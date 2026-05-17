@@ -1,17 +1,55 @@
 import { Navigate, useParams, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
-import { assetsInCollection, blogPosts, getCollection } from "@/data/marketplace";
+import { Asset, BlogPost, Collection, assetsInCollection, blogPosts, getCollection } from "@/data/marketplace";
+import { getPublishedCollectionBySlug, listPublishedAssetsForCollection, listPublishedBlogPosts } from "@/services/content";
+import { dbCollectionToCollection, dbBlogToBlogPost } from "@/lib/content-mappers";
+import { dbAssetToAsset } from "@/lib/asset-mappers";
+import { explainSupabaseError } from "@/lib/supabase/errors";
 
 export default function CollectionPage() {
   const { slug } = useParams();
-  const c = getCollection(slug || "");
-  if (!c) return <Navigate to="/collections" replace />;
-  const list = assetsInCollection(c.slug);
-  const relatedPosts = blogPosts.slice(0, 3);
+  const mockCollection = getCollection(slug || "");
+  const [collection, setCollection] = useState<Collection | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setErr("");
+      try {
+        const row = await getPublishedCollectionBySlug(slug || "");
+        if (row && !cancelled) {
+          setCollection(dbCollectionToCollection(row));
+          const assetRows = await listPublishedAssetsForCollection(row);
+          setAssets(assetRows.map(dbAssetToAsset));
+          const posts = await listPublishedBlogPosts();
+          setRelatedPosts(posts.slice(0, 3).map(dbBlogToBlogPost));
+        }
+      } catch (error) {
+        if (!cancelled) setErr(explainSupabaseError(error, "Using demo collection because Supabase could not load this collection."));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [slug]);
+
+  const c = collection || mockCollection;
+  if (!c && !loading) return <Navigate to="/collections" replace />;
+  if (!c) return null;
+  const list = assets.length > 0 ? assets : assetsInCollection(c.slug);
+  const posts = relatedPosts.length > 0 ? relatedPosts : blogPosts.slice(0, 3);
 
   return (
     <SiteLayout>
+      {err && <section className="container-mb pt-6"><div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">{err}</div></section>}
       <section className="container-mb pt-16 md:pt-24">
         <Link to="/collections" className="text-sm text-white/50 hover:text-white">← All collections</Link>
         <div className="eyebrow mt-6">Collection</div>
@@ -21,6 +59,8 @@ export default function CollectionPage() {
 
       <section className="container-mb mt-14">
         <h2 className="text-2xl font-medium tracking-tight">Curated assets</h2>
+        {loading && <div className="mt-6 card-premium p-4 text-sm text-white/55">Loading assets...</div>}
+        {!loading && list.length === 0 && <div className="mt-6 card-premium p-10 text-center text-white/55">No published assets in this collection yet.</div>}
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {list.map(a => <AssetCard key={a.slug} asset={a} />)}
         </div>
@@ -46,7 +86,7 @@ export default function CollectionPage() {
       <section className="container-mb mt-20">
         <h2 className="text-2xl font-medium tracking-tight">Related reading</h2>
         <div className="mt-6 grid gap-5 md:grid-cols-3">
-          {relatedPosts.map(p => (
+          {posts.map(p => (
             <Link key={p.slug} to={`/blog/${p.slug}`} className="card-premium p-6">
               <div className="text-xs uppercase tracking-[0.16em] text-white/40">{p.category}</div>
               <h3 className="mt-3 text-lg font-medium tracking-tight">{p.title}</h3>

@@ -25,6 +25,47 @@ export async function getCreatorBySlug(slug: string) {
   return data;
 }
 
+export async function listPublishedAssetsByCreatorId(creatorId: string) {
+  const { data, error } = await supabase
+    .from("assets")
+    .select(`
+      *,
+      creators (
+        id,
+        slug,
+        brand_name,
+        profile_id,
+        niche,
+        description,
+        tags,
+        followers,
+        assets_count,
+        downloads,
+        rating,
+        monthly_revenue,
+        strengths
+      )
+    `)
+    .eq("creator_id", creatorId)
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function listPublishedBlogPostsByCreatorId(creatorId: string) {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*, creators (id, slug, brand_name)")
+    .eq("creator_id", creatorId)
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
 export async function getCreatorByProfileId(profileId: string) {
   const { data, error } = await supabase
     .from("creators")

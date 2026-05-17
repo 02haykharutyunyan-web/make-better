@@ -9,6 +9,7 @@ import { Star, Download, ArrowUpRight, Check, X } from "lucide-react";
 import { dbAssetToAsset, dbCreatorToCreator } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { getPublishedAssetBySlug } from "@/services/assets";
+import { listAssetReviews } from "@/services/reviews";
 
 const beforeAfter = {
   before: ["Guessing what to sell", "Manual competitor research", "Weak product angles", "Slow decision making"],
@@ -50,6 +51,7 @@ export default function AssetPage() {
   const [remoteIncludes, setRemoteIncludes] = useState<string[]>([]);
   const [remoteBefore, setRemoteBefore] = useState<string[]>([]);
   const [remoteAfter, setRemoteAfter] = useState<string[]>([]);
+  const [remoteReviews, setRemoteReviews] = useState<typeof reviews>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -68,6 +70,12 @@ export default function AssetPage() {
           setRemoteIncludes(row.included || []);
           setRemoteBefore(row.before || []);
           setRemoteAfter(row.after || []);
+          const reviewRows = await listAssetReviews(row.id);
+          setRemoteReviews(reviewRows.map(r => ({
+            name: r.profiles?.full_name || "Buyer",
+            rating: r.rating,
+            body: r.body || "",
+          })).filter(r => r.body));
         }
       } catch (error) {
         if (!cancelled) setErr(explainSupabaseError(error, "Using demo asset details because Supabase could not load this asset."));
@@ -91,6 +99,7 @@ export default function AssetPage() {
   const pageAfter = remoteAfter.length > 0 ? remoteAfter : beforeAfter.after;
   const pageUseCases = remoteUseCases.length > 0 ? remoteUseCases : useCases;
   const pageIncludes = remoteIncludes.length > 0 ? remoteIncludes : includes;
+  const pageReviews = remoteReviews.length > 0 ? remoteReviews : reviews;
 
   return (
     <SiteLayout>
@@ -203,7 +212,7 @@ export default function AssetPage() {
           </div>
         </div>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {reviews.map((r, i) => (
+          {pageReviews.map((r, i) => (
             <div key={i} className="card-premium p-6">
               <div className="flex">{Array.from({length: r.rating}).map((_, j) => <Star key={j} className="h-4 w-4 fill-white text-white" />)}</div>
               <p className="mt-3 text-white/75 leading-relaxed">"{r.body}"</p>

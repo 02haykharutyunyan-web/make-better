@@ -12,6 +12,16 @@ export async function listPublishedBlogPosts() {
   return data || [];
 }
 
+export async function listAdminBlogPosts() {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*, creators (id, slug, brand_name)")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
 export async function getPublishedBlogPostBySlug(slug: string) {
   const { data, error } = await supabase
     .from("blog_posts")
@@ -51,6 +61,16 @@ export async function listPublishedCollections() {
   return data || [];
 }
 
+export async function listAdminCollections() {
+  const { data, error } = await supabase
+    .from("collections")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
 export async function getPublishedCollectionBySlug(slug: string) {
   const { data, error } = await supabase
     .from("collections")
@@ -61,6 +81,40 @@ export async function getPublishedCollectionBySlug(slug: string) {
 
   if (error) throw error;
   return data;
+}
+
+export async function listPublishedAssetsForCollection(collection: { selected_asset_ids?: string[] | null; related_types?: string[] | null }) {
+  let query = supabase
+    .from("assets")
+    .select(`
+      *,
+      creators (
+        id,
+        slug,
+        brand_name,
+        profile_id,
+        niche,
+        description,
+        tags,
+        followers,
+        assets_count,
+        downloads,
+        rating,
+        monthly_revenue,
+        strengths
+      )
+    `)
+    .eq("status", "published");
+
+  if (collection.selected_asset_ids && collection.selected_asset_ids.length > 0) {
+    query = query.in("id", collection.selected_asset_ids);
+  } else if (collection.related_types && collection.related_types.length > 0) {
+    query = query.in("product_type", collection.related_types);
+  }
+
+  const { data, error } = await query.order("published_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function upsertCollection(input: Inserts<"collections">) {
