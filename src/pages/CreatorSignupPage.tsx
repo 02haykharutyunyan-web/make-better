@@ -28,13 +28,13 @@ export default function CreatorSignupPage() {
 
   return (
     <SiteLayout>
-      <section className="container-mb pt-16 pb-24 grid gap-14 lg:grid-cols-[1.05fr_1fr] items-start">
+      <section className="container-mb pt-12 sm:pt-16 pb-20 sm:pb-24 grid min-w-0 gap-10 sm:gap-14 lg:grid-cols-[1.05fr_minmax(0,1fr)] items-start">
         <div>
           <div className="eyebrow">Become a creator</div>
-          <h1 className="mt-5 text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[1.04]">
+          <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[1.06]">
             Start selling your AI assets in minutes.
           </h1>
-          <p className="mt-5 text-white/60 text-lg max-w-xl">
+          <p className="mt-5 text-[#94A3B8] text-base sm:text-lg max-w-xl leading-relaxed">
             Free to register. No approval required. Submit assets right after signup — they go live once reviewed.
           </p>
           <ul className="mt-10 grid gap-3 text-white/75">
@@ -46,7 +46,7 @@ export default function CreatorSignupPage() {
           </ul>
         </div>
 
-        <form onSubmit={submit} className="card-premium p-8 md:p-10 space-y-4">
+        <form onSubmit={submit} className="card-premium p-5 sm:p-8 md:p-10 space-y-4">
           <h2 className="text-2xl font-medium tracking-tight">Creator registration</h2>
           <Field label="Full name" value={form.name} onChange={v => setForm({ ...form, name: v })} required />
           <Field label="Email" type="email" value={form.email} onChange={v => setForm({ ...form, email: v })} required />
@@ -54,15 +54,15 @@ export default function CreatorSignupPage() {
           <Field label="Phone" value={form.phone} onChange={v => setForm({ ...form, phone: v })} />
           <Field label="Creator / Brand name" value={form.brand} onChange={v => setForm({ ...form, brand: v })} required />
           <label className="block">
-            <span className="text-xs text-white/55">Short bio</span>
+            <span className="text-xs text-[#94A3B8]">Short bio</span>
             <textarea
               required value={form.bio} rows={3}
               onChange={e => setForm({ ...form, bio: e.target.value })}
-              className="mt-1 w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-white/30"
+              className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70"
             />
           </label>
           {err && <p className="text-xs text-red-400">{err}</p>}
-          <button disabled={loading} className="w-full rounded-full bg-white text-black py-3 text-sm font-medium hover:bg-white/90 transition disabled:opacity-50">
+          <button disabled={loading} className="min-h-12 w-full rounded-full btn-primary py-3 text-sm font-medium transition disabled:opacity-50">
             {loading ? "Creating..." : "Create creator account"}
           </button>
         </form>
@@ -74,9 +74,9 @@ export default function CreatorSignupPage() {
 function Field({ label, value, onChange, required, type = "text" }: { label: string; value: string; onChange: (v: string) => void; required?: boolean; type?: string }) {
   return (
     <label className="block">
-      <span className="text-xs text-white/55">{label}{required && <span className="text-white/30"> *</span>}</span>
+      <span className="text-xs text-[#94A3B8]">{label}{required && <span className="text-white/30"> *</span>}</span>
       <input required={required} type={type} value={value} onChange={e => onChange(e.target.value)}
-        className="mt-1 w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-white/30" />
+        className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70" />
     </label>
   );
 }

@@ -103,10 +103,10 @@ export default function SubmitAssetPage() {
   if (done) {
     return (
       <SiteLayout>
-        <section className="container-mb pt-24 pb-24 max-w-md mx-auto text-center">
-          <div className="mx-auto h-12 w-12 rounded-full border border-white/15 bg-white/[0.05] flex items-center justify-center mb-4">✓</div>
+        <section className="container-mb pt-20 sm:pt-24 pb-20 sm:pb-24 max-w-md mx-auto text-center">
+          <div className="mx-auto h-12 w-12 rounded-full border border-[#1E293B] bg-[#111827]/70 flex items-center justify-center mb-4">✓</div>
           <h1 className="text-3xl font-medium tracking-tight">Submitted for review</h1>
-          <p className="mt-3 text-white/60">Our team will review your asset within 48 hours.</p>
+          <p className="mt-3 text-[#94A3B8]">Our team will review your asset within 48 hours.</p>
         </section>
       </SiteLayout>
     );
@@ -114,18 +114,18 @@ export default function SubmitAssetPage() {
 
   return (
     <SiteLayout>
-      <section className="container-mb pt-16 pb-24 max-w-3xl mx-auto">
+      <section className="container-mb pt-12 sm:pt-16 pb-20 sm:pb-24 max-w-3xl mx-auto">
         <div className="eyebrow">Submit asset</div>
-        <h1 className="mt-5 text-4xl font-medium tracking-[-0.04em]">New asset submission</h1>
-        <p className="mt-3 text-white/55">Fill in the details below. Your asset will be submitted for review.</p>
+        <h1 className="mt-5 text-3xl sm:text-4xl font-medium tracking-[-0.04em]">New asset submission</h1>
+        <p className="mt-3 text-[#94A3B8]">Fill in the details below. Your asset will be submitted for review.</p>
 
-        <form onSubmit={submit} className="mt-10 card-premium p-8 space-y-5">
+        <form onSubmit={submit} className="mt-8 sm:mt-10 card-premium p-5 sm:p-8 space-y-5">
           <Field label="Asset title" value={form.title} onChange={v => setForm({ ...form, title: v })} required />
 
           <label className="block">
-            <span className="text-xs text-white/55">Product type</span>
+            <span className="text-xs text-[#94A3B8]">Product type</span>
             <select value={form.productType} onChange={e => setForm({ ...form, productType: e.target.value as ProductType })}
-              className="mt-1 w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-white/30">
+              className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70">
               {productTypes.map(t => <option key={t} className="bg-black">{t}</option>)}
             </select>
           </label>
@@ -134,11 +134,11 @@ export default function SubmitAssetPage() {
           <Textarea label="Full description" rows={5} value={form.fullDescription} onChange={v => setForm({ ...form, fullDescription: v })} />
           <Field label="Tags (comma separated)" value={form.tags} onChange={v => setForm({ ...form, tags: v })} />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="text-xs text-white/55">Price type</span>
+              <span className="text-xs text-[#94A3B8]">Price type</span>
               <select value={form.priceType} onChange={e => setForm({ ...form, priceType: e.target.value as "free" | "paid" })}
-                className="mt-1 w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-white/30">
+                className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70">
                 <option className="bg-black" value="free">Free</option>
                 <option className="bg-black" value="paid">Paid</option>
               </select>
@@ -148,15 +148,15 @@ export default function SubmitAssetPage() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4">
+          <div className="rounded-2xl border border-[#1E293B] bg-[#0B1020]/70 p-5 space-y-4">
             <div>
-              <div className="text-xs uppercase tracking-[0.16em] text-white/40">Private delivery</div>
-              <p className="mt-1 text-sm text-white/55">Only approved buyers who claim this asset can access this.</p>
+              <div className="text-xs uppercase tracking-[0.16em] text-[#94A3B8]/70">Private delivery</div>
+              <p className="mt-1 text-sm text-[#94A3B8]">Only approved buyers who claim this asset can access this.</p>
             </div>
             <label className="block">
-              <span className="text-xs text-white/55">Delivery type</span>
+              <span className="text-xs text-[#94A3B8]">Delivery type</span>
               <select value={form.deliveryType} onChange={e => setForm({ ...form, deliveryType: e.target.value as DeliveryType })}
-                className="mt-1 w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-white/30">
+                className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70">
                 <option className="bg-black" value="file">Upload file</option>
                 <option className="bg-black" value="external_link">External delivery link</option>
                 <option className="bg-black" value="text">Text / prompt content</option>
@@ -176,13 +176,13 @@ export default function SubmitAssetPage() {
 
           <Textarea label="Use cases (one per line)" rows={3} value={form.useCases} onChange={v => setForm({ ...form, useCases: v })} />
           <Textarea label="What's included (one per line)" rows={3} value={form.included} onChange={v => setForm({ ...form, included: v })} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <Textarea label="Before (one per line)" rows={3} value={form.before} onChange={v => setForm({ ...form, before: v })} />
             <Textarea label="After (one per line)" rows={3} value={form.after} onChange={v => setForm({ ...form, after: v })} />
           </div>
 
           {err && <p className="text-sm text-red-300">{err}</p>}
-          <button disabled={loading} className="w-full rounded-full bg-white text-black py-3 text-sm font-medium hover:bg-white/90 transition disabled:opacity-50">
+          <button disabled={loading} className="min-h-12 w-full rounded-full btn-primary py-3 text-sm font-medium transition disabled:opacity-50">
             {loading ? "Submitting..." : "Submit for review"}
           </button>
         </form>
@@ -194,9 +194,9 @@ export default function SubmitAssetPage() {
 function Field({ label, value, onChange, required, type = "text" }: any) {
   return (
     <label className="block">
-      <span className="text-xs text-white/55">{label}{required && <span className="text-white/30"> *</span>}</span>
+      <span className="text-xs text-[#94A3B8]">{label}{required && <span className="text-white/30"> *</span>}</span>
       <input required={required} type={type} value={value} onChange={e => onChange(e.target.value)}
-        className="mt-1 w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-white/30" />
+        className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70" />
     </label>
   );
 }
@@ -204,9 +204,9 @@ function Field({ label, value, onChange, required, type = "text" }: any) {
 function Textarea({ label, value, onChange, required, rows = 3 }: any) {
   return (
     <label className="block">
-      <span className="text-xs text-white/55">{label}{required && <span className="text-white/30"> *</span>}</span>
+      <span className="text-xs text-[#94A3B8]">{label}{required && <span className="text-white/30"> *</span>}</span>
       <textarea required={required} value={value} rows={rows} onChange={e => onChange(e.target.value)}
-        className="mt-1 w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-white/30" />
+        className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70" />
     </label>
   );
 }
@@ -214,8 +214,8 @@ function Textarea({ label, value, onChange, required, rows = 3 }: any) {
 function UploadField({ label, file, onChange }: { label: string; file: File | null; onChange: (file: File | null) => void }) {
   return (
     <label className="block">
-      <span className="text-xs text-white/55">{label}</span>
-      <div className="mt-1 flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] py-5 text-sm text-white/55 cursor-pointer hover:border-white/30 hover:text-white transition">
+      <span className="text-xs text-[#94A3B8]">{label}</span>
+      <div className="mt-1 flex min-h-24 items-center justify-center gap-2 rounded-xl border border-dashed border-[#1E293B] bg-[#0B1020]/70 px-3 py-5 text-sm text-[#94A3B8] cursor-pointer hover:border-[#3B82F6]/60 hover:text-white transition">
         <Upload className="h-4 w-4" /> {file ? file.name : "Upload file"}
         <input type="file" className="hidden" onChange={e => onChange(e.target.files?.[0] || null)} />
       </div>

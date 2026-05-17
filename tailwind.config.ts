@@ -24,6 +24,24 @@ export default {
         foreground: "hsl(var(--foreground))",
         surface: "hsl(var(--surface))",
         "surface-elevated": "hsl(var(--surface-elevated))",
+        electric: {
+          DEFAULT: "#2563FF",
+          glow: "#3B82F6",
+          cyan: "#22D3EE",
+        },
+        cta: {
+          DEFAULT: "#F97316",
+          hover: "#FB923C",
+          glow: "#FDBA74",
+        },
+        ink: {
+          primary: "#F8FAFC",
+          secondary: "#94A3B8",
+          border: "#1E293B",
+          background: "#05070D",
+          surface: "#0B1020",
+          elevated: "#111827",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

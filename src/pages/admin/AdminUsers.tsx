@@ -4,7 +4,7 @@ import { listProfiles, updateProfile } from "@/services/profiles";
 import type { Tables, UserRole } from "@/types/database";
 
 const roleBadge: Record<UserRole, string> = {
-  buyer: "bg-white/[0.06] text-white/80 border-white/10",
+  buyer: "bg-[#111827]/80 text-white/80 border-[#1E293B]",
   creator: "bg-blue-400/10 text-blue-300 border-blue-400/20",
   admin: "bg-amber-400/10 text-amber-300 border-amber-400/20",
 };
@@ -62,13 +62,13 @@ export default function AdminUsers() {
 
       <div className="card-premium overflow-hidden">
         {loading ? (
-          <div className="px-5 py-10 text-sm text-white/60">Loading users...</div>
+          <div className="px-5 py-10 text-sm text-[#94A3B8]">Loading users...</div>
         ) : users.length === 0 ? (
-          <div className="px-5 py-10 text-sm text-white/60">No users found.</div>
+          <div className="px-5 py-10 text-sm text-[#94A3B8]">No users found.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wider text-white/45">
+            <table className="min-w-[820px] w-full text-sm">
+              <thead className="text-left text-xs uppercase tracking-wider text-[#94A3B8]/80">
                 <tr>
                   <th className="px-5 py-4">Name</th>
                   <th className="px-5 py-4">Email</th>
@@ -88,7 +88,7 @@ export default function AdminUsers() {
                         value={user.role}
                         disabled={savingId === user.id}
                         onChange={(event) => handleUpdateUser(user.id, { role: event.target.value as UserRole })}
-                        className={`rounded-full border px-3 py-1 text-xs bg-transparent disabled:opacity-50 ${roleBadge[user.role]}`}
+                        className={`min-h-10 rounded-full border px-3 py-1 text-xs bg-transparent disabled:opacity-50 ${roleBadge[user.role]}`}
                       >
                         <option value="buyer" className="bg-black">buyer</option>
                         <option value="creator" className="bg-black">creator</option>
@@ -100,12 +100,12 @@ export default function AdminUsers() {
                         {user.active ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-white/55">{new Date(user.created_at).toLocaleDateString()}</td>
+                    <td className="px-5 py-4 text-[#94A3B8]">{new Date(user.created_at).toLocaleDateString()}</td>
                     <td className="px-5 py-4 text-right">
                       <button
                         disabled={savingId === user.id}
                         onClick={() => handleUpdateUser(user.id, { active: !user.active })}
-                        className="text-xs text-white/70 hover:text-white disabled:opacity-50"
+                        className="text-xs text-[#94A3B8] hover:text-white disabled:opacity-50"
                       >
                         {user.active ? "Deactivate" : "Reactivate"}
                       </button>
@@ -117,7 +117,7 @@ export default function AdminUsers() {
           </div>
         )}
 
-        <div className="border-t border-white/5 px-5 py-3 text-xs text-white/40">
+        <div className="border-t border-white/5 px-5 py-3 text-xs text-[#94A3B8]/70">
           Users are loaded from public.profiles. Auth account internals are not exposed to the frontend.
         </div>
       </div>

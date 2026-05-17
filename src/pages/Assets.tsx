@@ -59,35 +59,35 @@ export default function AssetsPage() {
 
   return (
     <SiteLayout>
-      <section className="container-mb pt-16 md:pt-24 pb-10">
+      <section className="container-mb pt-12 sm:pt-16 md:pt-24 pb-8 sm:pb-10">
         <div className="eyebrow">AI Assets</div>
-        <h1 className="mt-5 text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[1.04] max-w-4xl">
+        <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[1.06] max-w-4xl break-words">
           Explore AI assets built to help you do better work.
         </h1>
-        <p className="mt-5 max-w-2xl text-white/60 text-lg">
+        <p className="mt-4 sm:mt-5 max-w-2xl text-[#94A3B8] text-base sm:text-lg leading-relaxed">
           Search proven prompts, agents, assistants, workflows, and templates created to save time and improve results.
         </p>
 
-        <div className="mt-10 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-2 pl-5 max-w-3xl focus-within:border-white/30 transition">
-          <Search className="h-5 w-5 text-white/40" />
+        <div className="mt-8 sm:mt-10 flex min-h-14 items-center gap-3 rounded-2xl border border-[#1E293B] bg-[#111827]/60 p-2 pl-4 sm:pl-5 max-w-3xl focus-within:border-white/30 transition">
+          <Search className="h-5 w-5 text-[#94A3B8]/70" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search assets, tags, creators..."
-            className="flex-1 bg-transparent py-3 text-base placeholder:text-white/30 focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent py-3 text-base placeholder:text-white/30 focus:outline-none"
           />
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
+        <div className="mt-6 sm:mt-8 flex flex-col items-stretch justify-between gap-4 md:flex-row md:items-center">
+          <div className="flex gap-2 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible md:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filters.map(f => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`rounded-full border px-4 py-1.5 text-sm transition ${
+                className={`min-h-10 shrink-0 rounded-full border px-4 py-1.5 text-sm transition ${
                   filter === f
-                    ? "bg-white text-black border-white"
-                    : "border-white/10 bg-white/[0.03] text-white/70 hover:text-white hover:border-white/25"
+                    ? "bg-[#F97316] text-white border-[#F97316]"
+                    : "border-[#1E293B] bg-[#111827]/60 text-[#94A3B8] hover:text-white hover:border-[#3B82F6]/50"
                 }`}
               >{f}</button>
             ))}
@@ -95,7 +95,7 @@ export default function AssetsPage() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as typeof sorts[number])}
-            className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/80 focus:outline-none focus:border-white/30"
+            className="min-h-11 w-full rounded-full border border-[#1E293B] bg-[#111827]/60 px-4 py-2 text-sm text-white/80 focus:outline-none focus:border-[#3B82F6]/70 md:w-auto"
           >
             {sorts.map(s => <option className="bg-black" key={s}>{s}</option>)}
           </select>
@@ -104,14 +104,14 @@ export default function AssetsPage() {
 
       <section className="container-mb">
         {err && <div className="mb-6 rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">{err}</div>}
-        {loading && <div className="mb-6 card-premium p-4 text-sm text-white/55">Loading marketplace assets...</div>}
+        {loading && <div className="mb-6 card-premium p-4 text-sm text-[#94A3B8]">Loading marketplace assets...</div>}
         {filtered.length === 0 ? (
-          <div className="card-premium p-16 text-center">
-            <h3 className="text-2xl font-medium tracking-tight">No assets found</h3>
-            <p className="mt-2 text-white/55">Try a broader search or clear filters to see everything.</p>
+          <div className="card-premium p-8 sm:p-16 text-center">
+            <h3 className="text-xl sm:text-2xl font-medium tracking-tight">No assets found</h3>
+            <p className="mt-2 text-[#94A3B8]">Try a broader search or clear filters to see everything.</p>
             <button
               onClick={() => { setQ(""); setFilter("All"); }}
-              className="mt-6 rounded-full bg-white text-black px-5 py-2 text-sm font-medium"
+              className="mt-6 min-h-11 rounded-full btn-primary px-5 py-2 text-sm font-medium"
             >Clear filters</button>
           </div>
         ) : (
@@ -123,7 +123,7 @@ export default function AssetsPage() {
               <div className="mt-12 flex justify-center">
                 <button
                   onClick={() => setVisible(v => v + 6)}
-                  className="rounded-full border border-white/15 bg-white/[0.04] px-6 py-2.5 text-sm hover:bg-white/[0.08] transition"
+                  className="min-h-11 rounded-full border border-[#1E293B] bg-[#111827]/80 px-6 py-2.5 text-sm hover:bg-[#2563FF]/15 transition"
                 >Load more</button>
               </div>
             )}
@@ -131,11 +131,11 @@ export default function AssetsPage() {
         )}
       </section>
 
-      <section className="container-mb mt-28">
-        <div className="card-premium p-10 md:p-14 max-w-4xl">
+      <section className="container-mb mt-20 sm:mt-28">
+        <div className="card-premium p-5 sm:p-8 md:p-14 max-w-4xl">
           <div className="eyebrow">Why this works</div>
-          <h2 className="mt-5 text-3xl md:text-4xl font-medium tracking-[-0.03em] leading-tight">Find the right asset faster.</h2>
-          <p className="mt-4 text-white/60 text-lg leading-relaxed">
+          <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-[-0.03em] leading-tight">Find the right asset faster.</h2>
+          <p className="mt-4 text-[#94A3B8] text-base sm:text-lg leading-relaxed">
             Each asset on Make Better solves a specific problem — getting leads, creating faster, ranking higher, automating tasks, improving output.
             Filter by what you want to do, not by what something is called.
           </p>

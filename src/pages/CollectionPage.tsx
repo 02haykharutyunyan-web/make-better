@@ -50,34 +50,34 @@ export default function CollectionPage() {
   return (
     <SiteLayout>
       {err && <section className="container-mb pt-6"><div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">{err}</div></section>}
-      <section className="container-mb pt-16 md:pt-24">
-        <Link to="/collections" className="text-sm text-white/50 hover:text-white">← All collections</Link>
+      <section className="container-mb pt-12 sm:pt-16 md:pt-24">
+        <Link to="/collections" className="text-sm text-[#94A3B8] hover:text-white">← All collections</Link>
         <div className="eyebrow mt-6">Collection</div>
-        <h1 className="mt-5 text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[1.04] max-w-4xl">{c.title}</h1>
-        <p className="mt-5 max-w-2xl text-white/60 text-lg">{c.longDescription}</p>
+        <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[1.06] max-w-4xl break-words">{c.title}</h1>
+        <p className="mt-5 max-w-2xl text-[#94A3B8] text-base sm:text-lg leading-relaxed">{c.longDescription}</p>
       </section>
 
       <section className="container-mb mt-14">
         <h2 className="text-2xl font-medium tracking-tight">Curated assets</h2>
-        {loading && <div className="mt-6 card-premium p-4 text-sm text-white/55">Loading assets...</div>}
-        {!loading && list.length === 0 && <div className="mt-6 card-premium p-10 text-center text-white/55">No published assets in this collection yet.</div>}
+        {loading && <div className="mt-6 card-premium p-4 text-sm text-[#94A3B8]">Loading assets...</div>}
+        {!loading && list.length === 0 && <div className="mt-6 card-premium p-8 sm:p-10 text-center text-[#94A3B8]">No published assets in this collection yet.</div>}
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {list.map(a => <AssetCard key={a.slug} asset={a} />)}
         </div>
       </section>
 
-      <section className="container-mb mt-20 grid gap-6 md:grid-cols-2">
-        <div className="card-premium p-8">
+      <section className="container-mb mt-16 sm:mt-20 grid gap-6 md:grid-cols-2">
+        <div className="card-premium p-5 sm:p-8">
           <div className="eyebrow">Best for</div>
           <ul className="mt-4 space-y-2.5 text-white/80">
             {c.bestFor.map(b => <li key={b} className="flex gap-2"><span className="text-white/30">—</span>{b}</li>)}
           </ul>
         </div>
-        <div className="card-premium p-8">
+        <div className="card-premium p-5 sm:p-8">
           <div className="eyebrow">Related product types</div>
           <div className="mt-4 flex flex-wrap gap-2">
             {c.relatedTypes.map(t => (
-              <Link key={t} to="/assets" className="chip hover:border-white/30 hover:text-white">{t}</Link>
+              <Link key={t} to="/assets" className="chip hover:border-[#3B82F6]/60 hover:text-white">{t}</Link>
             ))}
           </div>
         </div>
@@ -88,9 +88,9 @@ export default function CollectionPage() {
         <div className="mt-6 grid gap-5 md:grid-cols-3">
           {posts.map(p => (
             <Link key={p.slug} to={`/blog/${p.slug}`} className="card-premium p-6">
-              <div className="text-xs uppercase tracking-[0.16em] text-white/40">{p.category}</div>
+              <div className="text-xs uppercase tracking-[0.16em] text-[#94A3B8]/70">{p.category}</div>
               <h3 className="mt-3 text-lg font-medium tracking-tight">{p.title}</h3>
-              <p className="mt-2 text-sm text-white/55 line-clamp-2">{p.excerpt}</p>
+              <p className="mt-2 text-sm text-[#94A3B8] line-clamp-2">{p.excerpt}</p>
             </Link>
           ))}
         </div>

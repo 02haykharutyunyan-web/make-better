@@ -17,18 +17,18 @@ export default function AdminLayout({ children, title, eyebrow }: { children: Re
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="container-mb pt-10 pb-24 grid gap-10 lg:grid-cols-[220px_1fr] items-start">
-        <aside className="lg:sticky lg:top-24">
-          <div className="text-xs uppercase tracking-[0.18em] text-white/40 px-3 mb-3">Admin</div>
-          <nav className="flex lg:flex-col gap-1 overflow-x-auto">
+      <div className="container-mb pt-6 sm:pt-10 pb-20 sm:pb-24 grid min-w-0 gap-6 sm:gap-10 lg:grid-cols-[220px_minmax(0,1fr)] items-start">
+        <aside className="min-w-0 lg:sticky lg:top-24">
+          <div className="mb-3 px-3 text-xs uppercase tracking-[0.18em] text-[#94A3B8]">Admin</div>
+          <nav className="flex lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {nav.map(n => (
               <NavLink
                 key={n.to}
                 to={n.to}
                 end={n.end}
                 className={({ isActive }) =>
-                  `inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm whitespace-nowrap transition ${
-                    isActive ? "bg-white/[0.08] text-white" : "text-white/60 hover:text-white hover:bg-white/[0.04]"
+                  `inline-flex min-h-10 items-center gap-2 px-3 py-2 rounded-xl text-sm whitespace-nowrap transition ${
+                    isActive ? "bg-[#2563FF]/16 text-white shadow-[0_0_24px_rgba(37,99,255,0.12)]" : "text-[#94A3B8] hover:bg-[#F97316]/10 hover:text-white"
                   }`
                 }
               >
@@ -37,10 +37,10 @@ export default function AdminLayout({ children, title, eyebrow }: { children: Re
             ))}
           </nav>
         </aside>
-        <main>
+        <main className="min-w-0">
           {eyebrow && <div className="eyebrow">{eyebrow}</div>}
-          <h1 className="mt-3 text-3xl md:text-4xl font-medium tracking-[-0.03em]">{title}</h1>
-          <div className="mt-8">{children}</div>
+          <h1 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-medium tracking-[-0.03em] leading-tight break-words">{title}</h1>
+          <div className="mt-6 sm:mt-8 min-w-0">{children}</div>
         </main>
       </div>
     </div>
