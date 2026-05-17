@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
+import { requireSupabaseConfig } from "@/lib/supabase/errors";
 import type { AccessRequestStatus, DeliveryType, Inserts, Tables, Updates } from "@/types/database";
 
 export type AssetWithCreator = Awaited<ReturnType<typeof listPublishedAssets>>[number];
@@ -175,12 +176,41 @@ export async function createSignedDeliverableUrl(storagePath: string) {
     .from(ASSET_DELIVERABLES_BUCKET)
     .createSignedUrl(storagePath, 60 * 5, { download: true });
 
-  if (error) throw error;
+  if (error) throw new Error(`Storage signed URL failed: ${error.message}`);
   return data.signedUrl;
 }
 
 export async function getClaimedAssetDelivery(assetId: string) {
-  return getAssetDeliverable(assetId);
+  requireSupabaseConfig();
+
+  const { data: auth, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!auth.user) throw new Error("Sign in before accessing this asset.");
+
+  const { data: claim, error: claimError } = await supabase
+    .from("asset_claims")
+    .select("id, status")
+    .eq("asset_id", assetId)
+    .eq("user_id", auth.user.id)
+    .in("status", ["unlocked", "paid_mock"])
+    .maybeSingle();
+
+  if (claimError) throw claimError;
+  if (!claim) throw new Error("Asset not claimed. Claim this asset before accessing its private delivery.");
+
+  const { data: asset, error: assetError } = await supabase
+    .from("assets")
+    .select("id, status")
+    .eq("id", assetId)
+    .eq("status", "published")
+    .maybeSingle();
+
+  if (assetError) throw assetError;
+  if (!asset) throw new Error("Asset not published. Delivery is available only after admin approval.");
+
+  const delivery = await getAssetDeliverable(assetId);
+  if (!delivery) throw new Error("No deliverable attached. Ask the creator or admin to add a file, link, or text delivery.");
+  return delivery;
 }
 
 export function deliveryLabel(type?: DeliveryType | null) {

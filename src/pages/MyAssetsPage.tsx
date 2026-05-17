@@ -37,7 +37,6 @@ export default function MyAssetsPage() {
     setLoadingClaimId(claim.id);
     try {
       const delivery = await getClaimedAssetDelivery(claim.asset.id);
-      if (!delivery) throw new Error("No delivery has been attached to this asset yet.");
 
       if (delivery.delivery_type === "file") {
         if (!delivery.storage_path) throw new Error("This asset file is missing from storage.");
