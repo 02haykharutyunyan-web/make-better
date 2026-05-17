@@ -77,6 +77,31 @@ export async function getCreatorByProfileId(profileId: string) {
   return data;
 }
 
+export async function getCurrentCreatorForSubmission() {
+  const { data: auth, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!auth.user) throw new Error("No authenticated Supabase user found. Sign in again before submitting an asset.");
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, email, role")
+    .eq("id", auth.user.id)
+    .maybeSingle();
+
+  if (profileError) throw profileError;
+  if (!profile) throw new Error(`No profile row exists for authenticated user ${auth.user.id}. Sign out and sign in again, or run the creator profile repair SQL.`);
+  if (profile.role !== "creator" && profile.role !== "admin") {
+    throw new Error(`This account has role "${profile.role}". Only creator accounts can submit assets.`);
+  }
+
+  const creator = await getCreatorByProfileId(auth.user.id);
+  if (!creator) {
+    throw new Error(`No creator row is linked to this profile (${profile.email || auth.user.id}). Run the creator profile repair SQL or create a creator profile for this account.`);
+  }
+
+  return creator;
+}
+
 export async function createCreator(input: Inserts<"creators">) {
   const { data, error } = await supabase
     .from("creators")

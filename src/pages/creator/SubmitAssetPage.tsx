@@ -5,7 +5,7 @@ import { useStore } from "@/store/store";
 import { ProductType } from "@/data/marketplace";
 import { Upload } from "lucide-react";
 import { explainSupabaseError } from "@/lib/supabase/errors";
-import { getCreatorByProfileId } from "@/services/creators";
+import { getCurrentCreatorForSubmission } from "@/services/creators";
 import {
   ASSET_DELIVERABLES_BUCKET,
   submitAsset as submitAssetToSupabase,
@@ -38,8 +38,7 @@ export default function SubmitAssetPage() {
     setLoading(true);
     try {
       if (!user) throw new Error("Sign in as a creator before submitting an asset.");
-      const creator = await getCreatorByProfileId(user.id);
-      if (!creator) throw new Error("No creator profile found for this account. Create a creator profile before submitting assets.");
+      const creator = await getCurrentCreatorForSubmission();
 
       const price = form.priceType === "paid" ? Number(form.price) || 0 : 0;
       if (form.priceType === "paid" && price <= 0) throw new Error("Paid assets need a price greater than 0.");
