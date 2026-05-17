@@ -1,0 +1,82 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import SiteLayout from "@/components/layout/SiteLayout";
+import { useStore } from "@/store/store";
+import { explainSupabaseError } from "@/lib/supabase/errors";
+
+export default function CreatorSignupPage() {
+  const { signupCreator } = useStore();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", brand: "", bio: "" });
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr("");
+    setLoading(true);
+    try {
+      const u = await signupCreator(form);
+      if (!u) { setErr("Account created. Confirm your email, then sign in."); return; }
+      navigate("/creator-dashboard");
+    } catch (error) {
+      setErr(explainSupabaseError(error, "Unable to create creator account."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SiteLayout>
+      <section className="container-mb pt-16 pb-24 grid gap-14 lg:grid-cols-[1.05fr_1fr] items-start">
+        <div>
+          <div className="eyebrow">Become a creator</div>
+          <h1 className="mt-5 text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[1.04]">
+            Start selling your AI assets in minutes.
+          </h1>
+          <p className="mt-5 text-white/60 text-lg max-w-xl">
+            Free to register. No approval required. Submit assets right after signup — they go live once reviewed.
+          </p>
+          <ul className="mt-10 grid gap-3 text-white/75">
+            {["Instant access to dashboard","Submit unlimited assets","Set free or paid pricing","Stripe payouts coming soon"].map(b => (
+              <li key={b} className="flex items-center gap-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> {b}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <form onSubmit={submit} className="card-premium p-8 md:p-10 space-y-4">
+          <h2 className="text-2xl font-medium tracking-tight">Creator registration</h2>
+          <Field label="Full name" value={form.name} onChange={v => setForm({ ...form, name: v })} required />
+          <Field label="Email" type="email" value={form.email} onChange={v => setForm({ ...form, email: v })} required />
+          <Field label="Password" type="password" value={form.password} onChange={v => setForm({ ...form, password: v })} required />
+          <Field label="Phone" value={form.phone} onChange={v => setForm({ ...form, phone: v })} />
+          <Field label="Creator / Brand name" value={form.brand} onChange={v => setForm({ ...form, brand: v })} required />
+          <label className="block">
+            <span className="text-xs text-white/55">Short bio</span>
+            <textarea
+              required value={form.bio} rows={3}
+              onChange={e => setForm({ ...form, bio: e.target.value })}
+              className="mt-1 w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-white/30"
+            />
+          </label>
+          {err && <p className="text-xs text-red-400">{err}</p>}
+          <button disabled={loading} className="w-full rounded-full bg-white text-black py-3 text-sm font-medium hover:bg-white/90 transition disabled:opacity-50">
+            {loading ? "Creating..." : "Create creator account"}
+          </button>
+        </form>
+      </section>
+    </SiteLayout>
+  );
+}
+
+function Field({ label, value, onChange, required, type = "text" }: { label: string; value: string; onChange: (v: string) => void; required?: boolean; type?: string }) {
+  return (
+    <label className="block">
+      <span className="text-xs text-white/55">{label}{required && <span className="text-white/30"> *</span>}</span>
+      <input required={required} type={type} value={value} onChange={e => onChange(e.target.value)}
+        className="mt-1 w-full rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2.5 text-sm focus:outline-none focus:border-white/30" />
+    </label>
+  );
+}
