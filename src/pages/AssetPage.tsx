@@ -9,6 +9,7 @@ import { Star, Download, ArrowUpRight, Check, X } from "lucide-react";
 import { dbAssetToAsset, dbCreatorToCreator } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { getPublishedAssetBySlug, listPublishedAssets } from "@/services/assets";
+import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
 
 export default function AssetPage() {
   const { slug } = useParams();
@@ -86,7 +87,8 @@ export default function AssetPage() {
     <SiteLayout>
       {err && <section className="container-mb pt-6"><div className="rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div></section>}
 
-      <section className="container-mb pt-10 sm:pt-12 md:pt-16">
+      <section className="container-mb section-rich pt-10 sm:pt-12 md:pt-16">
+        <SectionVisual variant="market" />
         <div className="grid min-w-0 gap-8 sm:gap-12 lg:grid-cols-[1.1fr_minmax(0,1fr)] items-start">
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">{asset.category}</div>
@@ -121,7 +123,8 @@ export default function AssetPage() {
       </section>
 
       {asset.longDescription && (
-        <section className="container-mb mt-20 sm:mt-28">
+        <section className="container-mb section-rich mt-20 sm:mt-28">
+          <SectionVisual variant="lines" />
           <div className="max-w-3xl">
             <div className="eyebrow">Overview</div>
             <p className="mt-5 text-[#CFCFCF] text-base sm:text-lg leading-relaxed whitespace-pre-line">{asset.longDescription}</p>
@@ -151,7 +154,8 @@ export default function AssetPage() {
       )}
 
       {useCases.length > 0 && (
-        <section className="container-mb mt-20 sm:mt-28">
+        <section className="container-mb section-rich mt-20 sm:mt-28">
+          <SectionVisual variant="mesh" />
           <div className="eyebrow">Use cases</div>
           <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal max-w-2xl">Where this asset fits</h2>
           <div className="mt-8 sm:mt-10 grid gap-4 md:grid-cols-2">
@@ -166,7 +170,8 @@ export default function AssetPage() {
       )}
 
       {included.length > 0 && (
-        <section className="container-mb mt-20 sm:mt-28">
+        <section className="container-mb section-rich mt-20 sm:mt-28">
+          <SectionVisual variant="lines" />
           <div className="card-premium p-5 sm:p-8 md:p-10">
             <div className="eyebrow">Inside the asset</div>
             <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal">What's included</h2>

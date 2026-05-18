@@ -7,6 +7,7 @@ import { getPublishedCollectionBySlug, listPublishedAssetsForCollection, listPub
 import { dbCollectionToCollection, dbBlogToBlogPost } from "@/lib/content-mappers";
 import { dbAssetToAsset } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
+import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
 
 export default function CollectionPage() {
   const { slug } = useParams();
@@ -54,14 +55,16 @@ export default function CollectionPage() {
   return (
     <SiteLayout>
       {err && <section className="container-mb pt-6"><div className="rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div></section>}
-      <section className="container-mb pt-12 sm:pt-16 md:pt-24">
-        <Link to="/collections" className="text-sm text-[#CFCFCF] hover:text-white">← All collections</Link>
+      <section className="container-mb section-rich pt-12 sm:pt-16 md:pt-24">
+        <SectionVisual variant="market" />
+        <Link to="/collections" className="text-sm text-[#CFCFCF] hover:text-white">Back to collections</Link>
         <div className="eyebrow mt-6">Collection</div>
         <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-normal leading-[1.06] max-w-4xl break-words">{c.title}</h1>
         <p className="mt-5 max-w-2xl text-[#CFCFCF] text-base sm:text-lg leading-relaxed">{c.longDescription}</p>
       </section>
 
-      <section className="container-mb mt-14">
+      <section className="container-mb section-rich mt-14">
+        <SectionVisual variant="mesh" />
         <h2 className="text-2xl font-medium tracking-normal">Curated assets</h2>
         {loading && <div className="mt-6 card-premium p-4 text-sm text-[#CFCFCF]">Loading assets...</div>}
         {!loading && list.length === 0 && <div className="mt-6 card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No published assets in this collection yet.</div>}
@@ -70,7 +73,8 @@ export default function CollectionPage() {
         </div>
       </section>
 
-      <section className="container-mb mt-16 sm:mt-20 grid gap-6 md:grid-cols-2">
+      <section className="container-mb section-rich mt-16 sm:mt-20 grid gap-6 md:grid-cols-2">
+        <SectionVisual variant="lines" />
         <div className="card-premium p-5 sm:p-8">
           <div className="eyebrow">Best for</div>
           <ul className="mt-4 space-y-2.5 text-white/80">
@@ -91,7 +95,8 @@ export default function CollectionPage() {
       </section>
 
       {posts.length > 0 && (
-        <section className="container-mb mt-20">
+        <section className="container-mb section-rich mt-20">
+          <SectionVisual variant="market" />
           <h2 className="text-2xl font-medium tracking-normal">Related reading</h2>
           <div className="mt-6 grid gap-5 md:grid-cols-3">
             {posts.map(p => (

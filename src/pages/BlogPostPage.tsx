@@ -8,6 +8,7 @@ import { dbBlogToBlogPost } from "@/lib/content-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { getCreatorBySlug, listPublishedAssetsByCreatorId } from "@/services/creators";
 import { dbAssetToAsset } from "@/lib/asset-mappers";
+import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -74,7 +75,8 @@ export default function BlogPostPage() {
 
   return (
     <SiteLayout>
-      <article className="container-mb pt-10 sm:pt-12 md:pt-16 max-w-3xl">
+      <article className="container-mb section-rich pt-10 sm:pt-12 md:pt-16 max-w-3xl">
+        <SectionVisual variant="lines" />
         <Link to="/blog" className="text-sm text-[#CFCFCF] hover:text-white">Back to blog</Link>
         <div className="eyebrow mt-6">{post.category}</div>
         <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-normal leading-[1.06] break-words">{post.title}</h1>
@@ -89,7 +91,8 @@ export default function BlogPostPage() {
       </article>
 
       {creatorAssets.length > 0 && (
-        <section className="container-mb mt-20">
+        <section className="container-mb section-rich mt-20">
+          <SectionVisual variant="mesh" />
           <h2 className="text-2xl font-medium tracking-normal">Assets from {creatorName}</h2>
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {creatorAssets.map(a => <AssetCard key={a.slug} asset={a} />)}
@@ -98,7 +101,8 @@ export default function BlogPostPage() {
       )}
 
       {related.length > 0 && (
-        <section className="container-mb mt-20">
+        <section className="container-mb section-rich mt-20">
+          <SectionVisual variant="market" />
           <h2 className="text-2xl font-medium tracking-normal">Keep reading</h2>
           <div className="mt-6 grid gap-5 md:grid-cols-3">
             {related.map(p => (

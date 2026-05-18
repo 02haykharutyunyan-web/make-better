@@ -8,6 +8,7 @@ import { getCreatorBySlug, listPublishedAssetsByCreatorId, listPublishedBlogPost
 import { dbAssetToAsset, dbCreatorToCreator } from "@/lib/asset-mappers";
 import { dbBlogToBlogPost } from "@/lib/content-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
+import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
 
 export default function CreatorPage() {
   const { slug } = useParams();
@@ -67,7 +68,8 @@ export default function CreatorPage() {
 
   return (
     <SiteLayout>
-      <section className="container-mb pt-10 sm:pt-12 md:pt-16">
+      <section className="container-mb section-rich pt-10 sm:pt-12 md:pt-16">
+        <SectionVisual variant="market" />
         <div className="card-premium p-5 sm:p-8 md:p-10 grid min-w-0 gap-6 sm:gap-8 md:grid-cols-[minmax(0,1fr)_auto] items-start">
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-4 sm:gap-5">
@@ -109,7 +111,8 @@ export default function CreatorPage() {
         </div>
       </section>
 
-      <section className="container-mb mt-20">
+      <section className="container-mb section-rich mt-20">
+        <SectionVisual variant="mesh" />
         <h2 className="text-2xl sm:text-3xl font-medium tracking-normal">Published assets by {creator.name}</h2>
         {creatorAssets.length === 0 && <div className="mt-6 card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No published assets yet.</div>}
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -131,7 +134,8 @@ export default function CreatorPage() {
       )}
 
       {creatorPosts.length > 0 && (
-        <section className="container-mb mt-20">
+        <section className="container-mb section-rich mt-20">
+          <SectionVisual variant="lines" />
           <h2 className="text-2xl sm:text-3xl font-medium tracking-normal">Posts by {creator.name}</h2>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {creatorPosts.map(p => (

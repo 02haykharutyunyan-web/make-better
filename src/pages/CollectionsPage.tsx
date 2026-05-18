@@ -6,6 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { listPublishedCollections } from "@/services/content";
 import { dbCollectionToCollection } from "@/lib/content-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
+import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
 
 export default function CollectionsPage() {
   const [remoteCollections, setRemoteCollections] = useState<Collection[]>([]);
@@ -34,7 +35,8 @@ export default function CollectionsPage() {
 
   return (
     <SiteLayout>
-      <section className="container-mb pt-12 sm:pt-16 md:pt-24">
+      <section className="container-mb section-rich pt-12 sm:pt-16 md:pt-24">
+        <SectionVisual variant="mesh" />
         <div className="eyebrow">Collections</div>
         <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-normal leading-[1.06] max-w-4xl">
           Start with what you want to achieve.
@@ -44,7 +46,8 @@ export default function CollectionsPage() {
         </p>
       </section>
 
-      <section className="container-mb mt-10">
+      <section className="container-mb section-rich mt-10">
+        <SectionVisual variant="lines" />
         {err && <div className="mb-6 rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div>}
         {loading && <div className="mb-6 card-premium p-4 text-sm text-[#CFCFCF]">Loading collections...</div>}
         {!loading && visibleCollections.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No published collections yet.</div>}

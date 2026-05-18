@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Asset, getCreator } from "@/data/marketplace";
 import { Download, Star, ArrowUpRight } from "lucide-react";
+import { AssetPreviewVisual } from "@/components/visuals/MarketplaceVisuals";
 
 export default function AssetCard({ asset }: { asset: Asset }) {
   const creator = getCreator(asset.creatorSlug);
@@ -9,7 +10,8 @@ export default function AssetCard({ asset }: { asset: Asset }) {
       to={`/asset/${asset.slug}`}
       className="card-premium group p-5 sm:p-6 flex min-w-0 flex-col"
     >
-      <div className="flex items-start justify-between gap-3 text-xs">
+      <AssetPreviewVisual type={asset.productType} title={asset.title} />
+      <div className="mt-5 flex items-start justify-between gap-3 text-xs">
         <span className="min-w-0 break-words text-[#CFCFCF] uppercase tracking-[0.14em]">{asset.category}</span>
         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
           asset.price === 0

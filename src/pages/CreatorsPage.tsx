@@ -6,6 +6,7 @@ import { Star } from "lucide-react";
 import { listActiveCreators } from "@/services/creators";
 import { dbCreatorToCreator } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
+import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
 
 export default function CreatorsPage() {
   const [remoteCreators, setRemoteCreators] = useState<Creator[]>([]);
@@ -34,7 +35,8 @@ export default function CreatorsPage() {
 
   return (
     <SiteLayout>
-      <section className="container-mb pt-12 sm:pt-16 md:pt-24">
+      <section className="container-mb section-rich pt-12 sm:pt-16 md:pt-24">
+        <SectionVisual variant="market" />
         <div className="eyebrow">Creators</div>
         <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-normal leading-[1.06] max-w-4xl">
           Builders shipping the best AI assets.
@@ -44,7 +46,8 @@ export default function CreatorsPage() {
         </p>
       </section>
 
-      <section className="container-mb mt-10">
+      <section className="container-mb section-rich mt-10">
+        <SectionVisual variant="mesh" />
         {err && <div className="mb-6 rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div>}
         {loading && <div className="mb-6 card-premium p-4 text-sm text-[#CFCFCF]">Loading creators...</div>}
         {!loading && visibleCreators.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No active creators yet.</div>}

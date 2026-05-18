@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { listPublishedBlogPosts } from "@/services/content";
 import { dbBlogToBlogPost } from "@/lib/content-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
+import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -33,7 +34,8 @@ export default function BlogPage() {
 
   return (
     <SiteLayout>
-      <section className="container-mb pt-12 sm:pt-16 md:pt-24">
+      <section className="container-mb section-rich pt-12 sm:pt-16 md:pt-24">
+        <SectionVisual variant="lines" />
         <div className="eyebrow">Blog</div>
         <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-normal leading-[1.06] max-w-4xl">
           Better strategies for using AI assets.
@@ -43,7 +45,8 @@ export default function BlogPage() {
         </p>
       </section>
 
-      <section className="container-mb mt-10">
+      <section className="container-mb section-rich mt-10">
+        <SectionVisual variant="mesh" />
         {err && <div className="mb-6 rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div>}
         {loading && <div className="mb-6 card-premium p-4 text-sm text-[#CFCFCF]">Loading posts...</div>}
         {!loading && visiblePosts.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No published posts yet.</div>}
