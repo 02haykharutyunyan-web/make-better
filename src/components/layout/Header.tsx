@@ -59,7 +59,7 @@ export default function Header() {
   return (
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? "border-b border-white/10 bg-[#050505]/82 shadow-[0_18px_60px_-42px_rgba(255,214,0,0.55)] backdrop-blur-xl" : "bg-transparent"
+        scrolled ? "glass-nav" : "bg-transparent"
       }`}
     >
       <div className="container-mb flex h-16 items-center justify-between">
@@ -98,21 +98,21 @@ export default function Header() {
                 to="/creator-signup"
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full btn-primary px-4 py-1.5 text-sm font-medium transition"
               >
-                List your asset <span aria-hidden>→</span>
+                List your asset <span aria-hidden>-&gt;</span>
               </Link>
             </>
           ) : (
             <div className="relative">
               <button
                 onClick={() => setAccountOpen(o => !o)}
-                className="hidden min-h-10 items-center gap-2 rounded-full border border-white/10 bg-[#0E0E0E]/80 px-3 py-1.5 text-sm text-white transition hover:border-[#FFD600]/60 hover:bg-[#FFD600]/15 sm:inline-flex"
+                className="hidden min-h-10 items-center gap-2 rounded-full glass-panel px-3 py-1.5 text-sm text-white transition hover:border-[#FFD600]/20 hover:bg-[#FFD600]/10 sm:inline-flex"
               >
                 <UserIcon className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{user.name.split(" ")[0]}</span>
                 <span className="text-[10px] uppercase tracking-wider text-[#CFCFCF]">{user.role}</span>
               </button>
               {accountOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-white/10 bg-[#0E0E0E] p-2 text-sm shadow-[0_24px_80px_-34px_rgba(255,214,0,0.7)]">
+                <div className="absolute right-0 mt-2 w-48 glass-modal p-2 text-sm">
                   {roleLinks.map(l => (
                     <Link key={l.to} to={l.to} className="block px-3 py-2 rounded-xl hover:bg-[#FFD600]/10">{l.label}</Link>
                   ))}
@@ -135,7 +135,7 @@ export default function Header() {
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen(open => !open)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-[#0E0E0E]/80 text-white transition hover:border-[#FFD600]/70 hover:bg-[#FFD600]/10 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full glass-panel text-white transition hover:border-[#FFD600]/20 hover:bg-[#FFD600]/10 md:hidden"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -143,11 +143,11 @@ export default function Header() {
       </div>
 
       <div
-        className={`fixed inset-x-0 bottom-0 top-16 z-40 bg-[#050505]/82 backdrop-blur-sm md:hidden transition-all duration-300 ${
+        className={`fixed inset-x-0 bottom-0 top-16 z-40 bg-[#050505]/70 backdrop-blur-sm md:hidden transition-all duration-300 ${
           mobileOpen ? "pointer-events-auto opacity-100 translate-y-0" : "pointer-events-none opacity-0 -translate-y-3"
         }`}
       >
-        <div className="border-y border-white/10 bg-[#0E0E0E]/96 shadow-[0_24px_90px_-38px_rgba(255,214,0,0.75)] backdrop-blur-2xl">
+        <div className="glass-modal rounded-none border-x-0">
           <nav className="container-mb max-h-[calc(100dvh-4rem)] overflow-y-auto py-4">
             <div className="grid gap-1">
               {navLinks.map((l) => (
@@ -177,7 +177,7 @@ export default function Header() {
                 </div>
               ) : (
                 <div className="grid gap-2">
-                  <div className="rounded-2xl border border-white/10 bg-[#0E0E0E]/80 px-4 py-3">
+                  <div className="rounded-2xl glass-panel px-4 py-3">
                     <div className="text-sm text-white">{user.name}</div>
                     <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#CFCFCF]/80">{user.role}</div>
                   </div>
@@ -188,7 +188,7 @@ export default function Header() {
                   )}
                   <button
                     onClick={signOut}
-                    className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-[#0E0E0E]/80 text-sm font-medium text-white/75"
+                    className="flex min-h-12 items-center justify-center gap-2 rounded-2xl glass-panel text-sm font-medium text-white/75"
                   >
                     <LogOut className="h-4 w-4" /> Sign out
                   </button>

@@ -100,7 +100,7 @@ export default function MyAssetsPage() {
         {textDelivery && (
           <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setTextDelivery(null)} />
-            <div className="relative w-full max-w-2xl card-premium p-5 sm:p-7 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
+            <div className="relative w-full max-w-2xl glass-modal p-5 sm:p-7 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
               <h2 className="text-xl sm:text-2xl font-medium tracking-normal">{textDelivery.title}</h2>
               <pre className="mt-5 whitespace-pre-wrap rounded-xl border border-white/10 bg-[#0E0E0E]/60 p-4 text-sm text-white/80 font-sans leading-relaxed">
                 {textDelivery.body}

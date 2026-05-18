@@ -136,7 +136,7 @@ export default function Index() {
           </p>
 
           <div className="mt-8 sm:mt-10 max-w-2xl animate-fade-up">
-            <form onSubmit={handleSearch} className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-[#0E0E0E]/60 p-2 focus-within:border-white/30 transition sm:flex-row sm:items-center sm:gap-3 sm:pl-5">
+            <form onSubmit={handleSearch} className="glass-panel flex flex-col gap-2 rounded-2xl p-2 focus-within:border-[#FFD600]/20 transition sm:flex-row sm:items-center sm:gap-3 sm:pl-5">
               <Search className="h-5 w-5 text-[#CFCFCF]/70" />
               <input
                 value={query}

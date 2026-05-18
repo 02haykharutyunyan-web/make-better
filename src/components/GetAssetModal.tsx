@@ -59,7 +59,7 @@ export default function GetAssetModal({ asset, open, onClose }: { asset: Asset; 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 animate-fade-up">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full max-w-md card-premium max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-5 sm:p-7">
+      <div className="relative w-full max-w-md glass-modal max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-5 sm:p-7">
         <button onClick={onClose} className="absolute top-3 right-3 sm:top-4 sm:right-4 flex h-10 w-10 items-center justify-center rounded-full text-[#CFCFCF] hover:bg-[#FFD600]/10 hover:text-white">
           <X className="h-4 w-4" />
         </button>

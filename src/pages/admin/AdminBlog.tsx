@@ -103,7 +103,7 @@ export default function AdminBlog() {
       {editing && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setEditing(null)} />
-          <form onSubmit={save} className="relative w-full max-w-2xl card-premium p-5 sm:p-7 space-y-4 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
+          <form onSubmit={save} className="relative w-full max-w-2xl glass-modal p-5 sm:p-7 space-y-4 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
             <h3 className="text-xl sm:text-2xl font-medium tracking-normal">{editing.slug ? "Edit post" : "New post"}</h3>
             <Field label="Title" value={editing.title} onChange={v => setEditing({ ...editing, title: v })} required />
             <Field label="Slug (optional)" value={editing.slug} onChange={v => setEditing({ ...editing, slug: v })} />

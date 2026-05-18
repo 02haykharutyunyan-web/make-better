@@ -75,7 +75,7 @@ export default function AssetsPage() {
           Search proven prompts, agents, assistants, workflows, and templates created to save time and improve results.
         </p>
 
-        <div className="mt-8 sm:mt-10 flex min-h-14 items-center gap-3 rounded-2xl border border-white/10 bg-[#0E0E0E]/60 p-2 pl-4 sm:pl-5 max-w-3xl focus-within:border-white/30 transition">
+        <div className="mt-8 sm:mt-10 glass-panel flex min-h-14 items-center gap-3 rounded-2xl p-2 pl-4 sm:pl-5 max-w-3xl focus-within:border-[#FFD600]/20 transition">
           <Search className="h-5 w-5 text-[#CFCFCF]/70" />
           <input
             value={q}

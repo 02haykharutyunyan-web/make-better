@@ -150,34 +150,73 @@
     @apply border border-white/10;
   }
 
-  .card-premium {
-    @apply rounded-xl border border-white/10 bg-white/[0.03] transition-all duration-300;
-    backdrop-filter: blur(12px);
+  .glass-panel {
+    @apply border border-white/10 bg-white/[0.04] transition-all duration-300;
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
     background:
-      linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02)),
-      rgba(255,255,255,0.03);
-    box-shadow:
-      0 1px 0 0 rgba(255,255,255,0.055) inset,
-      0 22px 72px -52px rgba(255,214,0,0.22),
-      0 18px 60px -44px rgba(0,0,0,0.95);
-  }
-
-  .card-premium:hover {
-    border-color: rgba(255,214,0,0.72);
-    background:
-      linear-gradient(180deg, rgba(255,255,255,0.065), rgba(255,255,255,0.025)),
+      linear-gradient(135deg, rgba(255,255,255,0.095), rgba(255,255,255,0.025) 38%, rgba(255,255,255,0.012)),
+      radial-gradient(120% 90% at 16% 0%, rgba(255,255,255,0.07), transparent 42%),
       rgba(255,255,255,0.04);
     box-shadow:
-      0 1px 0 0 rgba(255,255,255,0.08) inset,
-      0 0 20px rgba(255,214,0,0.18),
-      0 18px 54px -36px rgba(0,0,0,0.98),
-      0 0 0 1px rgba(255,214,0,0.08);
+      0 20px 60px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .glass-card,
+  .card-premium {
+    @apply rounded-xl glass-panel;
+  }
+
+  .glass-card:hover,
+  .card-premium:hover {
+    border-color: rgba(255,214,0,0.18);
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.035) 42%, rgba(255,255,255,0.018)),
+      radial-gradient(120% 90% at 16% 0%, rgba(255,255,255,0.09), transparent 44%),
+      rgba(255,255,255,0.05);
+    box-shadow:
+      0 24px 68px rgba(0,0,0,0.42),
+      inset 0 1px 0 rgba(255,255,255,0.11),
+      0 0 0 1px rgba(255,214,0,0.08),
+      0 0 26px rgba(255,214,0,0.09);
     transform: translateY(-2px);
   }
 
+  .glass-nav {
+    @apply border-b border-white/10 bg-white/[0.04];
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .glass-modal {
+    @apply rounded-xl glass-panel;
+    backdrop-filter: blur(22px) saturate(145%);
+    -webkit-backdrop-filter: blur(22px) saturate(145%);
+    box-shadow:
+      0 30px 90px rgba(0,0,0,0.55),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  .glass-input,
+  input,
+  select,
+  textarea {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025)),
+      rgba(255,255,255,0.035) !important;
+    border-color: rgba(255,255,255,0.10) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.055);
+  }
+
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-[#CFCFCF] transition-colors;
-    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-[#CFCFCF] transition-colors;
+    backdrop-filter: blur(10px) saturate(130%);
+    -webkit-backdrop-filter: blur(10px) saturate(130%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
   }
 
   .eyebrow {
@@ -220,8 +259,12 @@
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-white/15 bg-transparent text-white transition-all duration-300;
-    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
+    @apply inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] text-white transition-all duration-300;
+    backdrop-filter: blur(14px) saturate(135%);
+    -webkit-backdrop-filter: blur(14px) saturate(135%);
+    box-shadow:
+      0 12px 32px rgba(0,0,0,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.07);
   }
 
   .btn-secondary:hover {
@@ -249,11 +292,21 @@
   }
 
   @media (max-width: 767px) {
+    .glass-panel,
+    .glass-card,
+    .card-premium,
+    .glass-nav,
+    .glass-modal {
+      backdrop-filter: blur(12px) saturate(125%);
+      -webkit-backdrop-filter: blur(12px) saturate(125%);
+    }
+
+    .glass-card:hover,
     .card-premium:hover {
       transform: none;
       box-shadow:
-        0 1px 0 0 rgba(255,255,255,0.04) inset,
-        0 18px 60px -42px rgba(255,214,0,0.22);
+        0 18px 48px rgba(0,0,0,0.34),
+        inset 0 1px 0 rgba(255,255,255,0.08);
     }
   }
 
