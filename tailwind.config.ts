@@ -13,7 +13,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['"Instrument Serif"', 'Georgia', 'serif'],
+        display: ['"Space Grotesk"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       colors: {
@@ -25,22 +25,23 @@ export default {
         surface: "hsl(var(--surface))",
         "surface-elevated": "hsl(var(--surface-elevated))",
         electric: {
-          DEFAULT: "#2563FF",
-          glow: "#3B82F6",
-          cyan: "#22D3EE",
+          DEFAULT: "#FFD600",
+          glow: "#FFD600",
+          cyan: "#FFD600",
         },
         cta: {
-          DEFAULT: "#F97316",
-          hover: "#FB923C",
-          glow: "#FDBA74",
+          DEFAULT: "#FFD600",
+          hover: "#FFD600",
+          glow: "#FFD600",
         },
         ink: {
-          primary: "#F8FAFC",
-          secondary: "#94A3B8",
-          border: "#1E293B",
-          background: "#05070D",
-          surface: "#0B1020",
-          elevated: "#111827",
+          primary: "#FFFFFF",
+          secondary: "#CFCFCF",
+          muted: "#8A8A8A",
+          border: "rgba(255,255,255,0.08)",
+          background: "#050505",
+          surface: "#0E0E0E",
+          elevated: "#121212",
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",

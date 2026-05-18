@@ -60,15 +60,15 @@ export default function GetAssetModal({ asset, open, onClose }: { asset: Asset; 
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 animate-fade-up">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
       <div className="relative w-full max-w-md card-premium max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-5 sm:p-7">
-        <button onClick={onClose} className="absolute top-3 right-3 sm:top-4 sm:right-4 flex h-10 w-10 items-center justify-center rounded-full text-[#94A3B8] hover:bg-[#F97316]/10 hover:text-white">
+        <button onClick={onClose} className="absolute top-3 right-3 sm:top-4 sm:right-4 flex h-10 w-10 items-center justify-center rounded-full text-[#CFCFCF] hover:bg-[#FFD600]/10 hover:text-white">
           <X className="h-4 w-4" />
         </button>
 
         {step === "form" ? (
           <>
-            <div className="text-xs uppercase tracking-[0.18em] text-[#94A3B8]">{isPaid ? "Request access" : "Unlock free asset"}</div>
-            <h3 className="mt-2 pr-10 text-xl sm:text-2xl font-medium tracking-tight">{asset.title}</h3>
-            <p className="mt-1 text-sm text-[#94A3B8]">
+            <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">{isPaid ? "Request access" : "Unlock free asset"}</div>
+            <h3 className="mt-2 pr-10 text-xl sm:text-2xl font-medium tracking-normal">{asset.title}</h3>
+            <p className="mt-1 text-sm text-[#CFCFCF]">
               {isPaid ? `Paid purchases are coming soon. Join the access list and we'll contact you when this asset is available.` : "Free for everyone. Instant access after signup."}
             </p>
 
@@ -77,23 +77,23 @@ export default function GetAssetModal({ asset, open, onClose }: { asset: Asset; 
               <Field label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
               {!user && !isPaid && <Field label="Password" type="password" value={form.password} onChange={(v) => setForm({ ...form, password: v })} required />}
               <Field label="Phone" type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-              {err && <p className="text-xs text-red-400">{err}</p>}
+              {err && <p className="text-xs text-[#CFCFCF]">{err}</p>}
 
               <button disabled={loading} type="submit" className="mt-2 w-full rounded-full btn-primary py-3 text-sm font-medium transition disabled:opacity-50">
                 {loading ? "Working..." : isPaid ? "Join waitlist" : "Unlock asset"}
               </button>
-              <p className="text-[11px] text-[#94A3B8]/70 text-center">By continuing you agree to our Terms and Privacy Policy.</p>
+              <p className="text-[11px] text-[#CFCFCF]/70 text-center">By continuing you agree to our Terms and Privacy Policy.</p>
             </form>
           </>
         ) : (
           <div className="text-center py-4">
-            <div className="mx-auto h-12 w-12 rounded-full border border-[#1E293B] bg-[#111827]/70 flex items-center justify-center mb-4">✓</div>
-            <h3 className="text-2xl font-medium tracking-tight">{isPaid ? "You're on the list." : "You're in."}</h3>
-            <p className="mt-2 text-sm text-[#94A3B8]">
+            <div className="mx-auto h-12 w-12 rounded-full border border-white/10 bg-[#0E0E0E]/70 flex items-center justify-center mb-4">✓</div>
+            <h3 className="text-2xl font-medium tracking-normal">{isPaid ? "You're on the list." : "You're in."}</h3>
+            <p className="mt-2 text-sm text-[#CFCFCF]">
               {isPaid ? "We'll contact you when paid access opens. No payment has been taken." : "Your free asset is unlocked and saved to My Assets."}
             </p>
             <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              <button onClick={onClose} className="min-h-12 rounded-full border border-[#1E293B] bg-[#111827]/80 py-3 text-sm font-medium hover:bg-[#2563FF]/15 transition">
+              <button onClick={onClose} className="min-h-12 rounded-full border border-white/10 bg-[#0E0E0E]/80 py-3 text-sm font-medium hover:bg-[#FFD600]/15 transition">
                 Close
               </button>
               <button onClick={() => { onClose(); isPaid ? navigate("/assets") : navigate("/my-assets"); }} className="min-h-12 rounded-full btn-primary py-3 text-sm font-medium transition">
@@ -110,13 +110,13 @@ export default function GetAssetModal({ asset, open, onClose }: { asset: Asset; 
 function Field({ label, value, onChange, required, type = "text" }: { label: string; value: string; onChange: (v: string) => void; required?: boolean; type?: string }) {
   return (
     <label className="block">
-      <span className="text-xs text-[#94A3B8]">{label}{required && <span className="text-white/30"> *</span>}</span>
+      <span className="text-xs text-[#CFCFCF]">{label}{required && <span className="text-white/30"> *</span>}</span>
       <input
         required={required}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70 transition"
+        className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70 transition"
       />
     </label>
   );

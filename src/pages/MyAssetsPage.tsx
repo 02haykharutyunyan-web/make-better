@@ -16,8 +16,8 @@ export default function MyAssetsPage() {
     return (
       <SiteLayout>
         <section className="container-mb pt-16 sm:pt-20 pb-20 sm:pb-24 max-w-xl">
-          <h1 className="text-3xl sm:text-4xl font-medium tracking-[-0.04em]">Sign in to see your assets</h1>
-          <p className="mt-3 text-[#94A3B8]">When you claim or purchase an asset, it appears here for instant access.</p>
+          <h1 className="text-3xl sm:text-4xl font-medium tracking-normal">Sign in to see your assets</h1>
+          <p className="mt-3 text-[#CFCFCF]">When you claim or purchase an asset, it appears here for instant access.</p>
           <Link to="/login" className="mt-6 inline-flex min-h-11 items-center rounded-full btn-primary px-5 py-2.5 text-sm font-medium">Sign in</Link>
         </section>
       </SiteLayout>
@@ -60,13 +60,13 @@ export default function MyAssetsPage() {
     <SiteLayout>
       <section className="container-mb pt-12 sm:pt-16 pb-20 sm:pb-24">
         <div className="eyebrow">My Assets</div>
-        <h1 className="mt-5 text-3xl sm:text-4xl md:text-5xl font-medium tracking-[-0.04em]">Your library</h1>
-        <p className="mt-3 text-[#94A3B8] max-w-lg">Assets you've unlocked or claimed live here. Paid items will be released once Stripe is connected.</p>
-        {err && <div className="mt-6 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{err}</div>}
+        <h1 className="mt-5 text-3xl sm:text-4xl md:text-5xl font-medium tracking-normal">Your library</h1>
+        <p className="mt-3 text-[#CFCFCF] max-w-lg">Assets you've unlocked or claimed live here. Paid items will be released once Stripe is connected.</p>
+        {err && <div className="mt-6 rounded-xl border border-white/20 bg-white/10 p-4 text-sm text-[#CFCFCF]">{err}</div>}
 
         {claims.length === 0 ? (
           <div className="mt-10 sm:mt-12 card-premium p-8 sm:p-10 text-center">
-            <p className="text-[#94A3B8]">You haven't claimed anything yet.</p>
+            <p className="text-[#CFCFCF]">You haven't claimed anything yet.</p>
             <Link to="/assets" className="mt-5 inline-flex min-h-11 items-center rounded-full btn-primary px-5 py-2.5 text-sm font-medium">Browse assets</Link>
           </div>
         ) : (
@@ -74,13 +74,13 @@ export default function MyAssetsPage() {
             {claims.map(c => (
               <div key={c.id} className="card-premium p-5 sm:p-6 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center sm:gap-6">
                 <div className="min-w-0">
-                  <div className="text-xs uppercase tracking-[0.16em] text-[#94A3B8]/70">{c.asset?.category}</div>
-                  <h3 className="mt-1 text-xl font-medium tracking-tight">{c.asset?.title}</h3>
-                  <div className="mt-2 text-sm text-[#94A3B8]">Status: <span className="text-white">{c.status}</span></div>
+                  <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">{c.asset?.category}</div>
+                  <h3 className="mt-1 text-xl font-medium tracking-normal">{c.asset?.title}</h3>
+                  <div className="mt-2 text-sm text-[#CFCFCF]">Status: <span className="text-white">{c.status}</span></div>
                 </div>
                 <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
                   {c.asset && (
-                    <Link to={`/asset/${c.asset.slug}`} className="text-sm text-[#94A3B8] hover:text-white inline-flex items-center gap-1">
+                    <Link to={`/asset/${c.asset.slug}`} className="text-sm text-[#CFCFCF] hover:text-white inline-flex items-center gap-1">
                       View <ArrowUpRight className="h-3.5 w-3.5" />
                     </Link>
                   )}
@@ -101,12 +101,12 @@ export default function MyAssetsPage() {
           <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setTextDelivery(null)} />
             <div className="relative w-full max-w-2xl card-premium p-5 sm:p-7 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
-              <h2 className="text-xl sm:text-2xl font-medium tracking-tight">{textDelivery.title}</h2>
-              <pre className="mt-5 whitespace-pre-wrap rounded-xl border border-[#1E293B] bg-[#111827]/60 p-4 text-sm text-white/80 font-sans leading-relaxed">
+              <h2 className="text-xl sm:text-2xl font-medium tracking-normal">{textDelivery.title}</h2>
+              <pre className="mt-5 whitespace-pre-wrap rounded-xl border border-white/10 bg-[#0E0E0E]/60 p-4 text-sm text-white/80 font-sans leading-relaxed">
                 {textDelivery.body}
               </pre>
               <div className="mt-5 flex flex-col justify-end gap-3 sm:flex-row">
-                <button onClick={() => navigator.clipboard?.writeText(textDelivery.body)} className="min-h-11 rounded-full border border-[#1E293B] bg-[#111827]/80 px-4 py-2 text-sm hover:bg-[#2563FF]/15">Copy</button>
+                <button onClick={() => navigator.clipboard?.writeText(textDelivery.body)} className="min-h-11 rounded-full border border-white/10 bg-[#0E0E0E]/80 px-4 py-2 text-sm hover:bg-[#FFD600]/15">Copy</button>
                 <button onClick={() => setTextDelivery(null)} className="min-h-11 rounded-full btn-primary px-5 py-2 text-sm font-medium">Close</button>
               </div>
             </div>

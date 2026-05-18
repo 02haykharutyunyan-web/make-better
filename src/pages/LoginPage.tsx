@@ -47,40 +47,40 @@ export default function LoginPage() {
     <SiteLayout>
       <section className="container-mb pt-14 sm:pt-20 pb-20 sm:pb-24 max-w-md mx-auto">
         <div className="eyebrow">Sign in</div>
-        <h1 className="mt-5 text-3xl sm:text-4xl font-medium tracking-[-0.04em]">Welcome back.</h1>
-        <p className="mt-3 text-[#94A3B8]">Sign in with your Make Better account.</p>
+        <h1 className="mt-5 text-3xl sm:text-4xl font-medium tracking-normal">Welcome back.</h1>
+        <p className="mt-3 text-[#CFCFCF]">Sign in with your Make Better account.</p>
 
         <form onSubmit={submit} className="mt-8 card-premium p-5 sm:p-6 space-y-4">
           <label className="block">
-            <span className="text-xs text-[#94A3B8]">Email</span>
+            <span className="text-xs text-[#CFCFCF]">Email</span>
             <input
               type="email" required value={email} onChange={e => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70"
+              className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70"
             />
           </label>
           <label className="block">
-            <span className="text-xs text-[#94A3B8]">Password</span>
+            <span className="text-xs text-[#CFCFCF]">Password</span>
             <input
               type="password" required value={password} onChange={e => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-[#111827]/75 border border-[#1E293B] px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#3B82F6]/70"
+              className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70"
             />
           </label>
-          {err && <p className="text-xs text-red-400">{err}</p>}
+          {err && <p className="text-xs text-[#CFCFCF]">{err}</p>}
           <button disabled={loading} className="min-h-12 w-full rounded-full btn-primary py-3 text-sm font-medium transition disabled:opacity-50">
             {loading ? "Working..." : "Sign in"}
           </button>
         </form>
 
         <div className="mt-8">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#94A3B8]/70 text-center">Quick access</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]/70 text-center">Quick access</div>
           <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            <button onClick={() => quick("buyer")} className="min-h-11 rounded-full border border-[#1E293B] bg-[#111827]/75 py-2.5 text-sm hover:bg-[#2563FF]/15">Buyer</button>
-            <button onClick={() => quick("creator")} className="min-h-11 rounded-full border border-[#1E293B] bg-[#111827]/75 py-2.5 text-sm hover:bg-[#2563FF]/15">Creator</button>
-            <button onClick={() => quick("admin")} className="min-h-11 rounded-full border border-[#1E293B] bg-[#111827]/75 py-2.5 text-sm hover:bg-[#2563FF]/15">Admin</button>
+            <button onClick={() => quick("buyer")} className="min-h-11 rounded-full border border-white/10 bg-[#0E0E0E]/75 py-2.5 text-sm hover:bg-[#FFD600]/15">Buyer</button>
+            <button onClick={() => quick("creator")} className="min-h-11 rounded-full border border-white/10 bg-[#0E0E0E]/75 py-2.5 text-sm hover:bg-[#FFD600]/15">Creator</button>
+            <button onClick={() => quick("admin")} className="min-h-11 rounded-full border border-white/10 bg-[#0E0E0E]/75 py-2.5 text-sm hover:bg-[#FFD600]/15">Admin</button>
           </div>
         </div>
 
-        <p className="mt-8 text-center text-sm text-[#94A3B8]">
+        <p className="mt-8 text-center text-sm text-[#CFCFCF]">
           New creator? <Link to="/creator-signup" className="text-white hover:underline">Register here</Link>
         </p>
       </section>

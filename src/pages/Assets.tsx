@@ -61,15 +61,15 @@ export default function AssetsPage() {
     <SiteLayout>
       <section className="container-mb pt-12 sm:pt-16 md:pt-24 pb-8 sm:pb-10">
         <div className="eyebrow">AI Assets</div>
-        <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-[-0.04em] leading-[1.06] max-w-4xl break-words">
+        <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-normal leading-[1.06] max-w-4xl break-words">
           Explore AI assets built to help you do better work.
         </h1>
-        <p className="mt-4 sm:mt-5 max-w-2xl text-[#94A3B8] text-base sm:text-lg leading-relaxed">
+        <p className="mt-4 sm:mt-5 max-w-2xl text-[#CFCFCF] text-base sm:text-lg leading-relaxed">
           Search proven prompts, agents, assistants, workflows, and templates created to save time and improve results.
         </p>
 
-        <div className="mt-8 sm:mt-10 flex min-h-14 items-center gap-3 rounded-2xl border border-[#1E293B] bg-[#111827]/60 p-2 pl-4 sm:pl-5 max-w-3xl focus-within:border-white/30 transition">
-          <Search className="h-5 w-5 text-[#94A3B8]/70" />
+        <div className="mt-8 sm:mt-10 flex min-h-14 items-center gap-3 rounded-2xl border border-white/10 bg-[#0E0E0E]/60 p-2 pl-4 sm:pl-5 max-w-3xl focus-within:border-white/30 transition">
+          <Search className="h-5 w-5 text-[#CFCFCF]/70" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -86,8 +86,8 @@ export default function AssetsPage() {
                 onClick={() => setFilter(f)}
                 className={`min-h-10 shrink-0 rounded-full border px-4 py-1.5 text-sm transition ${
                   filter === f
-                    ? "bg-[#F97316] text-white border-[#F97316]"
-                    : "border-[#1E293B] bg-[#111827]/60 text-[#94A3B8] hover:text-white hover:border-[#3B82F6]/50"
+                    ? "bg-[#FFD600] text-[#050505] border-[#FFD600]"
+                    : "border-white/10 bg-[#0E0E0E]/60 text-[#CFCFCF] hover:text-white hover:border-[#FFD600]/50"
                 }`}
               >{f}</button>
             ))}
@@ -95,7 +95,7 @@ export default function AssetsPage() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as typeof sorts[number])}
-            className="min-h-11 w-full rounded-full border border-[#1E293B] bg-[#111827]/60 px-4 py-2 text-sm text-white/80 focus:outline-none focus:border-[#3B82F6]/70 md:w-auto"
+            className="min-h-11 w-full rounded-full border border-white/10 bg-[#0E0E0E]/60 px-4 py-2 text-sm text-white/80 focus:outline-none focus:border-[#FFD600]/70 md:w-auto"
           >
             {sorts.map(s => <option className="bg-black" key={s}>{s}</option>)}
           </select>
@@ -103,12 +103,12 @@ export default function AssetsPage() {
       </section>
 
       <section className="container-mb">
-        {err && <div className="mb-6 rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">{err}</div>}
-        {loading && <div className="mb-6 card-premium p-4 text-sm text-[#94A3B8]">Loading marketplace assets...</div>}
+        {err && <div className="mb-6 rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div>}
+        {loading && <div className="mb-6 card-premium p-4 text-sm text-[#CFCFCF]">Loading marketplace assets...</div>}
         {filtered.length === 0 ? (
           <div className="card-premium p-8 sm:p-16 text-center">
-            <h3 className="text-xl sm:text-2xl font-medium tracking-tight">No assets found</h3>
-            <p className="mt-2 text-[#94A3B8]">Try a broader search or clear filters to see everything.</p>
+            <h3 className="text-xl sm:text-2xl font-medium tracking-normal">No assets found</h3>
+            <p className="mt-2 text-[#CFCFCF]">Try a broader search or clear filters to see everything.</p>
             <button
               onClick={() => { setQ(""); setFilter("All"); }}
               className="mt-6 min-h-11 rounded-full btn-primary px-5 py-2 text-sm font-medium"
@@ -123,7 +123,7 @@ export default function AssetsPage() {
               <div className="mt-12 flex justify-center">
                 <button
                   onClick={() => setVisible(v => v + 6)}
-                  className="min-h-11 rounded-full border border-[#1E293B] bg-[#111827]/80 px-6 py-2.5 text-sm hover:bg-[#2563FF]/15 transition"
+                  className="min-h-11 rounded-full border border-white/10 bg-[#0E0E0E]/80 px-6 py-2.5 text-sm hover:bg-[#FFD600]/15 transition"
                 >Load more</button>
               </div>
             )}
@@ -134,8 +134,8 @@ export default function AssetsPage() {
       <section className="container-mb mt-20 sm:mt-28">
         <div className="card-premium p-5 sm:p-8 md:p-14 max-w-4xl">
           <div className="eyebrow">Why this works</div>
-          <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-[-0.03em] leading-tight">Find the right asset faster.</h2>
-          <p className="mt-4 text-[#94A3B8] text-base sm:text-lg leading-relaxed">
+          <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal leading-tight">Find the right asset faster.</h2>
+          <p className="mt-4 text-[#CFCFCF] text-base sm:text-lg leading-relaxed">
             Each asset on Make Better solves a specific problem — getting leads, creating faster, ranking higher, automating tasks, improving output.
             Filter by what you want to do, not by what something is called.
           </p>

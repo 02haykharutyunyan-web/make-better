@@ -37,14 +37,14 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout eyebrow="Overview" title="Platform dashboard">
-      {err && <div className="mb-6 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{err}</div>}
-      {loading && <div className="mb-6 card-premium p-4 text-sm text-[#94A3B8]">Loading dashboard...</div>}
+      {err && <div className="mb-6 rounded-xl border border-white/20 bg-white/10 p-4 text-sm text-[#CFCFCF]">{err}</div>}
+      {loading && <div className="mb-6 card-premium p-4 text-sm text-[#CFCFCF]">Loading dashboard...</div>}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map(s => (
           <div key={s.label} className="card-premium p-5 sm:p-6">
             <div className="text-2xl sm:text-3xl font-medium">{s.v}</div>
-            <div className="mt-2 text-xs uppercase tracking-wider text-[#94A3B8]/80">{s.label}</div>
+            <div className="mt-2 text-xs uppercase tracking-wider text-[#CFCFCF]/80">{s.label}</div>
           </div>
         ))}
       </div>

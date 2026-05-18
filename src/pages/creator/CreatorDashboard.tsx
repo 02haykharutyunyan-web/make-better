@@ -9,11 +9,11 @@ import { getCreatorByProfileId } from "@/services/creators";
 import { countAccessRequestsForAssets, listCreatorAssets } from "@/services/assets";
 
 const statusStyles: Record<string, string> = {
-  "Draft": "bg-[#111827]/80 text-[#94A3B8] border-[#1E293B]",
-  "Pending Review": "bg-amber-400/10 text-amber-300 border-amber-400/20",
-  "Approved": "bg-blue-400/10 text-blue-300 border-blue-400/20",
-  "Rejected": "bg-red-400/10 text-red-300 border-red-400/20",
-  "Published": "bg-emerald-400/10 text-emerald-300 border-emerald-400/20",
+  "Draft": "bg-[#0E0E0E]/80 text-[#CFCFCF] border-white/10",
+  "Pending Review": "bg-[#FFD600]/10 text-[#FFD600] border-[#FFD600]/20",
+  "Approved": "bg-white/10 text-white border-white/20",
+  "Rejected": "bg-white/10 text-[#CFCFCF] border-white/20",
+  "Published": "bg-[#FFD600]/10 text-[#FFD600] border-[#FFD600]/20",
 };
 
 export default function CreatorDashboard() {
@@ -22,6 +22,7 @@ export default function CreatorDashboard() {
   const [requestCounts, setRequestCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +30,7 @@ export default function CreatorDashboard() {
       if (!user) return;
       setLoading(true);
       setErr("");
+      setLoadFailed(false);
       try {
         const creator = await getCreatorByProfileId(user.id);
         if (!creator) {
@@ -43,7 +45,10 @@ export default function CreatorDashboard() {
           setRequestCounts(counts);
         }
       } catch (error) {
-        if (!cancelled) setErr(explainSupabaseError(error, "Unable to load your submissions."));
+        if (!cancelled) {
+          setLoadFailed(true);
+          setErr(explainSupabaseError(error, "Unable to load your submissions."));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -53,7 +58,7 @@ export default function CreatorDashboard() {
   }, [user]);
 
   const fallbackMine = store.assets.filter(a => a.creatorSlug === user?.creatorSlug);
-  const mine = remoteAssets.length > 0 ? remoteAssets : fallbackMine;
+  const mine = remoteAssets.length > 0 ? remoteAssets : loadFailed ? fallbackMine : [];
   const totalDownloads = mine.reduce((s, a) => s + a.downloads, 0);
   const stats = [
     { label: "Total assets", v: mine.length },
@@ -68,8 +73,8 @@ export default function CreatorDashboard() {
         <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:flex-wrap sm:items-end">
           <div>
             <div className="eyebrow">Creator dashboard</div>
-            <h1 className="mt-5 text-3xl sm:text-4xl md:text-5xl font-medium tracking-[-0.04em]">Hey {user?.name.split(" ")[0]}.</h1>
-            <p className="mt-3 text-[#94A3B8]">Brand: <span className="text-white">{user?.creatorSlug}</span></p>
+            <h1 className="mt-5 text-3xl sm:text-4xl md:text-5xl font-medium tracking-normal">Hey {user?.name.split(" ")[0]}.</h1>
+            <p className="mt-3 text-[#CFCFCF]">Brand: <span className="text-white">{user?.creatorSlug}</span></p>
           </div>
           <Link to="/creator-dashboard/submit-asset" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full btn-primary px-5 py-3 text-sm font-medium transition sm:w-auto">
             <Plus className="h-4 w-4" /> Submit new asset
@@ -80,39 +85,39 @@ export default function CreatorDashboard() {
           {stats.map(s => (
             <div key={s.label} className="card-premium p-5 sm:p-6">
               <div className="text-2xl sm:text-3xl font-medium">{s.v}</div>
-              <div className="mt-2 text-xs uppercase tracking-wider text-[#94A3B8]/80">{s.label}</div>
+              <div className="mt-2 text-xs uppercase tracking-wider text-[#CFCFCF]/80">{s.label}</div>
             </div>
           ))}
         </div>
 
         <div className="mt-10 card-premium p-5 sm:p-6">
-          <div className="text-xs uppercase tracking-[0.16em] text-[#94A3B8]/70">Payouts</div>
+          <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">Payouts</div>
           <div className="mt-2 text-white/80">Stripe payouts will be available soon. We'll email you when payout setup opens.</div>
         </div>
 
         <div className="mt-10">
-          <h2 className="text-2xl font-medium tracking-tight">Your submissions</h2>
-          {err && <div className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{err}</div>}
-          {loading && <div className="mt-6 card-premium p-6 text-[#94A3B8]">Loading submissions...</div>}
+          <h2 className="text-2xl font-medium tracking-normal">Your submissions</h2>
+          {err && <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-4 text-sm text-[#CFCFCF]">{err}</div>}
+          {loading && <div className="mt-6 card-premium p-6 text-[#CFCFCF]">Loading submissions...</div>}
           {!loading && mine.length === 0 ? (
-            <div className="mt-6 card-premium p-8 sm:p-10 text-center text-[#94A3B8]">No assets yet. Submit your first one.</div>
+            <div className="mt-6 card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No assets yet. Submit your first one.</div>
           ) : !loading && (
             <div className="mt-6 grid gap-3">
               {mine.map(a => (
                 <div key={a.id} className="card-premium p-5 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                   <div className="min-w-0">
-                    <div className="text-xs uppercase tracking-[0.14em] text-[#94A3B8]/70">{a.productType} • {a.isFree ? "Free" : `$${a.price}`}</div>
-                    <h3 className="mt-1 text-lg font-medium tracking-tight">{a.title}</h3>
+                    <div className="text-xs uppercase tracking-[0.14em] text-[#CFCFCF]/70">{a.productType} • {a.isFree ? "Free" : `$${a.price}`}</div>
+                    <h3 className="mt-1 text-lg font-medium tracking-normal">{a.title}</h3>
                     {a.status === "Rejected" && a.rejectionReason && (
-                      <p className="mt-2 text-sm text-red-300/90">Rejection reason: {a.rejectionReason}</p>
+                      <p className="mt-2 text-sm text-[#CFCFCF]/90">Rejection reason: {a.rejectionReason}</p>
                     )}
                     {!a.isFree && (
-                      <p className="mt-2 text-sm text-[#94A3B8]">{requestCounts[a.id] || 0} access requests</p>
+                      <p className="mt-2 text-sm text-[#CFCFCF]">{requestCounts[a.id] || 0} access requests</p>
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                     <span className={`rounded-full border px-3 py-1 text-xs ${statusStyles[a.status]}`}>{a.status}</span>
-                    <span className="text-xs text-[#94A3B8]/80">{a.downloads.toLocaleString()} downloads</span>
+                    <span className="text-xs text-[#CFCFCF]/80">{a.downloads.toLocaleString()} downloads</span>
                   </div>
                 </div>
               ))}

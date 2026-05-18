@@ -13,7 +13,7 @@ import {
 import { supabase } from "@/lib/supabase/client";
 import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
 import { requireSupabaseConfig } from "@/lib/supabase/errors";
-import { claimFreeAssetBySlug, createCreator, getCreatorByProfileId, listMyAssetClaims, upsertProfile } from "@/services";
+import { claimFreeAssetBySlug, createCreator, getCreatorByProfileId, getPublishedAssetBySlug, listMyAssetClaims, upsertProfile } from "@/services";
 import type { Tables } from "@/types/database";
 
 export type Role = "buyer" | "creator" | "admin";
@@ -411,6 +411,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       if (asset.isFree) {
         const remoteClaim = await claimFreeAssetBySlug(asset.slug, currentUserId);
+        const remoteAsset = await getPublishedAssetBySlug(asset.slug);
+        const claimedAsset = remoteAsset ? dbAssetToSubmittedAsset(remoteAsset as any) : asset;
         const claim: Claim = {
           id: remoteClaim.id,
           userId: remoteClaim.user_id,
@@ -421,7 +423,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setRemoteClaims(prev => [claim, ...prev.filter(c => c.assetSlug !== claim.assetSlug)]);
         update(s => ({
           ...s,
-          assets: s.assets.some(a => a.slug === asset.slug) ? s.assets : [asset, ...s.assets],
+          assets: [
+            claimedAsset,
+            ...s.assets.filter(a => a.slug !== claimedAsset.slug),
+          ],
           claims: [...s.claims.filter(c => !(c.userId === currentUserId && c.assetSlug === asset.slug)), claim],
         }));
         return claim;

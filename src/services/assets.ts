@@ -234,20 +234,18 @@ export async function requestPaidAssetAccessBySlug(input: { slug: string; name: 
 
   const { data, error } = await supabase
     .from("asset_access_requests")
-    .upsert(
-      {
-        asset_id: asset.id,
-        buyer_user_id: input.userId || null,
-        buyer_name: input.name,
-        buyer_email: input.email,
-        buyer_phone: input.phone || null,
-        status: "new",
-      },
-      { onConflict: "asset_id,buyer_email" }
-    )
+    .insert({
+      asset_id: asset.id,
+      buyer_user_id: input.userId || null,
+      buyer_name: input.name,
+      buyer_email: input.email,
+      buyer_phone: input.phone || null,
+      status: "new",
+    })
     .select()
     .single();
 
+  if (error && "code" in error && error.code === "23505") return null;
   if (error) throw error;
   return data;
 }

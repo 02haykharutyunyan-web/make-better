@@ -45,6 +45,18 @@ export async function upsertBlogPost(input: Inserts<"blog_posts">) {
   return data;
 }
 
+export async function updateBlogPost(id: string, patch: Updates<"blog_posts">) {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .update(patch)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function deleteBlogPost(id: string) {
   const { error } = await supabase.from("blog_posts").delete().eq("id", id);
   if (error) throw error;
