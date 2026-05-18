@@ -17,7 +17,7 @@ export default function AdminLayout({ children, title, eyebrow }: { children: Re
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="container-mb pt-6 sm:pt-10 pb-20 sm:pb-24 grid min-w-0 gap-6 sm:gap-10 lg:grid-cols-[220px_minmax(0,1fr)] items-start">
+      <div className="container-mb pt-[5.5rem] sm:pt-[6.5rem] pb-20 sm:pb-24 grid min-w-0 gap-6 sm:gap-10 lg:grid-cols-[220px_minmax(0,1fr)] items-start">
         <aside className="min-w-0 lg:sticky lg:top-24">
           <div className="mb-3 px-3 text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">Admin</div>
           <nav className="glass-panel flex rounded-2xl p-1 lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

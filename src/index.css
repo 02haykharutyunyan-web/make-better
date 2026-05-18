@@ -75,10 +75,12 @@
     background:
       linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px),
-      radial-gradient(740px 420px at 78% -10%, rgba(255,214,0,0.13), transparent 66%),
-      radial-gradient(580px 340px at 8% 10%, rgba(255,214,0,0.055), transparent 62%),
+      radial-gradient(900px 520px at 84% -12%, rgba(255,214,0,0.16), transparent 68%),
+      radial-gradient(760px 440px at -8% 8%, rgba(255,255,255,0.07), transparent 64%),
+      radial-gradient(680px 420px at 18% 92%, rgba(255,214,0,0.06), transparent 70%),
+      radial-gradient(580px 340px at 96% 72%, rgba(255,255,255,0.045), transparent 66%),
       linear-gradient(180deg, #050505 0%, #080808 48%, #050505 100%);
-    background-size: 42px 42px, 42px 42px, auto, auto, auto;
+    background-size: 42px 42px, 42px 42px, auto, auto, auto, auto, auto;
   }
 
   body::before {
@@ -151,16 +153,19 @@
   }
 
   .glass-panel {
-    @apply border border-white/10 bg-white/[0.04] transition-all duration-300;
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    @apply border border-white/10 bg-white/[0.025] transition-all duration-300;
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
     background:
-      linear-gradient(135deg, rgba(255,255,255,0.095), rgba(255,255,255,0.025) 38%, rgba(255,255,255,0.012)),
-      radial-gradient(120% 90% at 16% 0%, rgba(255,255,255,0.07), transparent 42%),
-      rgba(255,255,255,0.04);
+      linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.035) 28%, rgba(255,255,255,0.014) 58%, rgba(255,255,255,0.03) 100%),
+      linear-gradient(112deg, transparent 0%, rgba(255,255,255,0.055) 38%, rgba(255,255,255,0.012) 48%, transparent 66%),
+      radial-gradient(120% 90% at 14% 0%, rgba(255,255,255,0.09), transparent 42%),
+      radial-gradient(110% 95% at 92% 100%, rgba(255,214,0,0.028), transparent 54%),
+      rgba(255,255,255,0.022);
     box-shadow:
-      0 20px 60px rgba(0,0,0,0.35),
-      inset 0 1px 0 rgba(255,255,255,0.08);
+      0 22px 68px rgba(0,0,0,0.38),
+      inset 0 1px 0 rgba(255,255,255,0.12),
+      inset 0 -1px 0 rgba(255,255,255,0.035);
   }
 
   .glass-card,
@@ -168,25 +173,42 @@
     @apply rounded-xl glass-panel;
   }
 
+  .glass-card h3,
+  .card-premium h3 {
+    transition: color 240ms ease, text-shadow 240ms ease;
+  }
+
   .glass-card:hover,
   .card-premium:hover {
-    border-color: rgba(255,214,0,0.18);
+    border-color: rgba(255,214,0,0.68);
     background:
-      linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.035) 42%, rgba(255,255,255,0.018)),
-      radial-gradient(120% 90% at 16% 0%, rgba(255,255,255,0.09), transparent 44%),
-      rgba(255,255,255,0.05);
+      linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.045) 30%, rgba(255,255,255,0.018) 58%, rgba(255,255,255,0.038) 100%),
+      linear-gradient(112deg, transparent 0%, rgba(255,255,255,0.075) 36%, rgba(255,255,255,0.018) 48%, transparent 68%),
+      radial-gradient(120% 90% at 14% 0%, rgba(255,255,255,0.11), transparent 44%),
+      radial-gradient(110% 95% at 92% 100%, rgba(255,214,0,0.055), transparent 56%),
+      rgba(255,255,255,0.028);
     box-shadow:
-      0 24px 68px rgba(0,0,0,0.42),
-      inset 0 1px 0 rgba(255,255,255,0.11),
-      0 0 0 1px rgba(255,214,0,0.08),
-      0 0 26px rgba(255,214,0,0.09);
-    transform: translateY(-2px);
+      0 28px 76px rgba(0,0,0,0.48),
+      inset 0 1px 0 rgba(255,255,255,0.15),
+      inset 0 -1px 0 rgba(255,255,255,0.04),
+      0 0 0 1px rgba(255,214,0,0.14),
+      0 0 34px rgba(255,214,0,0.16);
+    transform: translateY(-3px);
+  }
+
+  .glass-card:hover h3,
+  .card-premium:hover h3 {
+    color: #FFFFFF;
+    text-shadow: 0 0 18px rgba(255,255,255,0.08);
   }
 
   .glass-nav {
-    @apply border-b border-white/10 bg-white/[0.04];
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    @apply border-b border-white/10 bg-white/[0.025];
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.018)),
+      rgba(5,5,5,0.58);
     box-shadow:
       0 20px 60px rgba(0,0,0,0.35),
       inset 0 1px 0 rgba(255,255,255,0.08);
@@ -194,8 +216,8 @@
 
   .glass-modal {
     @apply rounded-xl glass-panel;
-    backdrop-filter: blur(22px) saturate(145%);
-    -webkit-backdrop-filter: blur(22px) saturate(145%);
+    backdrop-filter: blur(26px) saturate(155%);
+    -webkit-backdrop-filter: blur(26px) saturate(155%);
     box-shadow:
       0 30px 90px rgba(0,0,0,0.55),
       inset 0 1px 0 rgba(255,255,255,0.1);
@@ -220,10 +242,10 @@
   }
 
   .eyebrow {
-    @apply inline-flex max-w-full items-center gap-2 rounded-full border border-[#FFD600]/25 bg-[#FFD600]/[0.04] px-3 py-1 text-[11px] sm:text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-[#FFD600];
+    @apply inline-flex max-w-full items-center gap-2 rounded-full border border-[#FFD600]/45 bg-[#FFD600]/[0.025] px-3 py-1 text-[11px] sm:text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] text-[#FFD600];
     box-shadow:
-      0 1px 0 rgba(255,255,255,0.04) inset,
-      0 0 28px rgba(255,214,0,0.08);
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 0 26px rgba(255,214,0,0.12);
   }
 
   .display {
@@ -306,7 +328,8 @@
       transform: none;
       box-shadow:
         0 18px 48px rgba(0,0,0,0.34),
-        inset 0 1px 0 rgba(255,255,255,0.08);
+        inset 0 1px 0 rgba(255,255,255,0.11),
+        0 0 0 1px rgba(255,214,0,0.10);
     }
   }
 

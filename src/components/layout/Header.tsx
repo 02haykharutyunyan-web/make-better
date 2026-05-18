@@ -58,8 +58,8 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? "glass-nav" : "bg-transparent"
+      className={`fixed inset-x-0 top-0 z-40 glass-nav transition-all duration-300 ${
+        scrolled ? "shadow-[0_24px_72px_rgba(0,0,0,0.42),0_0_34px_rgba(255,214,0,0.08)]" : ""
       }`}
     >
       <div className="container-mb flex h-16 items-center justify-between">
