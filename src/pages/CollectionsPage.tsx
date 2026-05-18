@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
-import { Collection, collections } from "@/data/marketplace";
+import { Collection } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { listPublishedCollections } from "@/services/content";
@@ -21,7 +21,7 @@ export default function CollectionsPage() {
         const rows = await listPublishedCollections();
         if (!cancelled) setRemoteCollections(rows.map(dbCollectionToCollection));
       } catch (error) {
-        if (!cancelled) setErr(explainSupabaseError(error, "Using demo collections because Supabase collections could not be loaded."));
+        if (!cancelled) setErr(explainSupabaseError(error, "Unable to load published collections."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -30,7 +30,7 @@ export default function CollectionsPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const visibleCollections = remoteCollections.length > 0 ? remoteCollections : collections;
+  const visibleCollections = remoteCollections;
 
   return (
     <SiteLayout>

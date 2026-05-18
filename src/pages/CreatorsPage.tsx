@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
-import { Creator, creators } from "@/data/marketplace";
+import { Creator } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { listActiveCreators } from "@/services/creators";
@@ -21,7 +21,7 @@ export default function CreatorsPage() {
         const rows = await listActiveCreators();
         if (!cancelled) setRemoteCreators(rows.map(dbCreatorToCreator).filter(Boolean) as Creator[]);
       } catch (error) {
-        if (!cancelled) setErr(explainSupabaseError(error, "Using demo creators because Supabase creators could not be loaded."));
+        if (!cancelled) setErr(explainSupabaseError(error, "Unable to load active creators."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -30,7 +30,7 @@ export default function CreatorsPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const visibleCreators = remoteCreators.length > 0 ? remoteCreators : creators;
+  const visibleCreators = remoteCreators;
 
   return (
     <SiteLayout>

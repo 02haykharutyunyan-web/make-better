@@ -2,10 +2,13 @@ import { Link } from "react-router-dom";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
-import { Asset, assets, collections, creators, getCreator, productTypes, blogPosts, platformStats } from "@/data/marketplace";
+import { Asset, BlogPost, Collection, Creator, productTypes, platformStats } from "@/data/marketplace";
 import { ArrowUpRight, Search, Star } from "lucide-react";
 import { listPublishedAssets } from "@/services/assets";
-import { dbAssetToAsset } from "@/lib/asset-mappers";
+import { dbAssetToAsset, dbCreatorToCreator } from "@/lib/asset-mappers";
+import { listPublishedBlogPosts, listPublishedCollections } from "@/services/content";
+import { listActiveCreators } from "@/services/creators";
+import { dbBlogToBlogPost, dbCollectionToCollection } from "@/lib/content-mappers";
 
 const suggested = [
   "free prompts for TikTok",
@@ -23,6 +26,9 @@ export default function Index() {
   const [query, setQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
   const [remoteAssets, setRemoteAssets] = useState<SearchableAsset[]>([]);
+  const [remoteCollections, setRemoteCollections] = useState<Collection[]>([]);
+  const [remoteCreators, setRemoteCreators] = useState<Creator[]>([]);
+  const [remotePosts, setRemotePosts] = useState<BlogPost[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
@@ -49,12 +55,34 @@ export default function Index() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function loadContent() {
+      try {
+        const [collectionRows, creatorRows, postRows] = await Promise.all([
+          listPublishedCollections(),
+          listActiveCreators(),
+          listPublishedBlogPosts(),
+        ]);
+        if (!cancelled) {
+          setRemoteCollections(collectionRows.map(dbCollectionToCollection).slice(0, 6));
+          setRemoteCreators((creatorRows.map(dbCreatorToCreator).filter(Boolean) as Creator[]).slice(0, 3));
+          setRemotePosts(postRows.map(dbBlogToBlogPost).slice(0, 3));
+        }
+      } catch {
+        if (!cancelled) {
+          setRemoteCollections([]);
+          setRemoteCreators([]);
+          setRemotePosts([]);
+        }
+      }
+    }
+    loadContent();
+    return () => { cancelled = true; };
+  }, []);
+
   const searchableAssets = useMemo<SearchableAsset[]>(() => {
-    if (remoteAssets.length > 0) return remoteAssets;
-    return assets.map(asset => ({
-      asset,
-      creatorName: getCreator(asset.creatorSlug)?.name || "",
-    }));
+    return remoteAssets;
   }, [remoteAssets]);
 
   const displayedAssets = useMemo(() => {
@@ -155,7 +183,7 @@ export default function Index() {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {displayedAssets.map(a => <AssetCard key={a.slug} asset={a} />)}
             </div>
-          ) : (
+          ) : !loadingAssets && (
             <div className="card-premium p-8 sm:p-12 text-center">
               <h3 className="text-xl sm:text-2xl font-medium tracking-normal">No assets found</h3>
               <p className="mx-auto mt-2 max-w-md text-sm sm:text-base text-[#CFCFCF]">
@@ -203,7 +231,8 @@ export default function Index() {
         action={{ label: "All collections", to: "/collections" }}
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {collections.map(c => (
+          {remoteCollections.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No published collections yet.</div>}
+          {remoteCollections.map(c => (
             <Link to={`/collections/${c.slug}`} key={c.slug} className="card-premium p-5 sm:p-7 group">
               <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">Goal</div>
               <h3 className="mt-3 text-xl sm:text-2xl font-medium tracking-normal">{c.title}</h3>
@@ -224,7 +253,8 @@ export default function Index() {
         action={{ label: "All creators", to: "/creators" }}
       >
         <div className="grid gap-5 lg:grid-cols-3">
-          {creators.map(c => (
+          {remoteCreators.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF] lg:col-span-3">No active creators yet.</div>}
+          {remoteCreators.map(c => (
             <div key={c.slug} className="card-premium p-5 sm:p-7">
               <div className="flex min-w-0 items-center gap-4">
                 <div className="h-12 w-12 rounded-full border border-white/10 bg-[#0E0E0E]/70 flex items-center justify-center text-sm font-medium">
@@ -258,7 +288,8 @@ export default function Index() {
         action={{ label: "Read the blog", to: "/blog" }}
       >
         <div className="grid gap-5 md:grid-cols-3">
-          {blogPosts.slice(0, 3).map(p => (
+          {remotePosts.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF] md:col-span-3">No published posts yet.</div>}
+          {remotePosts.map(p => (
             <Link key={p.slug} to={`/blog/${p.slug}`} className="card-premium p-7 group">
               <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">{p.category}</div>
               <h3 className="mt-3 text-xl font-medium tracking-normal leading-snug">{p.title}</h3>

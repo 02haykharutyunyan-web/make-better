@@ -27,5 +27,6 @@ export function dbCollectionToCollection(collection: Tables<"collections">): Col
     longDescription: collection.long_description || collection.description || "",
     bestFor: collection.best_for || [],
     relatedTypes: (collection.related_types || []) as ProductType[],
+    relatedTags: collection.related_tags || [],
   };
 }

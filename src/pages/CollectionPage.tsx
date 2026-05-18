@@ -2,7 +2,7 @@ import { Navigate, useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
-import { Asset, BlogPost, Collection, assetsInCollection, blogPosts, getCollection } from "@/data/marketplace";
+import { Asset, BlogPost, Collection } from "@/data/marketplace";
 import { getPublishedCollectionBySlug, listPublishedAssetsForCollection, listPublishedBlogPosts } from "@/services/content";
 import { dbCollectionToCollection, dbBlogToBlogPost } from "@/lib/content-mappers";
 import { dbAssetToAsset } from "@/lib/asset-mappers";
@@ -10,7 +10,6 @@ import { explainSupabaseError } from "@/lib/supabase/errors";
 
 export default function CollectionPage() {
   const { slug } = useParams();
-  const mockCollection = getCollection(slug || "");
   const [collection, setCollection] = useState<Collection | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
@@ -36,7 +35,7 @@ export default function CollectionPage() {
       } catch (error) {
         if (!cancelled) {
           setLoadFailed(true);
-          setErr(explainSupabaseError(error, "Using demo collection because Supabase could not load this collection."));
+          setErr(explainSupabaseError(error, "Unable to load this published collection."));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -46,11 +45,11 @@ export default function CollectionPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  const c = collection || (loadFailed ? mockCollection : null);
+  const c = collection;
   if (!c && !loading) return <Navigate to="/collections" replace />;
   if (!c) return null;
-  const list = assets.length > 0 ? assets : assetsInCollection(c.slug);
-  const posts = relatedPosts.length > 0 ? relatedPosts : blogPosts.slice(0, 3);
+  const list = assets;
+  const posts = relatedPosts;
 
   return (
     <SiteLayout>
@@ -84,22 +83,27 @@ export default function CollectionPage() {
             {c.relatedTypes.map(t => (
               <Link key={t} to="/assets" className="chip hover:border-[#FFD600]/60 hover:text-white">{t}</Link>
             ))}
+            {(c.relatedTags || []).map(t => (
+              <Link key={t} to={`/assets?tag=${encodeURIComponent(t)}`} className="chip hover:border-[#FFD600]/60 hover:text-white">{t}</Link>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="container-mb mt-20">
-        <h2 className="text-2xl font-medium tracking-normal">Related reading</h2>
-        <div className="mt-6 grid gap-5 md:grid-cols-3">
-          {posts.map(p => (
-            <Link key={p.slug} to={`/blog/${p.slug}`} className="card-premium p-6">
-              <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">{p.category}</div>
-              <h3 className="mt-3 text-lg font-medium tracking-normal">{p.title}</h3>
-              <p className="mt-2 text-sm text-[#CFCFCF] line-clamp-2">{p.excerpt}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {posts.length > 0 && (
+        <section className="container-mb mt-20">
+          <h2 className="text-2xl font-medium tracking-normal">Related reading</h2>
+          <div className="mt-6 grid gap-5 md:grid-cols-3">
+            {posts.map(p => (
+              <Link key={p.slug} to={`/blog/${p.slug}`} className="card-premium p-6">
+                <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">{p.category}</div>
+                <h3 className="mt-3 text-lg font-medium tracking-normal">{p.title}</h3>
+                <p className="mt-2 text-sm text-[#CFCFCF] line-clamp-2">{p.excerpt}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </SiteLayout>
   );
 }

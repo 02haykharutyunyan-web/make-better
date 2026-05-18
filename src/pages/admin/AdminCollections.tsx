@@ -7,8 +7,8 @@ import { explainSupabaseError } from "@/lib/supabase/errors";
 import { dbCollectionToCollection } from "@/lib/content-mappers";
 import type { Tables } from "@/types/database";
 
-type Draft = Collection & { id?: string; status?: string; selectedAssetIds?: string[] };
-const blank: Draft = { slug: "", title: "", description: "", longDescription: "", bestFor: [], relatedTypes: [], status: "Published", selectedAssetIds: [] };
+type Draft = Collection & { id?: string; status?: string; selectedAssetIds?: string[]; relatedTags?: string[] };
+const blank: Draft = { slug: "", title: "", description: "", longDescription: "", bestFor: [], relatedTypes: [], relatedTags: [], status: "Published", selectedAssetIds: [] };
 
 export default function AdminCollections() {
   const [collections, setCollections] = useState<Draft[]>([]);
@@ -21,7 +21,7 @@ export default function AdminCollections() {
     setLoading(true); setErr("");
     try {
       const [collectionRows, assetRows] = await Promise.all([listAdminCollections(), listAdminAssets()]);
-      setCollections(collectionRows.map(row => ({ ...dbCollectionToCollection(row), id: row.id, status: row.status === "published" ? "Published" : "Draft", selectedAssetIds: row.selected_asset_ids || [] })));
+      setCollections(collectionRows.map(row => ({ ...dbCollectionToCollection(row), id: row.id, status: row.status === "published" ? "Published" : "Draft", selectedAssetIds: row.selected_asset_ids || [], relatedTags: row.related_tags || [] })));
       setAssets(assetRows);
     } catch (error) {
       setErr(explainSupabaseError(error, "Unable to load collections."));
@@ -45,6 +45,7 @@ export default function AdminCollections() {
         long_description: editing.longDescription,
         best_for: editing.bestFor,
         related_types: editing.relatedTypes,
+        related_tags: editing.relatedTags || [],
         selected_asset_ids: editing.selectedAssetIds || [],
         status: editing.status === "Published" ? "published" : "draft",
       } as const;
@@ -106,6 +107,7 @@ export default function AdminCollections() {
             <Textarea label="SEO intro / long description" rows={4} value={editing.longDescription} onChange={v => setEditing({ ...editing, longDescription: v })} />
             <Field label="Best for (comma separated)" value={editing.bestFor.join(", ")} onChange={v => setEditing({ ...editing, bestFor: v.split(",").map(x => x.trim()).filter(Boolean) })} />
             <Field label="Related product types (comma separated)" value={editing.relatedTypes.join(", ")} onChange={v => setEditing({ ...editing, relatedTypes: v.split(",").map(x => x.trim()).filter(Boolean) as any })} />
+            <Field label="Related tags (comma separated)" value={(editing.relatedTags || []).join(", ")} onChange={v => setEditing({ ...editing, relatedTags: v.split(",").map(x => x.trim()).filter(Boolean) })} />
             <div><div className="text-xs text-[#CFCFCF] mb-2">Selected published assets</div><div className="max-h-40 overflow-y-auto rounded-xl border border-white/10 bg-[#0E0E0E]/70 p-3 space-y-1">
               {assets.filter(a => a.status === "published").map(a => <label key={a.id} className="flex items-center gap-2 text-sm py-1"><input type="checkbox" checked={(editing.selectedAssetIds || []).includes(a.id)} onChange={() => toggleAsset(a.id)} /><span className="text-white/80">{a.title}</span></label>)}
             </div></div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { AssetStatus, SubmittedAsset, useStore } from "@/store/store";
+import { ProductType } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
@@ -14,6 +15,7 @@ import {
 import type { Tables } from "@/types/database";
 
 const filters: (AssetStatus | "All")[] = ["All", "Pending Review", "Approved", "Rejected", "Published", "Draft"];
+const productTypes: ProductType[] = ["Prompts", "AI Agents", "AI Assistants", "API Tools", "Workflows", "Templates", "Automation Assets", "Creator Resources"];
 
 const statusStyles: Record<string, string> = {
   "Draft": "bg-[#0E0E0E]/80 text-[#CFCFCF] border-white/10",
@@ -28,6 +30,9 @@ export default function AdminAssets() {
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
   const [remoteAssets, setRemoteAssets] = useState<SubmittedAsset[]>([]);
   const [deliverables, setDeliverables] = useState<Record<string, Tables<"asset_deliverables">>>({});
+  const [assetRows, setAssetRows] = useState<Record<string, Tables<"assets">>>({});
+  const [editing, setEditing] = useState<Tables<"assets"> | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [creatorNames, setCreatorNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -41,6 +46,7 @@ export default function AdminAssets() {
       const rows = await listAdminAssets();
       const mapped = rows.map(dbAssetToSubmittedAsset);
       setRemoteAssets(mapped);
+      setAssetRows(Object.fromEntries(rows.map(row => [row.id, row])));
       setCreatorNames(Object.fromEntries(rows.map(row => [row.slug, row.creators?.brand_name || ""])));
       const deliveryRows = await listAssetDeliverables(mapped.map(a => a.id));
       setDeliverables(Object.fromEntries(deliveryRows.map(d => [d.asset_id, d])));
@@ -98,6 +104,36 @@ export default function AdminAssets() {
     }
   };
 
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    setErr("");
+    setSavingEdit(true);
+    try {
+      await updateAssetInSupabase(editing.id, {
+        title: editing.title,
+        product_type: editing.product_type,
+        category: editing.category,
+        short_description: editing.short_description,
+        long_description: editing.long_description,
+        tags: editing.tags,
+        price: editing.price,
+        is_free: editing.price_type === "free",
+        price_type: editing.price_type,
+        use_cases: editing.use_cases,
+        included: editing.included,
+        before: editing.before,
+        after: editing.after,
+      });
+      setEditing(null);
+      await loadAssets();
+    } catch (error) {
+      setErr(explainSupabaseError(error, "Unable to save asset content."));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   return (
     <AdminLayout eyebrow="Assets" title="All assets">
       <div className="mb-6 flex gap-2 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible md:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -151,6 +187,7 @@ export default function AdminAssets() {
                     <td className="px-5 py-4 text-white/65 text-xs">{a.downloads}/{a.rating}</td>
                     <td className="px-5 py-4 text-right text-xs space-x-2 whitespace-nowrap">
                       <Link to={`/asset/${a.slug}`} className="text-[#CFCFCF] hover:text-white">View</Link>
+                      <button onClick={() => setEditing(assetRows[a.id])} className="text-[#CFCFCF] hover:text-white">Edit</button>
                       {a.status !== "Approved" && a.status !== "Published" && (
                         <button onClick={() => setStatus(a.id, { status: "Published", rejectionReason: undefined })} className="text-[#FFD600] hover:text-[#FFD600]">Approve</button>
                       )}
@@ -177,6 +214,61 @@ export default function AdminAssets() {
           </table>
         </div>
       </div>
+
+      {editing && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setEditing(null)} />
+          <form onSubmit={saveEdit} className="relative w-full max-w-3xl card-premium p-5 sm:p-7 space-y-4 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
+            <h3 className="text-xl sm:text-2xl font-medium tracking-normal">Edit asset content</h3>
+            <Field label="Title" value={editing.title} onChange={v => setEditing({ ...editing, title: v })} required />
+            <label className="block">
+              <span className="text-xs text-[#CFCFCF]">Product type</span>
+              <select value={editing.product_type} onChange={e => setEditing({ ...editing, product_type: e.target.value, category: e.target.value })} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm">
+                {productTypes.map(type => <option key={type} className="bg-black">{type}</option>)}
+              </select>
+            </label>
+            <Textarea label="Short description" rows={2} value={editing.short_description || ""} onChange={v => setEditing({ ...editing, short_description: v })} />
+            <Textarea label="Full description" rows={5} value={editing.long_description || ""} onChange={v => setEditing({ ...editing, long_description: v })} />
+            <Field label="Tags (comma separated)" value={(editing.tags || []).join(", ")} onChange={v => setEditing({ ...editing, tags: splitCsv(v) })} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-xs text-[#CFCFCF]">Price type</span>
+                <select value={editing.price_type} onChange={e => setEditing({ ...editing, price_type: e.target.value as any, price: e.target.value === "free" ? 0 : editing.price, is_free: e.target.value === "free" })} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm">
+                  <option className="bg-black" value="free">Free</option>
+                  <option className="bg-black" value="paid">Paid</option>
+                </select>
+              </label>
+              {editing.price_type === "paid" && <Field label="Price (USD)" type="number" value={String(editing.price)} onChange={v => setEditing({ ...editing, price: Number(v) || 0 })} />}
+            </div>
+            <Textarea label="Use cases (one per line)" rows={3} value={(editing.use_cases || []).join("\n")} onChange={v => setEditing({ ...editing, use_cases: splitLines(v) })} />
+            <Textarea label="What's included (one per line)" rows={3} value={(editing.included || []).join("\n")} onChange={v => setEditing({ ...editing, included: splitLines(v) })} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Textarea label="Before (one per line)" rows={3} value={(editing.before || []).join("\n")} onChange={v => setEditing({ ...editing, before: splitLines(v) })} />
+              <Textarea label="After (one per line)" rows={3} value={(editing.after || []).join("\n")} onChange={v => setEditing({ ...editing, after: splitLines(v) })} />
+            </div>
+            <div className="flex flex-col justify-end gap-3 pt-2 sm:flex-row">
+              <button type="button" onClick={() => setEditing(null)} className="min-h-11 rounded-full border border-white/10 px-4 py-2 text-sm">Cancel</button>
+              <button disabled={savingEdit} className="min-h-11 rounded-full btn-primary px-5 py-2 text-sm font-medium disabled:opacity-50">{savingEdit ? "Saving..." : "Save content"}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </AdminLayout>
   );
+}
+
+function splitCsv(value: string) {
+  return value.split(",").map(item => item.trim()).filter(Boolean);
+}
+
+function splitLines(value: string) {
+  return value.split("\n").map(item => item.trim()).filter(Boolean);
+}
+
+function Field({ label, value, onChange, required, type = "text" }: any) {
+  return <label className="block"><span className="text-xs text-[#CFCFCF]">{label}{required && <span className="text-white/30"> *</span>}</span><input required={required} type={type} value={value} onChange={e => onChange(e.target.value)} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70" /></label>;
+}
+
+function Textarea({ label, value, onChange, rows = 3 }: any) {
+  return <label className="block"><span className="text-xs text-[#CFCFCF]">{label}</span><textarea value={value} rows={rows} onChange={e => onChange(e.target.value)} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70" /></label>;
 }

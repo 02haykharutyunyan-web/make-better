@@ -24,6 +24,7 @@ import MyAssetsPage from "./pages/MyAssetsPage.tsx";
 import CreatorSignupPage from "./pages/CreatorSignupPage.tsx";
 import CreatorDashboard from "./pages/creator/CreatorDashboard.tsx";
 import SubmitAssetPage from "./pages/creator/SubmitAssetPage.tsx";
+import EditAssetPage from "./pages/creator/EditAssetPage.tsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminCreators from "./pages/admin/AdminCreators.tsx";
@@ -62,6 +63,9 @@ const App = () => (
             } />
             <Route path="/creator-dashboard/submit-asset" element={
               <ProtectedRoute roles={["creator"]}><SubmitAssetPage /></ProtectedRoute>
+            } />
+            <Route path="/creator-dashboard/assets/:slug/edit" element={
+              <ProtectedRoute roles={["creator"]}><EditAssetPage /></ProtectedRoute>
             } />
 
             <Route path="/admin" element={

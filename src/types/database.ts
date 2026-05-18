@@ -359,6 +359,7 @@ export type Database = {
           long_description: string | null;
           best_for: string[];
           related_types: string[];
+          related_tags: string[];
           selected_asset_ids: string[];
           related_blog_post_ids: string[];
           status: PublishStatus;
@@ -373,6 +374,7 @@ export type Database = {
           long_description?: string | null;
           best_for?: string[];
           related_types?: string[];
+          related_tags?: string[];
           selected_asset_ids?: string[];
           related_blog_post_ids?: string[];
           status?: PublishStatus;

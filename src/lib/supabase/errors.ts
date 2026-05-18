@@ -38,3 +38,17 @@ export function explainSupabaseError(error: unknown, fallback = "Supabase reques
 
   return message || fallback;
 }
+
+export function explainDeliverableError(error: unknown) {
+  const message = explainSupabaseError(error, "The asset was created, but its private delivery could not be saved.");
+  if (message.includes("Row Level Security")) {
+    return "The asset was created, but Supabase blocked the private delivery save. Ask an admin to confirm the asset-deliverables RLS policies and storage bucket.";
+  }
+  if (message.includes("Storage is not ready")) {
+    return "The asset was created, but the private delivery file could not be uploaded because Supabase Storage is not ready.";
+  }
+  if (message.includes("file is too large")) {
+    return "The asset was created, but the delivery file is too large. Edit the asset and upload a file under 50 MB.";
+  }
+  return message;
+}

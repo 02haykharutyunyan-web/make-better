@@ -118,6 +118,7 @@ export default function CreatorDashboard() {
                   <div className="flex flex-wrap items-center gap-3">
                     <span className={`rounded-full border px-3 py-1 text-xs ${statusStyles[a.status]}`}>{a.status}</span>
                     <span className="text-xs text-[#CFCFCF]/80">{a.downloads.toLocaleString()} downloads</span>
+                    <Link to={`/creator-dashboard/assets/${a.slug}/edit`} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 hover:border-[#FFD600]/60 hover:text-white transition">Edit</Link>
                   </div>
                 </div>
               ))}

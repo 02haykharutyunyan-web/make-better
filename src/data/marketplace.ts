@@ -35,6 +35,7 @@ export type Collection = {
   longDescription: string;
   bestFor: string[];
   relatedTypes: ProductType[];
+  relatedTags?: string[];
 };
 
 export type BlogPost = {

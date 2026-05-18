@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
-import { Asset, assets, ProductType } from "@/data/marketplace";
-import { Search } from "lucide-react";
+import { Asset, ProductType } from "@/data/marketplace";
+import { ArrowUpRight, Search } from "lucide-react";
 import { dbAssetToAsset } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { listPublishedAssets } from "@/services/assets";
@@ -11,6 +12,7 @@ const filters: ("All" | ProductType)[] = ["All", "Prompts", "AI Agents", "AI Ass
 const sorts = ["Trending", "Newest", "Most Downloaded", "Highest Rated", "Free First"] as const;
 
 export default function AssetsPage() {
+  const [params] = useSearchParams();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<typeof filters[number]>("All");
   const [sort, setSort] = useState<typeof sorts[number]>("Trending");
@@ -18,6 +20,11 @@ export default function AssetsPage() {
   const [remoteAssets, setRemoteAssets] = useState<Asset[]>([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const tag = params.get("tag");
+    if (tag) setQ(tag);
+  }, [params]);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,7 +35,7 @@ export default function AssetsPage() {
         const rows = await listPublishedAssets();
         if (!cancelled) setRemoteAssets(rows.map(dbAssetToAsset));
       } catch (error) {
-        if (!cancelled) setErr(explainSupabaseError(error, "Using demo assets because Supabase assets could not be loaded."));
+        if (!cancelled) setErr(explainSupabaseError(error, "Unable to load published marketplace assets."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -38,23 +45,23 @@ export default function AssetsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const source = remoteAssets.length > 0 ? remoteAssets : assets;
-    let list = source.filter(a => filter === "All" || a.productType === filter);
+    let list = remoteAssets.filter(a => filter === "All" || a.productType === filter);
     if (q.trim()) {
-      const t = q.toLowerCase();
+      const term = q.toLowerCase();
       list = list.filter(a =>
-        a.title.toLowerCase().includes(t) ||
-        a.description.toLowerCase().includes(t) ||
-        a.tags.some(tag => tag.toLowerCase().includes(t))
+        a.title.toLowerCase().includes(term) ||
+        a.description.toLowerCase().includes(term) ||
+        a.productType.toLowerCase().includes(term) ||
+        a.tags.some(tag => tag.toLowerCase().includes(term))
       );
     }
     switch (sort) {
-      case "Newest": list = [...list].reverse(); break;
-      case "Most Downloaded": list = [...list].sort((a, b) => b.downloads - a.downloads); break;
-      case "Highest Rated": list = [...list].sort((a, b) => b.rating - a.rating); break;
-      case "Free First": list = [...list].sort((a, b) => a.price - b.price); break;
+      case "Newest": return [...list].reverse();
+      case "Most Downloaded": return [...list].sort((a, b) => b.downloads - a.downloads);
+      case "Highest Rated": return [...list].sort((a, b) => b.rating - a.rating);
+      case "Free First": return [...list].sort((a, b) => a.price - b.price);
+      default: return list;
     }
-    return list;
   }, [q, filter, sort, remoteAssets]);
 
   return (
@@ -105,7 +112,7 @@ export default function AssetsPage() {
       <section className="container-mb">
         {err && <div className="mb-6 rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div>}
         {loading && <div className="mb-6 card-premium p-4 text-sm text-[#CFCFCF]">Loading marketplace assets...</div>}
-        {filtered.length === 0 ? (
+        {!loading && filtered.length === 0 ? (
           <div className="card-premium p-8 sm:p-16 text-center">
             <h3 className="text-xl sm:text-2xl font-medium tracking-normal">No assets found</h3>
             <p className="mt-2 text-[#CFCFCF]">Try a broader search or clear filters to see everything.</p>
@@ -132,13 +139,24 @@ export default function AssetsPage() {
       </section>
 
       <section className="container-mb mt-20 sm:mt-28">
-        <div className="card-premium p-5 sm:p-8 md:p-14 max-w-4xl">
-          <div className="eyebrow">Why this works</div>
-          <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal leading-tight">Find the right asset faster.</h2>
-          <p className="mt-4 text-[#CFCFCF] text-base sm:text-lg leading-relaxed">
-            Each asset on Make Better solves a specific problem — getting leads, creating faster, ranking higher, automating tasks, improving output.
-            Filter by what you want to do, not by what something is called.
-          </p>
+        <div className="card-premium p-5 sm:p-8 md:p-14">
+          <div className="eyebrow">Build or browse</div>
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+            <div>
+              <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal leading-tight">Find the right asset faster, or publish the one your workflow already depends on.</h2>
+              <p className="mt-4 text-[#CFCFCF] text-base sm:text-lg leading-relaxed">
+                Buyers can search by category, tag, and outcome. Creators can submit focused tools, prompts, workflows, and templates for review.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
+              <Link to="/collections" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/10 bg-[#0E0E0E]/80 px-5 py-3 text-sm font-medium text-white/85 hover:border-[#FFD600]/50 hover:text-white transition">
+                Explore collections <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <Link to="/submit" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full btn-primary px-5 py-3 text-sm font-medium transition">
+                Submit an asset <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </SiteLayout>

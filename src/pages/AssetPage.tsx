@@ -4,57 +4,23 @@ import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
 import AssetVisual from "@/components/AssetVisual";
 import GetAssetModal from "@/components/GetAssetModal";
-import { Asset, assets, assetsByCreator, Creator, getAsset, getCreator, postsByCreator, platformStats } from "@/data/marketplace";
+import { Asset, Creator, platformStats } from "@/data/marketplace";
 import { Star, Download, ArrowUpRight, Check, X } from "lucide-react";
 import { dbAssetToAsset, dbCreatorToCreator } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
-import { getPublishedAssetBySlug } from "@/services/assets";
-import { listAssetReviews } from "@/services/reviews";
-
-const beforeAfter = {
-  before: ["Guessing what to sell", "Manual competitor research", "Weak product angles", "Slow decision making"],
-  after: ["Validated product ideas", "Clear demand signals", "Better offer positioning", "Faster launches"],
-};
-
-const useCases = [
-  "Launch a new Shopify store with better product selection",
-  "Find new winners for an existing store",
-  "Improve ad angles before spending budget",
-  "Use as a daily product research workflow",
-  "Hand results to your media buyer or VA",
-  "Reduce failed tests and wasted time",
-];
-
-const includes = [
-  "Research prompt system",
-  "Competitor analysis workflow",
-  "Offer angle generator",
-  "Trend validation checklist",
-  "Setup guide",
-  "Usage examples",
-  "Best practices",
-  "Future updates",
-];
-
-const reviews = [
-  { name: "Marcus L.", rating: 5, body: "Cut my product research from days to under an hour. The angle generator alone is worth it." },
-  { name: "Priya S.", rating: 5, body: "First asset I bought here that actually delivered. Validated 3 winners in week one." },
-  { name: "Jonas K.", rating: 4, body: "Solid system. The competitor workflow is a cheat code if you sell DTC." },
-];
+import { getPublishedAssetBySlug, listPublishedAssets } from "@/services/assets";
 
 export default function AssetPage() {
   const { slug } = useParams();
-  const mockAsset = getAsset(slug || "");
-  const [remoteAsset, setRemoteAsset] = useState<Asset | null>(null);
-  const [remoteCreator, setRemoteCreator] = useState<Creator | null>(null);
-  const [remoteUseCases, setRemoteUseCases] = useState<string[]>([]);
-  const [remoteIncludes, setRemoteIncludes] = useState<string[]>([]);
-  const [remoteBefore, setRemoteBefore] = useState<string[]>([]);
-  const [remoteAfter, setRemoteAfter] = useState<string[]>([]);
-  const [remoteReviews, setRemoteReviews] = useState<typeof reviews>([]);
+  const [asset, setAsset] = useState<Asset | null>(null);
+  const [creator, setCreator] = useState<Creator | null>(null);
+  const [useCases, setUseCases] = useState<string[]>([]);
+  const [included, setIncluded] = useState<string[]>([]);
+  const [before, setBefore] = useState<string[]>([]);
+  const [after, setAfter] = useState<string[]>([]);
+  const [related, setRelated] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [loadFailed, setLoadFailed] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
@@ -62,28 +28,31 @@ export default function AssetPage() {
     async function load() {
       setLoading(true);
       setErr("");
-      setLoadFailed(false);
       try {
         const row = await getPublishedAssetBySlug(slug || "");
-        if (!cancelled && row) {
-          setRemoteAsset(dbAssetToAsset(row));
-          setRemoteCreator(dbCreatorToCreator(row.creators));
-          setRemoteUseCases(row.use_cases || []);
-          setRemoteIncludes(row.included || []);
-          setRemoteBefore(row.before || []);
-          setRemoteAfter(row.after || []);
-          const reviewRows = await listAssetReviews(row.id);
-          setRemoteReviews(reviewRows.map(r => ({
-            name: r.profiles?.full_name || "Buyer",
-            rating: r.rating,
-            body: r.body || "",
-          })).filter(r => r.body));
+        if (!row) {
+          if (!cancelled) setAsset(null);
+          return;
+        }
+
+        const mappedAsset = dbAssetToAsset(row);
+        const rows = await listPublishedAssets();
+        const relatedRows = rows
+          .filter(item => item.slug !== row.slug)
+          .filter(item => item.product_type === row.product_type || (item.tags || []).some(tag => (row.tags || []).includes(tag)))
+          .slice(0, 3);
+
+        if (!cancelled) {
+          setAsset(mappedAsset);
+          setCreator(dbCreatorToCreator(row.creators));
+          setUseCases(row.use_cases || []);
+          setIncluded(row.included || []);
+          setBefore(row.before || []);
+          setAfter(row.after || []);
+          setRelated(relatedRows.map(dbAssetToAsset));
         }
       } catch (error) {
-        if (!cancelled) {
-          setLoadFailed(true);
-          setErr(explainSupabaseError(error, "Using demo asset details because Supabase could not load this asset."));
-        }
+        if (!cancelled) setErr(explainSupabaseError(error, "Unable to load this published asset."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -92,36 +61,31 @@ export default function AssetPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  const asset = remoteAsset || (loadFailed ? mockAsset : null);
-  if (!asset && !loading) return <Navigate to="/assets" replace />;
-  if (!asset) return null;
-
-  const creator = remoteCreator || getCreator(asset.creatorSlug) || {
-    slug: asset.creatorSlug || "unknown",
-    name: "Make Better Creator",
-    niche: "",
-    description: "Creator profile details are not available for this asset yet.",
-    tags: [],
-    followers: 0,
-    assetsCount: 0,
-    downloads: 0,
-    rating: 0,
-    monthlyRevenue: "-",
-    strengths: [],
-  };
-  const creatorPosts = postsByCreator(creator.slug);
-  const creatorAssets = assetsByCreator(creator.slug).filter(a => a.slug !== asset.slug).slice(0, 2);
-  const related = assets.filter(a => a.slug !== asset.slug && a.productType === asset.productType).slice(0, 3);
-  const pageBefore = remoteBefore.length > 0 ? remoteBefore : beforeAfter.before;
-  const pageAfter = remoteAfter.length > 0 ? remoteAfter : beforeAfter.after;
-  const pageUseCases = remoteUseCases.length > 0 ? remoteUseCases : useCases;
-  const pageIncludes = remoteIncludes.length > 0 ? remoteIncludes : includes;
-  const pageReviews = remoteReviews.length > 0 ? remoteReviews : reviews;
+  if (!asset && !loading && !err) return <Navigate to="/assets" replace />;
+  if (!asset) {
+    return (
+      <SiteLayout>
+        <section className="container-mb pt-16 sm:pt-24 pb-20">
+          {loading ? (
+            <div className="card-premium p-6 text-[#CFCFCF]">Loading asset...</div>
+          ) : (
+            <div className="card-premium p-8 sm:p-10 text-center">
+              <h1 className="text-2xl font-medium tracking-normal">Asset unavailable</h1>
+              <p className="mt-3 text-[#CFCFCF]">{err || "This asset is not published yet."}</p>
+              <Link to="/assets" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full btn-primary px-5 py-2 text-sm font-medium">
+                Explore assets
+              </Link>
+            </div>
+          )}
+        </section>
+      </SiteLayout>
+    );
+  }
 
   return (
     <SiteLayout>
       {err && <section className="container-mb pt-6"><div className="rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div></section>}
-      {/* HERO */}
+
       <section className="container-mb pt-10 sm:pt-12 md:pt-16">
         <div className="grid min-w-0 gap-8 sm:gap-12 lg:grid-cols-[1.1fr_minmax(0,1fr)] items-start">
           <div className="min-w-0">
@@ -129,10 +93,14 @@ export default function AssetPage() {
             <h1 className="mt-4 text-3xl sm:text-4xl md:text-6xl font-medium tracking-normal leading-[1.06] break-words">{asset.title}</h1>
             <p className="mt-5 text-base sm:text-lg text-[#CFCFCF] leading-relaxed max-w-xl">{asset.description}</p>
 
+            <div className="mt-6 flex flex-wrap gap-2">
+              {asset.tags.map(tag => <Link key={tag} to={`/assets?tag=${encodeURIComponent(tag)}`} className="chip hover:border-[#FFD600]/60 hover:text-white">{tag}</Link>)}
+            </div>
+
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-[#CFCFCF]">
               <span className="inline-flex items-center gap-1.5"><Download className="h-4 w-4" /> {asset.downloads.toLocaleString()} downloads</span>
               <span className="inline-flex items-center gap-1.5"><Star className="h-4 w-4 fill-white text-white" /> {asset.rating} ({asset.reviewCount})</span>
-              <Link to={`/creator/${creator.slug}`} className="hover:text-white">by {creator.name}</Link>
+              {creator && <Link to={`/creator/${creator.slug}`} className="hover:text-white">by {creator.name}</Link>}
             </div>
 
             <div className="mt-8 sm:mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
@@ -146,177 +114,119 @@ export default function AssetPage() {
                 {asset.price === 0 ? "Get Asset" : "Join Waitlist"} <ArrowUpRight className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-4 text-xs text-[#CFCFCF]/70 max-w-md">
-              {asset.price === 0 ? "Free assets unlock instantly after signup." : "Paid purchases are coming soon. Join the waitlist and we will contact you when access opens."}
-            </p>
           </div>
 
           <AssetVisual title={asset.title} />
         </div>
       </section>
 
-      {/* PROBLEM */}
-      <section className="container-mb mt-20 sm:mt-28">
-        <div className="max-w-3xl">
-          <div className="eyebrow">The problem</div>
-          <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal">What problem does this solve?</h2>
-          <p className="mt-5 text-[#CFCFCF] text-base sm:text-lg leading-relaxed">
-            Most store owners waste weeks testing random products with no system behind it. This asset gives you a repeatable validation loop — so you stop guessing and start launching products with real demand signals behind them.
-          </p>
-        </div>
-      </section>
-
-      {/* BEFORE / AFTER */}
-      <section className="container-mb mt-14 sm:mt-20 grid gap-5 md:grid-cols-2">
-        <div className="card-premium p-5 sm:p-8">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">Before</div>
-          <ul className="mt-5 space-y-3">
-            {pageBefore.map(i => (
-              <li key={i} className="flex items-start gap-3 text-[#CFCFCF]"><X className="h-4 w-4 mt-0.5 text-white/30" /> {i}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="card-premium p-5 sm:p-8 border-[#FFD600]/35">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#FFD600]/80">After</div>
-          <ul className="mt-5 space-y-3">
-            {pageAfter.map(i => (
-              <li key={i} className="flex items-start gap-3 text-white"><Check className="h-4 w-4 mt-0.5 text-[#FFD600]" /> {i}</li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* USE CASES */}
-      <section className="container-mb mt-20 sm:mt-28">
-        <div className="eyebrow">Use cases</div>
-        <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal max-w-2xl">Where this asset fits</h2>
-        <div className="mt-8 sm:mt-10 grid gap-4 md:grid-cols-2">
-          {pageUseCases.map(u => (
-            <div key={u} className="card-premium p-5 flex items-start gap-3">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/60" />
-              <span className="text-white/80">{u}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* INCLUDES */}
-      <section className="container-mb mt-20 sm:mt-28">
-        <div className="card-premium p-5 sm:p-8 md:p-10">
-          <div className="eyebrow">Inside the asset</div>
-          <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal">What's included</h2>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {pageIncludes.map(i => (
-              <div key={i} className="flex items-start gap-2 rounded-2xl border border-white/10 bg-[#0E0E0E]/60 p-4 text-sm text-white/80">
-                <Check className="h-4 w-4 text-[#FFD600]" /> {i}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* REVIEWS */}
-      <section className="container-mb mt-20 sm:mt-28">
-        <div className="flex items-start sm:items-end justify-between flex-col sm:flex-row sm:flex-wrap gap-4">
-          <div>
-            <div className="eyebrow">Reviews</div>
-            <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal">What buyers say</h2>
-          </div>
-          <div className="flex items-center gap-2 text-[#CFCFCF]">
-            <Star className="h-5 w-5 fill-white text-white" />
-            <span className="text-2xl font-medium text-white">{asset.rating}</span>
-            <span className="text-sm">({asset.reviewCount} reviews)</span>
-          </div>
-        </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {pageReviews.map((r, i) => (
-            <div key={i} className="card-premium p-6">
-              <div className="flex">{Array.from({length: r.rating}).map((_, j) => <Star key={j} className="h-4 w-4 fill-white text-white" />)}</div>
-              <p className="mt-3 text-white/75 leading-relaxed">"{r.body}"</p>
-              <div className="mt-4 text-xs text-[#CFCFCF]/80">— {r.name}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CREATOR */}
-      <section className="container-mb mt-20 sm:mt-28">
-        <div className="card-premium p-5 sm:p-8 md:p-10 grid min-w-0 gap-6 sm:gap-8 md:grid-cols-[minmax(0,1fr)_auto] items-center">
-          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
-            <div className="h-14 w-14 rounded-full border border-white/10 bg-[#0E0E0E]/70 flex items-center justify-center font-medium">
-              {creator.name.split(" ").map(w => w[0]).join("")}
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]/70">Creator</div>
-              <div className="mt-1 text-xl sm:text-2xl font-medium tracking-normal break-words">{creator.name}</div>
-              <p className="mt-2 text-[#CFCFCF] max-w-lg">{creator.description}</p>
-              <div className="mt-4 flex flex-wrap gap-4 text-sm text-[#CFCFCF]">
-                <span>{creator.assetsCount} assets</span>
-                <span>{(creator.downloads/1000).toFixed(1)}k downloads</span>
-                <span>{creator.monthlyRevenue}</span>
-                <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-white text-white" /> {creator.rating}</span>
-              </div>
-            </div>
-          </div>
-          <Link to={`/creator/${creator.slug}`} className="inline-flex min-h-11 items-center justify-center rounded-full btn-primary px-5 py-2.5 text-sm font-medium transition">
-            Open profile
-          </Link>
-        </div>
-      </section>
-
-      {/* CREATOR BLOG */}
-      {creatorPosts.length > 0 && (
+      {asset.longDescription && (
         <section className="container-mb mt-20 sm:mt-28">
-          <div className="eyebrow">Learn from this creator</div>
-          <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal">More from {creator.name}</h2>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {creatorPosts.map(p => (
-              <Link key={p.slug} to={`/blog/${p.slug}`} className="card-premium p-6 group">
-                <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">{p.category}</div>
-                <h3 className="mt-3 text-lg font-medium tracking-normal leading-snug">{p.title}</h3>
-                <p className="mt-2 text-sm text-[#CFCFCF]">{p.excerpt}</p>
-                <div className="mt-4 text-xs text-[#CFCFCF]/70">{p.date}</div>
-              </Link>
+          <div className="max-w-3xl">
+            <div className="eyebrow">Overview</div>
+            <p className="mt-5 text-[#CFCFCF] text-base sm:text-lg leading-relaxed whitespace-pre-line">{asset.longDescription}</p>
+          </div>
+        </section>
+      )}
+
+      {(before.length > 0 || after.length > 0) && (
+        <section className="container-mb mt-14 sm:mt-20 grid gap-5 md:grid-cols-2">
+          {before.length > 0 && (
+            <div className="card-premium p-5 sm:p-8">
+              <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">Before</div>
+              <ul className="mt-5 space-y-3">
+                {before.map(item => <li key={item} className="flex items-start gap-3 text-[#CFCFCF]"><X className="h-4 w-4 mt-0.5 text-white/30" /> {item}</li>)}
+              </ul>
+            </div>
+          )}
+          {after.length > 0 && (
+            <div className="card-premium p-5 sm:p-8 border-[#FFD600]/35">
+              <div className="text-xs uppercase tracking-[0.18em] text-[#FFD600]/80">After</div>
+              <ul className="mt-5 space-y-3">
+                {after.map(item => <li key={item} className="flex items-start gap-3 text-white"><Check className="h-4 w-4 mt-0.5 text-[#FFD600]" /> {item}</li>)}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
+
+      {useCases.length > 0 && (
+        <section className="container-mb mt-20 sm:mt-28">
+          <div className="eyebrow">Use cases</div>
+          <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal max-w-2xl">Where this asset fits</h2>
+          <div className="mt-8 sm:mt-10 grid gap-4 md:grid-cols-2">
+            {useCases.map(item => (
+              <div key={item} className="card-premium p-5 flex items-start gap-3">
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/60" />
+                <span className="text-white/80">{item}</span>
+              </div>
             ))}
           </div>
         </section>
       )}
 
-      {creatorAssets.length > 0 && (
-        <section className="container-mb mt-20">
-          <div className="eyebrow">More by {creator.name}</div>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2">
-            {creatorAssets.map(a => <AssetCard key={a.slug} asset={a} />)}
+      {included.length > 0 && (
+        <section className="container-mb mt-20 sm:mt-28">
+          <div className="card-premium p-5 sm:p-8 md:p-10">
+            <div className="eyebrow">Inside the asset</div>
+            <h2 className="mt-5 text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal">What's included</h2>
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {included.map(item => (
+                <div key={item} className="flex items-start gap-2 rounded-2xl border border-white/10 bg-[#0E0E0E]/60 p-4 text-sm text-white/80">
+                  <Check className="h-4 w-4 text-[#FFD600]" /> {item}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
-      {/* RELATED */}
-      <section className="container-mb mt-20 sm:mt-28">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal">Related assets</h2>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {related.map(a => <AssetCard key={a.slug} asset={a} />)}
-        </div>
-      </section>
+      {creator && (
+        <section className="container-mb mt-20 sm:mt-28">
+          <div className="card-premium p-5 sm:p-8 md:p-10 grid min-w-0 gap-6 sm:gap-8 md:grid-cols-[minmax(0,1fr)_auto] items-center">
+            <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+              <div className="h-14 w-14 rounded-full border border-white/10 bg-[#0E0E0E]/70 flex items-center justify-center font-medium">
+                {creator.name.split(" ").map(word => word[0]).join("")}
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]/70">Creator</div>
+                <div className="mt-1 text-xl sm:text-2xl font-medium tracking-normal break-words">{creator.name}</div>
+                {creator.description && <p className="mt-2 text-[#CFCFCF] max-w-lg">{creator.description}</p>}
+              </div>
+            </div>
+            <Link to={`/creator/${creator.slug}`} className="inline-flex min-h-11 items-center justify-center rounded-full btn-primary px-5 py-2.5 text-sm font-medium transition">
+              Open profile
+            </Link>
+          </div>
+        </section>
+      )}
 
-      {/* CREATOR CTA */}
+      {related.length > 0 && (
+        <section className="container-mb mt-20 sm:mt-28">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium tracking-normal">Related assets</h2>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map(item => <AssetCard key={item.slug} asset={item} />)}
+          </div>
+        </section>
+      )}
+
       <section className="container-mb mt-20 sm:mt-28">
         <div className="card-premium p-5 sm:p-8 md:p-14">
           <div className="eyebrow">For creators</div>
           <h2 className="mt-5 text-2xl sm:text-3xl md:text-5xl font-medium tracking-normal max-w-3xl">Built something that makes your work faster?</h2>
           <p className="mt-5 text-[#CFCFCF] text-base sm:text-lg max-w-2xl">Turn it into an AI asset people can discover, trust, and buy on Make Better.</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-3 sm:gap-6 max-w-2xl">
-            <div><div className="text-2xl font-medium">{platformStats.assets}</div><div className="text-xs text-[#CFCFCF]/70 uppercase tracking-wider mt-1">Listed Assets</div></div>
-            <div><div className="text-2xl font-medium">{platformStats.visitors}</div><div className="text-xs text-[#CFCFCF]/70 uppercase tracking-wider mt-1">Organic Visitors</div></div>
+            <div><div className="text-2xl font-medium">{platformStats.assets}</div><div className="text-xs text-[#CFCFCF]/70 uppercase tracking-wider mt-1">Listed assets</div></div>
+            <div><div className="text-2xl font-medium">{platformStats.visitors}</div><div className="text-xs text-[#CFCFCF]/70 uppercase tracking-wider mt-1">Organic visitors</div></div>
             <div><div className="text-2xl font-medium">{platformStats.creators}</div><div className="text-xs text-[#CFCFCF]/70 uppercase tracking-wider mt-1">Creators</div></div>
           </div>
           <Link to="/submit" className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-full btn-primary px-6 py-3 text-sm font-medium transition">
-            List Your Asset <ArrowUpRight className="h-4 w-4" />
+            List your asset <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
 
-      <GetAssetModal asset={asset} open={modalOpen} onClose={() => setModalOpen(false)} />
+      <GetAssetModal asset={asset as any} open={modalOpen} onClose={() => setModalOpen(false)} />
     </SiteLayout>
   );
 }

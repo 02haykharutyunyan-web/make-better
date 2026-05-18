@@ -95,7 +95,7 @@ export async function getPublishedCollectionBySlug(slug: string) {
   return data;
 }
 
-export async function listPublishedAssetsForCollection(collection: { selected_asset_ids?: string[] | null; related_types?: string[] | null }) {
+export async function listPublishedAssetsForCollection(collection: { selected_asset_ids?: string[] | null; related_types?: string[] | null; related_tags?: string[] | null }) {
   let query = supabase
     .from("assets")
     .select(`
@@ -120,13 +120,22 @@ export async function listPublishedAssetsForCollection(collection: { selected_as
 
   if (collection.selected_asset_ids && collection.selected_asset_ids.length > 0) {
     query = query.in("id", collection.selected_asset_ids);
-  } else if (collection.related_types && collection.related_types.length > 0) {
-    query = query.in("product_type", collection.related_types);
   }
 
   const { data, error } = await query.order("published_at", { ascending: false });
   if (error) throw error;
-  return data || [];
+  const rows = data || [];
+  if (collection.selected_asset_ids && collection.selected_asset_ids.length > 0) return rows;
+
+  const relatedTypes = collection.related_types || [];
+  const relatedTags = (collection.related_tags || []).map(tag => tag.toLowerCase());
+  if (relatedTypes.length === 0 && relatedTags.length === 0) return rows;
+
+  return rows.filter(asset => {
+    const typeMatch = relatedTypes.includes(asset.product_type);
+    const tagMatch = (asset.tags || []).some(tag => relatedTags.includes(tag.toLowerCase()));
+    return typeMatch || tagMatch;
+  });
 }
 
 export async function upsertCollection(input: Inserts<"collections">) {

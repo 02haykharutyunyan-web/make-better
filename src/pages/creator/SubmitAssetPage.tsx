@@ -4,7 +4,7 @@ import SiteLayout from "@/components/layout/SiteLayout";
 import { useStore } from "@/store/store";
 import { ProductType } from "@/data/marketplace";
 import { Upload } from "lucide-react";
-import { explainSupabaseError } from "@/lib/supabase/errors";
+import { explainDeliverableError, explainSupabaseError } from "@/lib/supabase/errors";
 import { getCurrentCreatorForSubmission } from "@/services/creators";
 import {
   ASSET_DELIVERABLES_BUCKET,
@@ -30,11 +30,13 @@ export default function SubmitAssetPage() {
   const [deliverableFile, setDeliverableFile] = useState<File | null>(null);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState("");
+  const [partialWarning, setPartialWarning] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr("");
+    setPartialWarning("");
     setLoading(true);
     try {
       if (!user) throw new Error("Sign in as a creator before submitting an asset.");
@@ -67,32 +69,38 @@ export default function SubmitAssetPage() {
         after: form.after.split("\n").map(t => t.trim()).filter(Boolean),
       });
 
-      if (form.deliveryType === "file" && deliverableFile) {
-        const storagePath = await uploadAssetDeliverableFile(creator.id, asset.id, deliverableFile);
-        await upsertAssetDeliverable({
-          asset_id: asset.id,
-          delivery_type: "file",
-          storage_bucket: ASSET_DELIVERABLES_BUCKET,
-          storage_path: storagePath,
-          file_name: deliverableFile.name,
-          file_size: deliverableFile.size,
-        });
-      } else if (form.deliveryType === "external_link") {
-        await upsertAssetDeliverable({
-          asset_id: asset.id,
-          delivery_type: "external_link",
-          external_url: form.externalUrl.trim(),
-        });
-      } else {
-        await upsertAssetDeliverable({
-          asset_id: asset.id,
-          delivery_type: "text",
-          text_content: form.textContent,
-        });
+      let deliveryWarning = "";
+      try {
+        if (form.deliveryType === "file" && deliverableFile) {
+          const storagePath = await uploadAssetDeliverableFile(creator.id, asset.id, deliverableFile);
+          await upsertAssetDeliverable({
+            asset_id: asset.id,
+            delivery_type: "file",
+            storage_bucket: ASSET_DELIVERABLES_BUCKET,
+            storage_path: storagePath,
+            file_name: deliverableFile.name,
+            file_size: deliverableFile.size,
+          });
+        } else if (form.deliveryType === "external_link") {
+          await upsertAssetDeliverable({
+            asset_id: asset.id,
+            delivery_type: "external_link",
+            external_url: form.externalUrl.trim(),
+          });
+        } else {
+          await upsertAssetDeliverable({
+            asset_id: asset.id,
+            delivery_type: "text",
+            text_content: form.textContent,
+          });
+        }
+      } catch (deliveryError) {
+        deliveryWarning = explainDeliverableError(deliveryError);
+        setPartialWarning(deliveryWarning);
       }
 
       setDone(true);
-      setTimeout(() => navigate("/creator-dashboard"), 1200);
+      setTimeout(() => navigate("/creator-dashboard"), deliveryWarning ? 2800 : 1200);
     } catch (error) {
       setErr(explainSupabaseError(error, "Unable to submit this asset."));
     } finally {
@@ -104,9 +112,14 @@ export default function SubmitAssetPage() {
     return (
       <SiteLayout>
         <section className="container-mb pt-20 sm:pt-24 pb-20 sm:pb-24 max-w-md mx-auto text-center">
-          <div className="mx-auto h-12 w-12 rounded-full border border-white/10 bg-[#0E0E0E]/70 flex items-center justify-center mb-4">✓</div>
+          <div className="mx-auto h-12 w-12 rounded-full border border-white/10 bg-[#0E0E0E]/70 flex items-center justify-center mb-4">OK</div>
           <h1 className="text-3xl font-medium tracking-normal">Submitted for review</h1>
           <p className="mt-3 text-[#CFCFCF]">Our team will review your asset within 48 hours.</p>
+          {partialWarning && (
+            <div className="mt-5 rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-left text-sm text-[#CFCFCF]">
+              {partialWarning}
+            </div>
+          )}
         </section>
       </SiteLayout>
     );
