@@ -143,52 +143,91 @@ export default function Header() {
       </div>
 
       <div
-        className={`fixed inset-x-0 bottom-0 top-16 z-40 bg-[#050505]/70 backdrop-blur-sm md:hidden transition-all duration-300 ${
+        className={`fixed inset-x-0 bottom-0 top-16 z-40 md:hidden transition-all duration-300 ${
           mobileOpen ? "pointer-events-auto opacity-100 translate-y-0" : "pointer-events-none opacity-0 -translate-y-3"
         }`}
+        aria-hidden={!mobileOpen}
       >
-        <div className="glass-modal rounded-none border-x-0">
-          <nav className="container-mb max-h-[calc(100dvh-4rem)] overflow-y-auto py-4">
-            <div className="grid gap-1">
-              {navLinks.map((l) => (
-                <NavLink
-                  key={l.to}
-                  to={l.to}
-                  className={({ isActive }) =>
-                    `flex min-h-12 items-center justify-between rounded-2xl px-4 text-base transition ${
-                      isActive ? "bg-[#FFD600]/16 text-white" : "text-[#CFCFCF] hover:bg-[#FFD600]/10 hover:text-white"
-                    }`
-                  }
-                >
-                  {l.label}
-                </NavLink>
-              ))}
+        <button
+          type="button"
+          aria-label="Close menu overlay"
+          className="absolute inset-0 h-full w-full bg-[#050505]/72 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+        <div className="relative h-full overflow-y-auto border-t border-white/10 bg-[#050505]/72 shadow-[0_28px_90px_rgba(0,0,0,0.55)]">
+          <nav className="container-mb py-5 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+            <div className="glass-modal rounded-[1.75rem] p-3">
+              <div className="px-2 pb-2 text-[11px] uppercase tracking-[0.18em] text-[#FFD600]">Browse</div>
+              <div className="grid gap-2">
+                {baseLinks.map((l) => (
+                  <NavLink
+                    key={l.to}
+                    to={l.to}
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) =>
+                      `flex min-h-14 items-center justify-between rounded-2xl px-4 text-base font-medium transition ${
+                        isActive ? "border border-[#FFD600]/25 bg-[#FFD600]/12 text-white" : "border border-white/0 text-[#CFCFCF] hover:border-white/10 hover:bg-white/[0.04] hover:text-white"
+                      }`
+                    }
+                  >
+                    <span>{l.label}</span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#FFD600]/50" />
+                  </NavLink>
+                ))}
+              </div>
             </div>
 
-            <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="mt-4 glass-modal rounded-[1.75rem] p-3">
               {!user ? (
-                <div className="grid gap-2">
-                  <Link to="/login" className="btn-secondary flex min-h-12 items-center justify-center rounded-2xl text-sm font-medium">
+                <div className="grid gap-3">
+                  <div className="px-2 text-[11px] uppercase tracking-[0.18em] text-[#CFCFCF]/80">Account</div>
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="btn-secondary flex min-h-[3.25rem] items-center justify-center rounded-2xl text-sm font-medium"
+                  >
                     Sign in
                   </Link>
-                  <Link to="/creator-signup" className="btn-primary flex min-h-12 items-center justify-center rounded-2xl text-sm font-medium">
+                  <Link
+                    to="/creator-signup"
+                    onClick={() => setMobileOpen(false)}
+                    className="btn-primary flex min-h-[3.25rem] items-center justify-center rounded-2xl text-sm font-medium"
+                  >
                     List your asset
                   </Link>
                 </div>
               ) : (
-                <div className="grid gap-2">
-                  <div className="rounded-2xl glass-panel px-4 py-3">
-                    <div className="text-sm text-white">{user.name}</div>
+                <div className="grid gap-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4">
+                    <div className="truncate text-base font-medium text-white">{user.name}</div>
                     <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#CFCFCF]/80">{user.role}</div>
                   </div>
+                  {roleLinks.length > 0 && (
+                    <div className="grid gap-2">
+                      {roleLinks.map(l => (
+                        <Link
+                          key={l.to}
+                          to={l.to}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex min-h-[3.25rem] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.035] px-4 text-sm font-medium text-white/85 transition hover:border-[#FFD600]/25 hover:bg-[#FFD600]/10"
+                        >
+                          {l.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                   {user.role === "creator" && (
-                    <Link to="/creator-dashboard/submit-asset" className="btn-primary flex min-h-12 items-center justify-center rounded-2xl text-sm font-medium">
+                    <Link
+                      to="/creator-dashboard/submit-asset"
+                      onClick={() => setMobileOpen(false)}
+                      className="btn-primary flex min-h-[3.25rem] items-center justify-center rounded-2xl text-sm font-medium"
+                    >
                       Submit asset
                     </Link>
                   )}
                   <button
                     onClick={signOut}
-                    className="flex min-h-12 items-center justify-center gap-2 rounded-2xl glass-panel text-sm font-medium text-white/75"
+                    className="flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-sm font-medium text-white/75 transition hover:border-[#FFD600]/25 hover:bg-[#FFD600]/10 hover:text-white"
                   >
                     <LogOut className="h-4 w-4" /> Sign out
                   </button>
