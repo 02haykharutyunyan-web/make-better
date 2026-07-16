@@ -17,7 +17,14 @@ export async function expectedFromMigrations(dir) {
   const files = (await readdir(dir)).filter(f=>f.endsWith('.sql')).sort();
   const sql = (await Promise.all(files.map(f=>readFile(path.join(dir,f),'utf8')))).join('\n');
   const enums = [...sql.matchAll(/create\s+type\s+public\.([a-z0-9_]+)\s+as\s+enum\s*\(([^)]+)\)/gi)].map(m=>({name:m[1], values:[...m[2].matchAll(/'([^']+)'/g)].map(v=>v[1])}));
-  const tables = [...sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?public\.([a-z0-9_]+)/gi)].map(m=>m[1]);
+  const createTableMatches = [...sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?public\.([a-z0-9_]+)\s*\(([\s\S]*?)\);/gi)];
+  const tables = createTableMatches.map(m=>m[1]);
+  const createTableColumns = createTableMatches.flatMap(([_, table, body]) => [...body.matchAll(/^\s*([a-z0-9_]+)\s+[^,]+/gim)]
+    .filter((m) => !['constraint', 'primary', 'foreign', 'unique', 'check'].includes(m[1].toLowerCase()))
+    .map((m) => `${table}.${m[1]}`));
+  const alterAddColumns = [...sql.matchAll(/alter\s+table\s+public\.([a-z0-9_]+)\s+add\s+column\s+(?:if\s+not\s+exists\s+)?([a-z0-9_]+)/gi)]
+    .map((m) => `${m[1]}.${m[2]}`);
+  const columns = [...new Set([...createTableColumns, ...alterAddColumns])];
   const functions = [...sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+public\.([a-z0-9_]+)/gi)].map(m=>m[1]);
   const indexes = [...sql.matchAll(/create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?([a-z0-9_]+)/gi)].map(m=>m[1]);
   const policies = [...sql.matchAll(/create\s+policy\s+"([^"]+)"\s+on\s+public\.([a-z0-9_]+)/gi)].map(m=>`${m[2]}.${m[1]}`);
@@ -27,7 +34,7 @@ export async function expectedFromMigrations(dir) {
       return target ? { schema: target[1], table: target[2], name: m[1] } : null;
     })
     .filter(Boolean);
-  return { extensions:['pgcrypto'], storageBuckets:['asset-deliverables'], enums, tables:[...new Set(tables)], functions:[...new Set(functions)], indexes:[...new Set(indexes)], policies:[...new Set(policies)], triggers:[...new Set(triggers.filter(t=>t.schema==='public').map(t=>`${t.table}.${t.name}`))], authTriggers:[...new Set(triggers.filter(t=>t.schema==='auth').map(t=>`${t.table}.${t.name}`))] };
+  return { extensions:['pgcrypto'], storageBuckets:['asset-deliverables'], enums, tables:[...new Set(tables)], columns, functions:[...new Set(functions)], indexes:[...new Set(indexes)], policies:[...new Set(policies)], triggers:[...new Set(triggers.filter(t=>t.schema==='public').map(t=>`${t.table}.${t.name}`))], authTriggers:[...new Set(triggers.filter(t=>t.schema==='auth').map(t=>`${t.table}.${t.name}`))] };
 }
 
 function unwrapAuditExport(input) {
@@ -61,6 +68,7 @@ export function normalizeAudit(input) {
     storageBuckets: read('asset_deliverables_bucket').map(r=>r.id),
     enums: Object.values(read('public_enums').reduce((a,r)=>{(a[r.enum_name]??={name:r.enum_name,values:[]}).values.push(r.value); return a;},{})),
     tables: [...new Set(read('public_columns').map(r=>r.table_name))],
+    columns: [...new Set(read('public_columns').filter(r=>r.table_name && r.column_name).map(r=>`${r.table_name}.${r.column_name}`))],
     functions: [...new Set(read('public_functions').map(r=>r.function_name))],
     indexes: [...new Set(read('public_indexes').map(r=>r.index_name))],
     constraintBackedIndexes: [...new Set(read('public_constraints').filter(r=>['p','u'].includes(r.constraint_type)).map(r=>r.constraint_name))],
@@ -78,7 +86,7 @@ export async function compareAudit({ auditJson, migrationsDir = path.join(proces
   const expected = await expectedFromMigrations(migrationsDir);
   const actual = normalizeAudit(auditJson);
   if (!actual) return { status:'not verified', confirmedMatches:[], missingObjects:[], unexpectedObjects:[], differencesRequiringManualReview:[], notVerified:['production audit export was not provided'] };
-  const categories = ['extensions','storageBuckets','tables','functions','policies','triggers'];
+  const categories = ['extensions','storageBuckets','tables','columns','functions','policies','triggers'];
   const report = { status:'pending comparison', confirmedMatches:[], missingObjects:[], unexpectedObjects:[], differencesRequiringManualReview:[], notVerified:manualReviewItems };
   for (const c of categories) {
     const {missing, unexpected}=diffSet(expected[c], actual[c]??[]);

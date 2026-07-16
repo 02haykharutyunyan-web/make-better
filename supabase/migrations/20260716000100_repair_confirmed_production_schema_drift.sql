@@ -1,6 +1,11 @@
--- Forward-only repair for confirmed production schema drift from the 2026-07-16 audit.
+-- Forward-only repair for confirmed production schema drift from the 2026-07-16 audit/preflight.
 -- Do not use this file for migration-history repair or replay of historical migrations.
--- Contains only the confirmed missing function and explicit GIN indexes.
+-- Exceptional amendment: this unexecuted repair migration is being updated in place only because it has never been executed anywhere
+-- and has not been recorded in production migration history. If evidence of execution appears, stop and create a new forward migration.
+-- Contains only the four confirmed missing repair targets: collections.related_tags, can_access_asset_delivery, and two GIN indexes.
+
+alter table public.collections
+add column related_tags text[] not null default '{}'::text[];
 
 create function public.can_access_asset_delivery(target_asset_id uuid)
 returns boolean

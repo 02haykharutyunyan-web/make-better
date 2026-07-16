@@ -66,3 +66,18 @@ The prepared repair is additive/idempotent where reasonable. If an issue is disc
 ## Data handling
 
 The report and new audit files intentionally avoid secrets, credentials, user rows, emails, private storage paths, customer data, storage object contents, and row-level customer records. The preflight and verification SQL return only object metadata and aggregate/catalog state.
+
+## Task 1E preflight stop and repair amendment
+
+The manually run SELECT-only Task 1D preflight returned `ready_for_repair=false` with `function_missing=true`, `collections_index_missing=true`, `assets_index_missing=true`, and `required_dependencies_present=false`. That stop condition worked as intended: it prevented execution of an incomplete repair before any production SQL was run.
+
+The preflight result listed only 12 of the 13 expected dependency columns. Follow-up review confirmed a newly discovered production drift object: `public.collections.related_tags` is also missing. The confirmed production drift set now totals exactly four objects:
+
+1. Missing `public.collections.related_tags`.
+2. Missing `public.can_access_asset_delivery(target_asset_id uuid)`.
+3. Missing `collections_related_tags_idx`.
+4. Missing `assets_tags_idx`.
+
+The existing repair migration `supabase/migrations/20260716000100_repair_confirmed_production_schema_drift.sql` is amended in place only because it has never been executed anywhere and has not been recorded in production migration history. This is an exceptional case to avoid creating a second repair migration with a confusing dependency order. If any evidence appears that the repair migration was executed or recorded, stop immediately and create a new forward-only migration instead of editing this file.
+
+The amended repair remains unexecuted. The new preflight requires the exact four-object drift state before readiness is true: `related_tags_column_missing`, `function_missing`, `collections_index_missing`, and `assets_index_missing` must all be true, while `base_dependencies_present` must also be true for all dependencies other than those four repair targets.
