@@ -12,7 +12,7 @@ const allowedRelations = new Set([
 const allowedFunctions = new Set([
   'jsonb_build_object','jsonb_agg','jsonb_build_array','coalesce','unnest','string_agg','pg_get_constraintdef','pg_get_function_identity_arguments','pg_get_function_result','count','lower'
 ]);
-const sqlKeywords = new Set(['select','with','where','as','in','values','order','filter','and','or','from','join','on','by','case','when','then','else','end','not','null','true','false']);
+const sqlKeywords = new Set(['select','with','where','as','in','values','order','filter','and','or','from','join','on','by','case','when','then','else','end','not','exists','null','true','false']);
 
 export function stripCommentsPreserveSql(sql) {
   let out = '';

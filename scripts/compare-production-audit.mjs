@@ -21,8 +21,13 @@ export async function expectedFromMigrations(dir) {
   const functions = [...sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+public\.([a-z0-9_]+)/gi)].map(m=>m[1]);
   const indexes = [...sql.matchAll(/create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?([a-z0-9_]+)/gi)].map(m=>m[1]);
   const policies = [...sql.matchAll(/create\s+policy\s+"([^"]+)"\s+on\s+public\.([a-z0-9_]+)/gi)].map(m=>`${m[2]}.${m[1]}`);
-  const triggers = [...sql.matchAll(/create\s+trigger\s+([a-z0-9_]+)\s+[\s\S]*?on\s+public\.([a-z0-9_]+)/gi)].map(m=>`${m[2]}.${m[1]}`);
-  return { extensions:['pgcrypto'], storageBuckets:['asset-deliverables'], enums, tables:[...new Set(tables)], functions:[...new Set(functions)], indexes:[...new Set(indexes)], policies:[...new Set(policies)], triggers:[...new Set(triggers)] };
+  const triggers = [...sql.matchAll(/create\s+trigger\s+([a-z0-9_]+)\b[\s\S]*?;(?=\s*(?:create|alter|drop|grant|revoke|insert|update|delete|$))/gi)]
+    .map((m) => {
+      const target = m[0].match(/\bon\s+([a-z0-9_]+)\.([a-z0-9_]+)/i);
+      return target ? { schema: target[1], table: target[2], name: m[1] } : null;
+    })
+    .filter(Boolean);
+  return { extensions:['pgcrypto'], storageBuckets:['asset-deliverables'], enums, tables:[...new Set(tables)], functions:[...new Set(functions)], indexes:[...new Set(indexes)], policies:[...new Set(policies)], triggers:[...new Set(triggers.filter(t=>t.schema==='public').map(t=>`${t.table}.${t.name}`))], authTriggers:[...new Set(triggers.filter(t=>t.schema==='auth').map(t=>`${t.table}.${t.name}`))] };
 }
 
 function unwrapAuditExport(input) {
@@ -58,6 +63,7 @@ export function normalizeAudit(input) {
     tables: [...new Set(read('public_columns').map(r=>r.table_name))],
     functions: [...new Set(read('public_functions').map(r=>r.function_name))],
     indexes: [...new Set(read('public_indexes').map(r=>r.index_name))],
+    constraintBackedIndexes: [...new Set(read('public_constraints').filter(r=>['p','u'].includes(r.constraint_type)).map(r=>r.constraint_name))],
     policies: [...new Set(read('public_policies').map(r=>`${r.table_name}.${r.policy_name}`))],
     triggers: [...new Set(read('public_triggers').map(r=>`${r.table_name}.${r.trigger_name}`))],
     functionGrants: read('public_function_grants'),
@@ -72,13 +78,21 @@ export async function compareAudit({ auditJson, migrationsDir = path.join(proces
   const expected = await expectedFromMigrations(migrationsDir);
   const actual = normalizeAudit(auditJson);
   if (!actual) return { status:'not verified', confirmedMatches:[], missingObjects:[], unexpectedObjects:[], differencesRequiringManualReview:[], notVerified:['production audit export was not provided'] };
-  const categories = ['extensions','storageBuckets','tables','functions','indexes','policies','triggers'];
+  const categories = ['extensions','storageBuckets','tables','functions','policies','triggers'];
   const report = { status:'pending comparison', confirmedMatches:[], missingObjects:[], unexpectedObjects:[], differencesRequiringManualReview:[], notVerified:manualReviewItems };
   for (const c of categories) {
     const {missing, unexpected}=diffSet(expected[c], actual[c]??[]);
     report.confirmedMatches.push(...expected[c].filter(x=>(actual[c]??[]).includes(x)).map(x=>`${c}:${x}`));
     report.missingObjects.push(...missing.map(x=>`${c}:${x}`));
     report.unexpectedObjects.push(...unexpected.map(x=>`${c}:${x}`));
+  }
+  const indexDiff = diffSet(expected.indexes, actual.indexes ?? []);
+  report.confirmedMatches.push(...expected.indexes.filter(x=>(actual.indexes??[]).includes(x)).map(x=>`indexes:${x}`));
+  report.missingObjects.push(...indexDiff.missing.map(x=>`indexes:${x}`));
+  const expectedOrConstraintBackedIndexes = new Set([...(expected.indexes ?? []), ...(actual.constraintBackedIndexes ?? [])]);
+  report.unexpectedObjects.push(...(actual.indexes ?? []).filter(x=>!expectedOrConstraintBackedIndexes.has(x)).map(x=>`indexes:${x}`));
+  if ((expected.authTriggers ?? []).length) {
+    report.notVerified.push(...expected.authTriggers.map(x=>`auth trigger not audited by public trigger audit:${x}`));
   }
   for (const e of expected.enums) {
     const a = actual.enums.find(x=>x.name===e.name);
