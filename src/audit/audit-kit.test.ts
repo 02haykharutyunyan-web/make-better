@@ -178,6 +178,19 @@ describe('production audit comparison', () => {
 });
 
 describe('Task 1D repair assets', () => {
+
+  it('documentation describes the Task 1E four-object drift and readiness expression without stale Task 1D wording', () => {
+    const doc = readFileSync('docs/production-schema-reconciliation-2026-07-16.md', 'utf8');
+    expect(doc).not.toMatch(/three confirmed differences|three missing objects|required_dependencies_present/i);
+    expect(doc).toMatch(/Column `public\.collections\.related_tags`/);
+    expect(doc).toMatch(/Function `public\.can_access_asset_delivery\(target_asset_id uuid\)`/);
+    expect(doc).toMatch(/Index `collections_related_tags_idx`/);
+    expect(doc).toMatch(/Index `assets_tags_idx`/);
+    expect(doc).toMatch(new RegExp('ready_for_repair =\\s*\\n\\s*related_tags_column_missing\\s*\\n\\s*AND function_missing\\s*\\n\\s*AND collections_index_missing\\s*\\n\\s*AND assets_index_missing\\s*\\n\\s*AND base_dependencies_present'));
+    expect(doc).toMatch(/`ALTER TABLE \.\.\. ADD COLUMN` may acquire a table lock/);
+    expect(doc).toMatch(/approved low-traffic maintenance window/);
+    expect(doc).toMatch(/do not claim or assume zero downtime/i);
+  });
   it('preflight and verification SQL remain SELECT-only', () => {
     for (const file of ['supabase/audit/task_1d_repair_preflight.sql', 'supabase/audit/task_1d_repair_verification.sql']) {
       expect(validateReadOnlySelectAudit(readFileSync(file, 'utf8'))).toEqual([]);
