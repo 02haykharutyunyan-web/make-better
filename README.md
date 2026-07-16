@@ -35,6 +35,17 @@ GitHub Actions runs on pull requests and pushes to `main` with read-only reposit
 
 The workflow does not define Supabase environment variables, does not require production secrets, does not run linked-project commands, and does not connect to production Supabase.
 
+
+## Dependency audit baseline
+
+GitHub Quality gates for PR #6 produced the actionable baseline after the local environment could not reach the npm advisory endpoint:
+
+- Full install audit: 19 vulnerabilities total — 6 moderate, 12 high, and 1 critical.
+- Production audit (`npm audit --omit=dev`): 10 vulnerabilities total — 3 moderate and 7 high.
+- Reported production paths included `@remix-run/router` through `react-router`/`react-router-dom`, plus build-tooling packages that were incorrectly classified as production-reachable because `tailwindcss-animate` was listed as an application dependency: `glob`, `minimatch`, `brace-expansion`, `picomatch`, `postcss`, and `yaml`.
+
+After this update, `tailwindcss-animate` is classified as a development dependency because it is only loaded by `tailwind.config.ts` during CSS generation, not by browser runtime code. This moves the Tailwind/PostCSS toolchain out of the production dependency graph while preserving the build and generated UI behavior. The production audit gate remains enabled in CI and must pass before merge.
+
 ## Dependency update policy
 
 - Inspect `package.json` and `package-lock.json` before dependency changes.
