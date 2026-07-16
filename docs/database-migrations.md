@@ -45,22 +45,24 @@ Do not connect these commands to the production Supabase project while testing m
 
 **Do not apply these migrations to production until existing migration history has been exported and reconciled.**
 
-Supabase migration files follow the `<timestamp>_<name>.sql` convention; the CLI examples use 14-digit timestamps such as `20230306095710_schema_test.sql`, and migration history is tracked by the timestamp/version prefix. If production has already recorded the old `20260517_*` or `20260518_*` versions, renamed files with new timestamp prefixes are different migration versions and may be treated as pending. Replaying them could fail on already-created objects or mutate policy/function definitions unexpectedly.
+Supabase migration files follow the `<timestamp>_<name>.sql` convention; the CLI examples use 14-digit timestamps such as `20230306095710_schema_test.sql`, and migration history is tracked by the timestamp/version prefix. The currently verified production state is that production has no `supabase_migrations.schema_migrations` relation, and the existing schema appears to have been applied manually rather than through Supabase-managed migration history.
 
-Merging renamed files is therefore not safe for production rollout until production history is inspected. If production history cannot currently be verified, the safest alternative is to keep already-applied migration filenames unchanged and add a new forward-only migration that documents/repairs any remaining drift instead of renaming historical files.
+Because there is no recorded production migration history to reconcile against, no production `db push`, migration replay, or history repair is allowed until schema equivalence has been verified against production with read-only inspection and a reviewed baseline history has been established. Merging repository files alone does not authorize production migration execution.
+
+If old `20260517_*` or `20260518_*` versions are later found in another environment, renamed files with new timestamp prefixes are different migration versions and may be treated as pending. Replaying them could fail on already-created objects or mutate policy/function definitions unexpectedly. If production history cannot be established safely, the safest alternative is to keep already-applied migration filenames unchanged for that environment and add a new forward-only migration that documents/repairs any remaining drift instead of replaying historical files.
 
 ## Production migration reconciliation
 
-This branch renames migration files to deterministic unique versions. Do **not** blindly replay renamed files against production if the old `20260517_*`/`20260518_*` migrations are already recorded in Supabase migration history.
+This branch renames migration files to deterministic unique versions. Do **not** replay these files against production while production has no `supabase_migrations.schema_migrations` relation and appears manually migrated; first verify schema equivalence and establish a reviewed baseline history.
 
 Safe reconciliation process:
 
-1. Export the production migration history with `supabase migration list --linked` or by reading `supabase_migrations.schema_migrations` using a read-only connection.
-2. Compare each previously applied filename to the renamed file with the same descriptive suffix in this guide.
-3. Confirm the SQL body is unchanged except for separately documented content changes, if any.
-4. If production already has the old versions applied, mark the new deterministic versions as applied in a controlled maintenance window instead of replaying them. Use the Supabase CLI repair workflow (for example, `supabase migration repair --status applied <new_version>`) only after a database backup and peer review.
-5. Do not mark a new version applied when its SQL body has not effectively been applied to production.
-6. Keep a written mapping from old filename to new filename in the release notes.
+1. Confirm, using read-only inspection, that production still has no `supabase_migrations.schema_migrations` relation and capture the current schema definition.
+2. Compare the production schema to the repository migrations to verify object, policy, function, storage bucket, and seed-data equivalence.
+3. Establish a reviewed baseline migration history for the already-present production schema before running any future production migrations.
+4. If another environment already has old filename versions applied, compare each previously applied filename to the renamed file with the same descriptive suffix in this guide and confirm SQL body equivalence.
+5. Use Supabase migration repair/mark-applied workflows only after backup, peer review, and a written mapping from old filename to new filename.
+6. Do not mark a version applied when its SQL body has not effectively been applied to that environment.
 
 ## Rollback and recovery precautions
 
