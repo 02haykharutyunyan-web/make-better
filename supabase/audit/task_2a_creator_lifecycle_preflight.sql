@@ -17,6 +17,11 @@ with state as (
     (
       select count(*) from public.creators
       where profile_id is not null
+        and id not in (
+          '6b6a8889-07bc-4cc0-a21e-c9c54769c56e'::uuid,
+          'f6841040-f99f-4020-8b96-69fea85d3cbb'::uuid,
+          '8c64ec1b-d99f-4549-a59b-c6afb121003f'::uuid
+        )
         and not exists (
           select 1 from public.assets
           where assets.creator_id = creators.id and assets.status = 'published'
@@ -29,6 +34,11 @@ with state as (
     (
       select count(*) from public.creators
       where profile_id is null
+        or id in (
+          '6b6a8889-07bc-4cc0-a21e-c9c54769c56e'::uuid,
+          'f6841040-f99f-4020-8b96-69fea85d3cbb'::uuid,
+          '8c64ec1b-d99f-4549-a59b-c6afb121003f'::uuid
+        )
         or exists (
           select 1 from public.assets
           where assets.creator_id = creators.id and assets.status = 'published'
