@@ -1,0 +1,10 @@
+[
+  { "section": "extensions", "rows": [{ "name": "pgcrypto" }, { "name": "unexpected_ext" }] },
+  { "section": "public_enums", "rows": [{ "enum_name": "user_role", "value": "buyer" }, { "enum_name": "user_role", "value": "admin" }] },
+  { "section": "public_columns", "rows": [{ "table_name": "profiles" }, { "table_name": "unexpected_table" }] },
+  { "section": "public_functions", "rows": [{ "function_name": "is_admin" }] },
+  { "section": "public_indexes", "rows": [] },
+  { "section": "public_policies", "rows": [] },
+  { "section": "public_triggers", "rows": [] },
+  { "section": "asset_deliverables_bucket", "rows": [{ "id": "asset-deliverables" }] }
+]
