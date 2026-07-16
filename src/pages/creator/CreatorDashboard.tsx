@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
-import { getCreatorByProfileId } from "@/services/creators";
+import { getCreatorByProfileId, reapplyCreatorApplication } from "@/services/creators";
 import type { Tables } from "@/types/database";
 import { countAccessRequestsForAssets, listCreatorAssets } from "@/services/assets";
 
@@ -24,6 +24,7 @@ export default function CreatorDashboard() {
   const [requestCounts, setRequestCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [reapplying, setReapplying] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,6 +57,20 @@ export default function CreatorDashboard() {
     load();
     return () => { cancelled = true; };
   }, [user]);
+
+  const reapply = async () => {
+    if (!window.confirm("Resubmit your creator application for admin review?")) return;
+    setReapplying(true);
+    setErr("");
+    try {
+      const updated = await reapplyCreatorApplication();
+      setCreator(updated);
+    } catch (error) {
+      setErr(explainSupabaseError(error, "Unable to resubmit your creator application."));
+    } finally {
+      setReapplying(false);
+    }
+  };
 
   const approved = creator?.application_status === "approved";
   const mine = remoteAssets;
@@ -91,7 +106,10 @@ export default function CreatorDashboard() {
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-[#CFCFCF]">
             <div className="font-medium text-white">Your creator application was rejected.</div>
             {creator.application_rejection_reason && <p className="mt-2 text-sm">Reason: {creator.application_rejection_reason}</p>}
-            <p className="mt-2 text-sm">Update your application details from signup or contact support to reapply safely.</p>
+            <p className="mt-2 text-sm">Update the editable details on your profile, then resubmit for a fresh admin review.</p>
+            <button type="button" disabled={reapplying} onClick={reapply} className="mt-4 min-h-11 rounded-full btn-primary px-5 text-sm disabled:opacity-50">
+              {reapplying ? "Resubmitting..." : "Resubmit application"}
+            </button>
           </div>
         )}
         {creator?.application_status === "pending" && (
