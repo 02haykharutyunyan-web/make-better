@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
-import { BlogPost } from "@/data/marketplace";
+import type { BlogPost } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { listPublishedBlogPosts } from "@/services/content";
 import { dbBlogToBlogPost } from "@/lib/content-mappers";

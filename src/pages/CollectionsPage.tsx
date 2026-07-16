@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
-import { Collection } from "@/data/marketplace";
+import type { Collection } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { listPublishedCollections } from "@/services/content";

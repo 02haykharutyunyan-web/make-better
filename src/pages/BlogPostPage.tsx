@@ -1,7 +1,7 @@
 import { Navigate, useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
-import { Asset, BlogPost } from "@/data/marketplace";
+import type { Asset, BlogPost } from "@/data/marketplace";
 import AssetCard from "@/components/AssetCard";
 import { getPublishedBlogPostBySlug, listPublishedBlogPosts } from "@/services/content";
 import { dbBlogToBlogPost } from "@/lib/content-mappers";

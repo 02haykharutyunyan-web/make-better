@@ -47,6 +47,7 @@ export function dbAssetToAsset(asset: DbAsset): Asset {
     rating: Number(asset.rating || 0),
     reviewCount: asset.review_count || 0,
     creatorSlug: asset.creators?.slug || "",
+    creatorName: asset.creators?.brand_name || undefined,
     collectionSlugs: [],
   };
 }

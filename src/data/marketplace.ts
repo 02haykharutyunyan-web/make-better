@@ -25,6 +25,7 @@ export type Asset = {
   rating: number;
   reviewCount: number;
   creatorSlug: string;
+  creatorName?: string;
   collectionSlugs: string[];
 };
 

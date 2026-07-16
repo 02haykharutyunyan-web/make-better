@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { AssetStatus, SubmittedAsset, useStore } from "@/store/store";
-import { ProductType } from "@/data/marketplace";
+import { AssetStatus, SubmittedAsset } from "@/store/store";
+import type { ProductType } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
@@ -26,7 +26,6 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function AdminAssets() {
-  const { store } = useStore();
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
   const [remoteAssets, setRemoteAssets] = useState<SubmittedAsset[]>([]);
   const [deliverables, setDeliverables] = useState<Record<string, Tables<"asset_deliverables">>>({});
@@ -36,12 +35,10 @@ export default function AdminAssets() {
   const [creatorNames, setCreatorNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [loadFailed, setLoadFailed] = useState(false);
 
   const loadAssets = async () => {
     setLoading(true);
     setErr("");
-    setLoadFailed(false);
     try {
       const rows = await listAdminAssets();
       const mapped = rows.map(dbAssetToSubmittedAsset);
@@ -51,7 +48,6 @@ export default function AdminAssets() {
       const deliveryRows = await listAssetDeliverables(mapped.map(a => a.id));
       setDeliverables(Object.fromEntries(deliveryRows.map(d => [d.asset_id, d])));
     } catch (error) {
-      setLoadFailed(true);
       setErr(explainSupabaseError(error, "Unable to load admin assets."));
     } finally {
       setLoading(false);
@@ -62,8 +58,7 @@ export default function AdminAssets() {
     loadAssets();
   }, []);
 
-  const assets = remoteAssets.length > 0 ? remoteAssets : loadFailed ? store.assets : [];
-  const list = filter === "All" ? assets : assets.filter(a => a.status === filter);
+  const list = filter === "All" ? remoteAssets : remoteAssets.filter(a => a.status === filter);
 
   const setStatus = async (id: string, patch: Partial<SubmittedAsset>) => {
     const dbPatch: any = {};
@@ -165,8 +160,7 @@ export default function AdminAssets() {
             </thead>
             <tbody>
               {list.map(a => {
-                const creator = store.creators.find(c => c.slug === a.creatorSlug);
-                const creatorName = creatorNames[a.slug] || creator?.name || "—";
+                const creatorName = creatorNames[a.slug] || a.creatorSlug || "—";
                 return (
                   <tr key={a.id} className="border-t border-white/5 align-top">
                     <td className="px-5 py-4 text-white max-w-[260px]">

@@ -17,12 +17,11 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function CreatorDashboard() {
-  const { user, store } = useStore();
+  const { user } = useStore();
   const [remoteAssets, setRemoteAssets] = useState<SubmittedAsset[]>([]);
   const [requestCounts, setRequestCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +29,6 @@ export default function CreatorDashboard() {
       if (!user) return;
       setLoading(true);
       setErr("");
-      setLoadFailed(false);
       try {
         const creator = await getCreatorByProfileId(user.id);
         if (!creator) {
@@ -46,7 +44,6 @@ export default function CreatorDashboard() {
         }
       } catch (error) {
         if (!cancelled) {
-          setLoadFailed(true);
           setErr(explainSupabaseError(error, "Unable to load your submissions."));
         }
       } finally {
@@ -57,8 +54,7 @@ export default function CreatorDashboard() {
     return () => { cancelled = true; };
   }, [user]);
 
-  const fallbackMine = store.assets.filter(a => a.creatorSlug === user?.creatorSlug);
-  const mine = remoteAssets.length > 0 ? remoteAssets : loadFailed ? fallbackMine : [];
+  const mine = remoteAssets;
   const totalDownloads = mine.reduce((s, a) => s + a.downloads, 0);
   const stats = [
     { label: "Total assets", v: mine.length },

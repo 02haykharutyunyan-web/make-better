@@ -1,10 +1,19 @@
 import { Link } from "react-router-dom";
-import { Asset, getCreator } from "@/data/marketplace";
+import type { Asset } from "@/data/marketplace";
 import { Download, Star, ArrowUpRight } from "lucide-react";
 import { AssetPreviewVisual } from "@/components/visuals/MarketplaceVisuals";
 
+function humanizeSlug(slug: string) {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export default function AssetCard({ asset }: { asset: Asset }) {
-  const creator = getCreator(asset.creatorSlug);
+  const creatorName = asset.creatorName || humanizeSlug(asset.creatorSlug);
+
   return (
     <Link
       to={`/asset/${asset.slug}`}
@@ -44,8 +53,8 @@ export default function AssetCard({ asset }: { asset: Asset }) {
             <Star className="h-3.5 w-3.5 fill-white/80 text-white/80" /> {asset.rating}
           </span>
         </div>
-        {creator && (
-          <span className="text-right text-[#CFCFCF]/75">by <span className="text-white/85">{creator.name}</span></span>
+        {creatorName && (
+          <span className="text-right text-[#CFCFCF]/75">by <span className="text-white/85">{creatorName}</span></span>
         )}
       </div>
 

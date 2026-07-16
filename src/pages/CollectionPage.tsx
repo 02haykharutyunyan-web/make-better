@@ -2,7 +2,7 @@ import { Navigate, useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
-import { Asset, BlogPost, Collection } from "@/data/marketplace";
+import type { Asset, BlogPost, Collection } from "@/data/marketplace";
 import { getPublishedCollectionBySlug, listPublishedAssetsForCollection, listPublishedBlogPosts } from "@/services/content";
 import { dbCollectionToCollection, dbBlogToBlogPost } from "@/lib/content-mappers";
 import { dbAssetToAsset } from "@/lib/asset-mappers";

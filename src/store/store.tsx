@@ -1,18 +1,9 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import {
-  Asset,
-  assets as seedAssets,
-  blogPosts as seedBlog,
-  collections as seedCollections,
-  creators as seedCreators,
-  Creator,
-  BlogPost,
-  Collection,
-  ProductType,
-} from "@/data/marketplace";
+import type { Asset, Creator, BlogPost, Collection, ProductType } from "@/data/marketplace";
 import { supabase } from "@/lib/supabase/client";
 import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
 import { requireSupabaseConfig } from "@/lib/supabase/errors";
+import { publicEnv } from "@/lib/env";
 import { claimFreeAssetBySlug, createCreator, getCreatorByProfileId, getPublishedAssetBySlug, listMyAssetClaims, upsertProfile } from "@/services";
 import type { Tables } from "@/types/database";
 
@@ -63,57 +54,17 @@ type StoreShape = {
   collections: Collection[];
 };
 
-const KEY = "mb_store_v1";
-const DEFAULT_DEMO_PASSWORD = "makebetter-demo-123";
-
-function seedStore(): StoreShape {
-  const seededAssets: SubmittedAsset[] = seedAssets.map((a, i) => ({
-    ...a,
-    id: `seed-${i}`,
-    status: "Published",
-    isFree: a.price === 0,
-    priceType: a.price === 0 ? "free" : "paid",
-    submittedAt: new Date(Date.now() - i * 86400000).toISOString(),
-    featured: i < 3,
-  }));
-
-  const seedUsers: User[] = [
-    { id: "u-admin", name: "Admin", email: "admin@makebetter.io", role: "admin", createdAt: new Date().toISOString(), active: true },
-    { id: "u-buyer", name: "Demo Buyer", email: "buyer@makebetter.io", role: "buyer", createdAt: new Date().toISOString(), active: true },
-    ...seedCreators.map(c => ({
-      id: `u-${c.slug}`,
-      name: c.name,
-      email: `${c.slug}@makebetter.io`,
-      role: "creator" as Role,
-      creatorSlug: c.slug,
-      createdAt: new Date().toISOString(),
-      active: true,
-    })),
-  ];
-
-  return {
-    users: seedUsers,
-    creators: [...seedCreators],
-    assets: seededAssets,
-    claims: [],
-    blog: [...seedBlog],
-    collections: [...seedCollections],
-  };
-}
+const EMPTY_STORE: StoreShape = {
+  users: [],
+  creators: [],
+  assets: [],
+  claims: [],
+  blog: [],
+  collections: [],
+};
 
 function load(): StoreShape {
-  if (typeof window === "undefined") return seedStore();
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) {
-      const s = seedStore();
-      localStorage.setItem(KEY, JSON.stringify(s));
-      return s;
-    }
-    return JSON.parse(raw);
-  } catch {
-    return seedStore();
-  }
+  return EMPTY_STORE;
 }
 
 function slugify(value: string) {
@@ -144,7 +95,6 @@ type Ctx = {
   authLoading: boolean;
   store: StoreShape;
   login: (email: string, password: string) => Promise<User | null>;
-  loginAs: (role: Role) => Promise<User | null>;
   logout: () => Promise<void>;
   signupBuyer: (data: { name: string; email: string; password: string; phone?: string }) => Promise<User | null>;
   signupCreator: (data: { name: string; email: string; password: string; phone?: string; brand: string; bio: string }) => Promise<User | null>;
@@ -167,10 +117,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [remoteClaims, setRemoteClaims] = useState<Claim[]>([]);
-
-  useEffect(() => {
-    localStorage.setItem(KEY, JSON.stringify(store));
-  }, [store]);
 
   const update = (fn: (s: StoreShape) => StoreShape) => setStore(prev => fn({ ...prev }));
 
@@ -257,6 +203,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     init();
 
+    if (!publicEnv.hasSupabaseConfig) {
+      return () => {
+        mounted = false;
+      };
+    }
+
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
       setAuthLoading(true);
       window.setTimeout(() => {
@@ -322,47 +274,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       return loadCurrentProfile();
     },
-    loginAs: async (role) => {
-      requireSupabaseConfig();
-      if (role === "admin") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: "admin@makebetter.io",
-          password: DEFAULT_DEMO_PASSWORD,
-        });
-        if (error) throw error;
-        return loadCurrentProfile();
-      }
-
-      const email = role === "buyer" ? "buyer@makebetter.io" : "creator@makebetter.io";
-      const password = DEFAULT_DEMO_PASSWORD;
-      const name = role === "buyer" ? "Demo Buyer" : "Demo Creator";
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: role === "buyer"
-            ? { full_name: name, role: "buyer" }
-            : { full_name: name, role: "creator", brand_name: "Demo Creator", bio: "Demo creator account for local testing." },
-        },
-      });
-
-      if (error && !error.message.toLowerCase().includes("already registered")) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw error;
-      }
-
-      const authUserId = data.user?.id;
-      if (authUserId && data.session) {
-        if (role === "buyer") await ensureBuyerProfile(authUserId, { name, email });
-        else await ensureCreatorProfile(authUserId, { name, email, brand: "Demo Creator", bio: "Demo creator account for local testing." });
-      } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw signInError;
-      }
-
-      return loadCurrentProfile();
-    },
     logout: async () => {
       requireSupabaseConfig();
       await supabase.auth.signOut();
@@ -389,14 +300,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       if (error) throw error;
       if (data.user && data.session) await ensureCreatorProfile(data.user.id, { name, email, phone, brand, bio });
-
-      const slug = slugify(brand) || `creator-${Date.now()}`;
-      const creator: Creator = {
-        slug, name: brand, niche: bio.slice(0, 60), description: bio,
-        tags: [], followers: 0, assetsCount: 0, downloads: 0, rating: 0,
-        monthlyRevenue: "-", strengths: [],
-      };
-      update(s => s.creators.some(c => c.slug === slug) ? s : ({ ...s, creators: [...s.creators, creator] }));
 
       return loadCurrentProfile();
     },
