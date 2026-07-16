@@ -12,6 +12,7 @@ const requiredNames = [
   "free_waitlist_mode",
   "fix_admin_profiles_visibility",
   "fix_creator_asset_submission_rls",
+  "creator_application_lifecycle",
   "fix_gated_delivery_access",
   "seed_marketplace_demo_data",
   "collection_related_tags",

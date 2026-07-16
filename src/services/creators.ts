@@ -77,6 +77,15 @@ export async function getCreatorByProfileId(profileId: string) {
   return data;
 }
 
+export function assertCreatorApproved(creator: { application_status?: string; application_rejection_reason?: string | null }) {
+  if (creator.application_status !== "approved") {
+    if (creator.application_status === "rejected") {
+      throw new Error(`Your creator application was rejected${creator.application_rejection_reason ? `: ${creator.application_rejection_reason}` : "."} You can update your application before submitting again.`);
+    }
+    throw new Error("Your creator application is pending admin approval. You can submit assets and creator blogs after approval.");
+  }
+}
+
 export async function getCurrentCreatorForSubmission() {
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError) throw authError;
@@ -99,13 +108,15 @@ export async function getCurrentCreatorForSubmission() {
     throw new Error(`No creator row is linked to this profile (${profile.email || auth.user.id}). Run the creator profile repair SQL or create a creator profile for this account.`);
   }
 
+  assertCreatorApproved(creator);
+
   return creator;
 }
 
 export async function createCreator(input: Inserts<"creators">) {
   const { data, error } = await supabase
     .from("creators")
-    .insert(input)
+    .insert({ ...input, application_status: "pending" })
     .select()
     .single();
 
@@ -117,6 +128,26 @@ export async function updateCreator(id: string, patch: Updates<"creators">) {
   const { data, error } = await supabase
     .from("creators")
     .update(patch)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+
+export async function reviewCreatorApplication(id: string, status: "approved" | "rejected", rejectionReason?: string) {
+  if (status === "rejected" && !rejectionReason?.trim()) {
+    throw new Error("A rejection reason is required before rejecting a creator application.");
+  }
+
+  const { data, error } = await supabase
+    .from("creators")
+    .update({
+      application_status: status,
+      application_rejection_reason: status === "rejected" ? rejectionReason!.trim() : null,
+    })
     .eq("id", id)
     .select()
     .single();

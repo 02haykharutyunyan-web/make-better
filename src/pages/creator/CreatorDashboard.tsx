@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
 import { getCreatorByProfileId } from "@/services/creators";
+import type { Tables } from "@/types/database";
 import { countAccessRequestsForAssets, listCreatorAssets } from "@/services/assets";
 
 const statusStyles: Record<string, string> = {
@@ -19,6 +20,7 @@ const statusStyles: Record<string, string> = {
 export default function CreatorDashboard() {
   const { user } = useStore();
   const [remoteAssets, setRemoteAssets] = useState<SubmittedAsset[]>([]);
+  const [creator, setCreator] = useState<Tables<"creators"> | null>(null);
   const [requestCounts, setRequestCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -31,6 +33,7 @@ export default function CreatorDashboard() {
       setErr("");
       try {
         const creator = await getCreatorByProfileId(user.id);
+        if (!cancelled) setCreator(creator);
         if (!creator) {
           if (!cancelled) setRemoteAssets([]);
           return;
@@ -54,6 +57,7 @@ export default function CreatorDashboard() {
     return () => { cancelled = true; };
   }, [user]);
 
+  const approved = creator?.application_status === "approved";
   const mine = remoteAssets;
   const totalDownloads = mine.reduce((s, a) => s + a.downloads, 0);
   const stats = [
@@ -72,10 +76,30 @@ export default function CreatorDashboard() {
             <h1 className="mt-5 text-3xl sm:text-4xl md:text-5xl font-medium tracking-normal">Hey {user?.name.split(" ")[0]}.</h1>
             <p className="mt-3 text-[#CFCFCF]">Brand: <span className="text-white">{user?.creatorSlug}</span></p>
           </div>
-          <Link to="/creator-dashboard/submit-asset" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full btn-primary px-5 py-3 text-sm font-medium transition sm:w-auto">
-            <Plus className="h-4 w-4" /> Submit new asset
-          </Link>
+          {approved ? (
+            <Link to="/creator-dashboard/submit-asset" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full btn-primary px-5 py-3 text-sm font-medium transition sm:w-auto">
+              <Plus className="h-4 w-4" /> Submit new asset
+            </Link>
+          ) : (
+            <div className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-[#CFCFCF] sm:w-auto">
+              Application status: <span className="capitalize text-white">{creator?.application_status || "pending"}</span>
+            </div>
+          )}
         </div>
+
+        {creator?.application_status === "rejected" && (
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-[#CFCFCF]">
+            <div className="font-medium text-white">Your creator application was rejected.</div>
+            {creator.application_rejection_reason && <p className="mt-2 text-sm">Reason: {creator.application_rejection_reason}</p>}
+            <p className="mt-2 text-sm">Update your application details from signup or contact support to reapply safely.</p>
+          </div>
+        )}
+        {creator?.application_status === "pending" && (
+          <div className="mt-6 rounded-2xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-5 text-[#CFCFCF]">
+            <div className="font-medium text-[#FFD600]">Application pending review</div>
+            <p className="mt-2 text-sm">You can sign in and view this status. Asset, creator-blog, and paid-listing tools unlock only after admin approval.</p>
+          </div>
+        )}
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map(s => (
@@ -96,7 +120,7 @@ export default function CreatorDashboard() {
           {err && <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-4 text-sm text-[#CFCFCF]">{err}</div>}
           {loading && <div className="mt-6 card-premium p-6 text-[#CFCFCF]">Loading submissions...</div>}
           {!loading && mine.length === 0 ? (
-            <div className="mt-6 card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No assets yet. Submit your first one.</div>
+            <div className="mt-6 card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No assets yet. Approved creators can submit their first asset.</div>
           ) : !loading && (
             <div className="mt-6 grid gap-3">
               {mine.map(a => (

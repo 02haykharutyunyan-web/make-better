@@ -7,6 +7,7 @@ export type ClaimStatus = "unlocked" | "pending_payment" | "paid_mock";
 export type PublishStatus = "draft" | "published";
 export type DeliveryType = "file" | "external_link" | "text";
 export type AccessRequestStatus = "new" | "contacted" | "closed";
+export type CreatorStatus = "pending" | "approved" | "rejected";
 
 export type Database = {
   public: {
@@ -52,6 +53,10 @@ export type Database = {
           strengths: string[];
           active: boolean;
           featured: boolean;
+          application_status: CreatorStatus;
+          application_submitted_at: string;
+          application_reviewed_at: string | null;
+          application_rejection_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -71,6 +76,10 @@ export type Database = {
           strengths?: string[];
           active?: boolean;
           featured?: boolean;
+          application_status?: CreatorStatus;
+          application_submitted_at?: string;
+          application_reviewed_at?: string | null;
+          application_rejection_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };

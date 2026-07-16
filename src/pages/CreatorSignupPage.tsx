@@ -32,13 +32,13 @@ export default function CreatorSignupPage() {
         <div>
           <div className="eyebrow">Become a creator</div>
           <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-normal leading-[1.06]">
-            Start selling your AI assets in minutes.
+            Apply to become a Make Better creator.
           </h1>
           <p className="mt-5 text-[#CFCFCF] text-base sm:text-lg max-w-xl leading-relaxed">
-            Free to register. No approval required. Submit assets right after signup — they go live once reviewed.
+            Submit your application for admin review. You can sign in and track status while pending; asset and blog submissions unlock after approval.
           </p>
           <ul className="mt-10 grid gap-3 text-white/75">
-            {["Instant access to dashboard","Submit unlimited assets","Set free or paid pricing","Stripe payouts coming soon"].map(b => (
+            {["Application starts pending","Admin review before submissions","Assets and blogs still require review","Paid listings are not automatic"].map(b => (
               <li key={b} className="flex items-center gap-3">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#FFD600]" /> {b}
               </li>
@@ -47,7 +47,7 @@ export default function CreatorSignupPage() {
         </div>
 
         <form onSubmit={submit} className="card-premium p-5 sm:p-8 md:p-10 space-y-4">
-          <h2 className="text-2xl font-medium tracking-normal">Creator registration</h2>
+          <h2 className="text-2xl font-medium tracking-normal">Creator application</h2>
           <Field label="Full name" value={form.name} onChange={v => setForm({ ...form, name: v })} required />
           <Field label="Email" type="email" value={form.email} onChange={v => setForm({ ...form, email: v })} required />
           <Field label="Password" type="password" value={form.password} onChange={v => setForm({ ...form, password: v })} required />
@@ -63,7 +63,7 @@ export default function CreatorSignupPage() {
           </label>
           {err && <p className="text-xs text-[#CFCFCF]">{err}</p>}
           <button disabled={loading} className="min-h-12 w-full rounded-full btn-primary py-3 text-sm font-medium transition disabled:opacity-50">
-            {loading ? "Creating..." : "Create creator account"}
+            {loading ? "Creating..." : "Submit creator application"}
           </button>
         </form>
       </section>

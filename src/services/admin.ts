@@ -14,6 +14,7 @@ export type AdminOverview = {
 
 export type AdminCreatorRow = Tables<"creators"> & {
   email: string;
+  applicantName: string;
   joinedAt: string;
   assetCount: number;
   totalDownloads: number;
@@ -54,6 +55,7 @@ export async function listAdminCreators(): Promise<AdminCreatorRow[]> {
     return {
       ...creator,
       email: profile?.email || "",
+      applicantName: profile?.full_name || "-",
       joinedAt: profile?.created_at || creator.created_at,
       assetCount: creatorAssets.length,
       totalDownloads: creatorAssets.reduce((sum, asset) => sum + (asset.downloads || 0), 0),
