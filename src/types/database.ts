@@ -408,6 +408,30 @@ export type Database = {
         Args: { target_asset_id: string };
         Returns: boolean;
       };
+      is_approved_creator: {
+        Args: { target_creator_id: string };
+        Returns: boolean;
+      };
+      creator_application_status_is: {
+        Args: { target_creator_id: string; expected_status: CreatorStatus };
+        Returns: boolean;
+      };
+      review_creator_application: {
+        Args: {
+          target_creator_id: string;
+          target_status: CreatorStatus;
+          rejection_reason?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["creators"]["Row"];
+      };
+      reapply_creator_application: {
+        Args: Record<string, never>;
+        Returns: Database["public"]["Tables"]["creators"]["Row"];
+      };
+      set_creator_featured: {
+        Args: { target_creator_id: string; target_featured: boolean };
+        Returns: Database["public"]["Tables"]["creators"]["Row"];
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -417,6 +441,7 @@ export type Database = {
       publish_status: PublishStatus;
       delivery_type: DeliveryType;
       access_request_status: AccessRequestStatus;
+      creator_status: CreatorStatus;
     };
     CompositeTypes: Record<string, never>;
   };
