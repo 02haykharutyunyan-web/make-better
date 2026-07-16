@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { AdminCreatorRow, listAdminCreators } from "@/services/admin";
-import { reviewCreatorApplication, updateCreator } from "@/services/creators";
+import { reviewCreatorApplication, setCreatorFeatured } from "@/services/creators";
 import type { CreatorStatus } from "@/types/database";
 import { Star } from "lucide-react";
 
@@ -51,7 +51,7 @@ export default function AdminCreators() {
     if (!window.confirm(`${creator.featured ? "Remove" : "Add"} featured status for ${creator.brand_name}?`)) return;
     setSavingId(creator.id);
     try {
-      const updated = await updateCreator(creator.id, { featured: !creator.featured });
+      const updated = await setCreatorFeatured(creator.id, !creator.featured);
       setCreators(prev => prev.map(c => c.id === creator.id ? { ...c, featured: updated.featured } : c));
       setSuccess("Creator featured status updated.");
     } catch (error) { setErr(explainSupabaseError(error, "Unable to update creator feature status.")); }
@@ -74,15 +74,17 @@ export default function AdminCreators() {
           {visibleCreators.map(c => (
             <article key={c.id} className="card-premium p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <button onClick={() => setSelected(c)} className="min-h-12 min-w-0 text-left">
+                <button onClick={() => { setSelected(c); setRejectionReason(""); }} className="min-h-12 min-w-0 text-left">
                   <div className="font-medium text-white break-words">{c.brand_name} {c.featured && <Star className="inline h-3.5 w-3.5 fill-[#FFD600] text-[#FFD600]" />}</div>
                   <div className="mt-1 text-sm text-[#CFCFCF] break-words">{c.applicantName} • {c.email || "No email"}</div>
                   <div className="mt-1 text-xs text-[#CFCFCF]/70">Submitted {new Date(c.application_submitted_at || c.created_at).toLocaleDateString()} • {c.assetCount} assets • {c.totalDownloads.toLocaleString()} downloads</div>
                 </button>
                 <div className="flex flex-wrap gap-2 sm:justify-end">
                   <span className="inline-flex min-h-9 items-center rounded-full border border-white/10 px-3 text-xs capitalize text-[#CFCFCF]">{c.application_status}</span>
-                  <button disabled={savingId === c.id} onClick={() => review(c, "approved")} className="min-h-11 rounded-full btn-primary px-4 text-sm disabled:opacity-50">Approve</button>
-                  <button disabled={savingId === c.id} onClick={() => { setSelected(c); review(c, "rejected"); }} className="min-h-11 rounded-full border border-white/10 px-4 text-sm text-white disabled:opacity-50">Reject</button>
+                  {c.application_status === "pending" && <>
+                    <button disabled={savingId === c.id} onClick={() => review(c, "approved")} className="min-h-11 rounded-full btn-primary px-4 text-sm disabled:opacity-50">Approve</button>
+                    <button disabled={savingId === c.id} onClick={() => { setSelected(c); setRejectionReason(""); }} className="min-h-11 rounded-full border border-white/10 px-4 text-sm text-white disabled:opacity-50">Review rejection</button>
+                  </>}
                 </div>
               </div>
             </article>
@@ -100,8 +102,10 @@ export default function AdminCreators() {
             <Link to={`/creator/${selected.slug}`} className="inline-flex min-h-11 items-center rounded-full border border-white/10 px-4 text-white">Open public page</Link>
             <label className="block pt-2"><span className="text-xs text-[#CFCFCF]">Required rejection reason</span><textarea value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} rows={4} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70" /></label>
             <div className="flex flex-wrap gap-2">
-              <button disabled={savingId === selected.id} onClick={() => review(selected, "approved")} className="min-h-11 rounded-full btn-primary px-4 text-sm disabled:opacity-50">Approve</button>
-              <button disabled={savingId === selected.id} onClick={() => review(selected, "rejected")} className="min-h-11 rounded-full border border-white/10 px-4 text-sm text-white disabled:opacity-50">Reject</button>
+              {selected.application_status === "pending" && <>
+                <button disabled={savingId === selected.id} onClick={() => review(selected, "approved")} className="min-h-11 rounded-full btn-primary px-4 text-sm disabled:opacity-50">Approve</button>
+                <button disabled={savingId === selected.id || !rejectionReason.trim()} onClick={() => review(selected, "rejected")} className="min-h-11 rounded-full border border-white/10 px-4 text-sm text-white disabled:opacity-50">Reject with reason</button>
+              </>}
               <button disabled={savingId === selected.id} onClick={() => toggleFeatured(selected)} className="min-h-11 rounded-full border border-white/10 px-4 text-sm text-white disabled:opacity-50">{selected.featured ? "Unfeature" : "Feature"}</button>
             </div>
           </div>}
