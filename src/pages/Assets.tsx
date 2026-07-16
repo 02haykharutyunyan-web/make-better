@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
-import { Asset, ProductType } from "@/data/marketplace";
+import type { Asset, ProductType } from "@/data/marketplace";
 import { ArrowUpRight, Search } from "lucide-react";
 import { dbAssetToAsset } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";

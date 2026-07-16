@@ -2,13 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { useStore } from "@/store/store";
-import { Asset } from "@/data/marketplace";
+import type { Asset } from "@/data/marketplace";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import type { SubmittedAsset } from "@/store/store";
 import { requestPaidAssetAccessBySlug } from "@/services/assets";
 
 export default function GetAssetModal({ asset, open, onClose }: { asset: Asset; open: boolean; onClose: () => void }) {
-  const { user, signupBuyer, claimAsset, store } = useStore();
+  const { user, signupBuyer, claimAsset } = useStore();
   const navigate = useNavigate();
   const [step, setStep] = useState<"form" | "success">("form");
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", password: "", phone: user?.phone || "" });
@@ -17,7 +17,7 @@ export default function GetAssetModal({ asset, open, onClose }: { asset: Asset; 
 
   if (!open) return null;
   const isPaid = asset.price > 0;
-  const submitted: SubmittedAsset = store.assets.find(a => a.slug === asset.slug) || {
+  const submitted: SubmittedAsset = {
     ...asset,
     id: asset.slug,
     status: "Published",
@@ -96,7 +96,7 @@ export default function GetAssetModal({ asset, open, onClose }: { asset: Asset; 
               <button onClick={onClose} className="min-h-12 rounded-full border border-white/10 bg-[#0E0E0E]/80 py-3 text-sm font-medium hover:bg-[#FFD600]/15 transition">
                 Close
               </button>
-              <button onClick={() => { onClose(); isPaid ? navigate("/assets") : navigate("/my-assets"); }} className="min-h-12 rounded-full btn-primary py-3 text-sm font-medium transition">
+              <button onClick={() => { onClose(); navigate(isPaid ? "/assets" : "/my-assets"); }} className="min-h-12 rounded-full btn-primary py-3 text-sm font-medium transition">
                 {isPaid ? "Browse assets" : "My Assets"}
               </button>
             </div>

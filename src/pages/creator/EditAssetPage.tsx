@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
 import { useStore } from "@/store/store";
-import { ProductType } from "@/data/marketplace";
+import type { ProductType } from "@/data/marketplace";
 import { ArrowLeft, Upload } from "lucide-react";
 import { explainDeliverableError, explainSupabaseError } from "@/lib/supabase/errors";
 import { getCurrentCreatorForSubmission } from "@/services/creators";

@@ -2,7 +2,7 @@ import { useParams, Navigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
-import { Asset, BlogPost, Creator } from "@/data/marketplace";
+import type { Asset, BlogPost, Creator } from "@/data/marketplace";
 import { Star, ArrowUpRight, Check } from "lucide-react";
 import { getCreatorBySlug, listPublishedAssetsByCreatorId, listPublishedBlogPostsByCreatorId } from "@/services/creators";
 import { dbAssetToAsset, dbCreatorToCreator } from "@/lib/asset-mappers";

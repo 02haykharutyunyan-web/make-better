@@ -1,10 +1,9 @@
 import { Link } from "react-router-dom";
-import { Asset, getCreator } from "@/data/marketplace";
+import type { Asset } from "@/data/marketplace";
 import { Download, Star, ArrowUpRight } from "lucide-react";
 import { AssetPreviewVisual } from "@/components/visuals/MarketplaceVisuals";
 
 export default function AssetCard({ asset }: { asset: Asset }) {
-  const creator = getCreator(asset.creatorSlug);
   return (
     <Link
       to={`/asset/${asset.slug}`}
@@ -44,8 +43,8 @@ export default function AssetCard({ asset }: { asset: Asset }) {
             <Star className="h-3.5 w-3.5 fill-white/80 text-white/80" /> {asset.rating}
           </span>
         </div>
-        {creator && (
-          <span className="text-right text-[#CFCFCF]/75">by <span className="text-white/85">{creator.name}</span></span>
+        {asset.creatorSlug && (
+          <span className="text-right text-[#CFCFCF]/75">by <span className="text-white/85">{asset.creatorSlug}</span></span>
         )}
       </div>
 

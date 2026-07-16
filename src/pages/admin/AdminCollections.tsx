@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Collection } from "@/data/marketplace";
+import type { Collection } from "@/data/marketplace";
 import { deleteCollection, listAdminCollections, updateCollection, upsertCollection } from "@/services/content";
 import { listAdminAssets } from "@/services/assets";
 import { explainSupabaseError } from "@/lib/supabase/errors";

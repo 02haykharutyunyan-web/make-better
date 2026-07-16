@@ -5,7 +5,7 @@ import { useStore } from "@/store/store";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 
 export default function LoginPage() {
-  const { login, loginAs } = useStore();
+  const { login } = useStore();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,21 +27,7 @@ export default function LoginPage() {
     }
   };
 
-  const quick = async (role: "admin" | "creator" | "buyer") => {
-    setErr("");
-    setLoading(true);
-    try {
-      const u = await loginAs(role);
-      if (!u) { setErr("Account created. Confirm the email, then sign in."); return null; }
-      navigate(u.role === "admin" ? "/admin" : u.role === "creator" ? "/creator-dashboard" : "/my-assets");
-      return u;
-    } catch (error) {
-      setErr(explainSupabaseError(error, "Unable to continue."));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <SiteLayout>
@@ -70,15 +56,6 @@ export default function LoginPage() {
             {loading ? "Working..." : "Sign in"}
           </button>
         </form>
-
-        <div className="mt-8">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]/70 text-center">Quick access</div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            <button onClick={() => quick("buyer")} className="min-h-11 rounded-full border border-white/10 bg-[#0E0E0E]/75 py-2.5 text-sm hover:bg-[#FFD600]/15">Buyer</button>
-            <button onClick={() => quick("creator")} className="min-h-11 rounded-full border border-white/10 bg-[#0E0E0E]/75 py-2.5 text-sm hover:bg-[#FFD600]/15">Creator</button>
-            <button onClick={() => quick("admin")} className="min-h-11 rounded-full border border-white/10 bg-[#0E0E0E]/75 py-2.5 text-sm hover:bg-[#FFD600]/15">Admin</button>
-          </div>
-        </div>
 
         <p className="mt-8 text-center text-sm text-[#CFCFCF]">
           New creator? <Link to="/creator-signup" className="text-white hover:underline">Register here</Link>

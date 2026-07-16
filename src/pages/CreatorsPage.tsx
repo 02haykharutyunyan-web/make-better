@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
-import { Creator } from "@/data/marketplace";
+import type { Creator } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { listActiveCreators } from "@/services/creators";

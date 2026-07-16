@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { BlogPost } from "@/data/marketplace";
+import type { BlogPost } from "@/data/marketplace";
 import { deleteBlogPost, listAdminBlogPosts, updateBlogPost, upsertBlogPost } from "@/services/content";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { dbBlogToBlogPost } from "@/lib/content-mappers";

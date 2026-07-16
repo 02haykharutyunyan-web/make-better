@@ -2,7 +2,7 @@ import { publicEnv } from "@/lib/env";
 
 export function requireSupabaseConfig() {
   if (!publicEnv.hasSupabaseConfig) {
-    throw new Error("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local, then restart the dev server.");
+    throw new Error(`${publicEnv.supabaseConfigError || "Supabase is not configured."} Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then restart the app.`);
   }
 }
 
