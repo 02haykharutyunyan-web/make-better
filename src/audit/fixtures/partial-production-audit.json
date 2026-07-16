@@ -1,17 +1,54 @@
 {
   "audit_result": {
     "schemas": [],
-    "extensions": [{ "name": "pgcrypto" }, { "name": "unexpected_ext" }],
-    "public_enums": [{ "enum_name": "user_role", "value": "buyer" }, { "enum_name": "user_role", "value": "admin" }],
-    "public_columns": [{ "table_name": "profiles" }, { "table_name": "unexpected_table" }],
+    "extensions": [
+      {
+        "name": "pgcrypto"
+      },
+      {
+        "name": "unexpected_ext"
+      }
+    ],
+    "public_enums": [
+      {
+        "enum_name": "user_role",
+        "value": "buyer"
+      },
+      {
+        "enum_name": "user_role",
+        "value": "admin"
+      }
+    ],
+    "public_columns": [
+      {
+        "table_name": "profiles"
+      },
+      {
+        "table_name": "unexpected_table"
+      }
+    ],
     "public_constraints": [],
     "public_indexes": [],
     "public_triggers": [],
     "public_rls": [],
     "public_policies": [],
-    "public_functions": [{ "function_name": "is_admin" }],
-    "public_function_grants": [],
-    "asset_deliverables_bucket": [{ "id": "asset-deliverables" }],
+    "public_functions": [
+      {
+        "function_name": "is_admin"
+      }
+    ],
+    "public_function_grants": [
+      {
+        "function_name": "is_admin",
+        "grantee": "PUBLIC",
+        "privilege_type": "EXECUTE"
+      }
+    ],
+    "asset_deliverables_bucket": [
+      {
+        "id": "asset-deliverables"
+      }
+    ],
     "storage_policies": [],
     "demo_seed_existence": []
   }

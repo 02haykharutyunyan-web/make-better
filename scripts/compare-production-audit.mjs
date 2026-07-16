@@ -60,6 +60,7 @@ export function normalizeAudit(input) {
     indexes: [...new Set(read('public_indexes').map(r=>r.index_name))],
     policies: [...new Set(read('public_policies').map(r=>`${r.table_name}.${r.policy_name}`))],
     triggers: [...new Set(read('public_triggers').map(r=>`${r.table_name}.${r.trigger_name}`))],
+    functionGrants: read('public_function_grants'),
   };
 }
 
@@ -72,7 +73,7 @@ export async function compareAudit({ auditJson, migrationsDir = path.join(proces
   const actual = normalizeAudit(auditJson);
   if (!actual) return { status:'not verified', confirmedMatches:[], missingObjects:[], unexpectedObjects:[], differencesRequiringManualReview:[], notVerified:['production audit export was not provided'] };
   const categories = ['extensions','storageBuckets','tables','functions','indexes','policies','triggers'];
-  const report = { status:'verified with review items', confirmedMatches:[], missingObjects:[], unexpectedObjects:[], differencesRequiringManualReview:[], notVerified:manualReviewItems };
+  const report = { status:'pending comparison', confirmedMatches:[], missingObjects:[], unexpectedObjects:[], differencesRequiringManualReview:[], notVerified:manualReviewItems };
   for (const c of categories) {
     const {missing, unexpected}=diffSet(expected[c], actual[c]??[]);
     report.confirmedMatches.push(...expected[c].filter(x=>(actual[c]??[]).includes(x)).map(x=>`${c}:${x}`));
@@ -85,6 +86,9 @@ export async function compareAudit({ auditJson, migrationsDir = path.join(proces
     else if (e.values.join('|') !== a.values.join('|')) report.differencesRequiringManualReview.push(`enums:${e.name} expected ${e.values.join(',')} got ${a.values.join(',')}`);
     else report.confirmedMatches.push(`enums:${e.name}`);
   }
+  report.status = report.missingObjects.length || report.unexpectedObjects.length || report.differencesRequiringManualReview.length
+    ? 'differences found'
+    : 'matched with manual review required';
   return report;
 }
 

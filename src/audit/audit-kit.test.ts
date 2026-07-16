@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { splitStatements, validateKnownReadOnlyAuditAccess, validateReadOnlySelectAudit } from '../../scripts/audit-safety.mjs';
-import { compareAudit, expectedFromMigrations } from '../../scripts/compare-production-audit.mjs';
+import { compareAudit, expectedFromMigrations, normalizeAudit } from '../../scripts/compare-production-audit.mjs';
 
 async function completeMatchingExport() {
   const expected = await expectedFromMigrations('supabase/migrations');
@@ -23,7 +23,7 @@ async function completeMatchingExport() {
         return { table_name, policy_name: name.join('.') };
       }),
       public_functions: expected.functions.map((function_name) => ({ function_name })),
-      public_function_grants: [],
+      public_function_grants: [{ function_name: 'is_admin', grantee: 'PUBLIC', privilege_type: 'EXECUTE' }],
       asset_deliverables_bucket: expected.storageBuckets.map((id) => ({ id })),
       storage_policies: [],
       demo_seed_existence: [],
@@ -65,6 +65,27 @@ describe('production audit safety checker', () => {
 describe('production audit comparison', () => {
   it('reports not verified when no production export is provided', async () => {
     await expect(compareAudit()).resolves.toMatchObject({ status: 'not verified', notVerified: ['production audit export was not provided'] });
+  });
+
+
+
+  it('uses matched status only when no static differences are detected', async () => {
+    const report = await compareAudit({ auditJson: await completeMatchingExport() });
+    expect(report.status).toBe('matched with manual review required');
+  });
+
+  it('uses differences status when drift is detected', async () => {
+    const auditJson = JSON.parse(readFileSync('src/audit/fixtures/partial-production-audit.json', 'utf8'));
+    const report = await compareAudit({ auditJson });
+    expect(report.status).toBe('differences found');
+  });
+
+  it('preserves uppercase PUBLIC function grants in normalized audit review data', async () => {
+    const exportJson = JSON.parse(readFileSync('src/audit/fixtures/partial-production-audit.json', 'utf8'));
+    const normalized = normalizeAudit(exportJson);
+    expect(normalized.functionGrants).toEqual(expect.arrayContaining([
+      expect.objectContaining({ grantee: 'PUBLIC', privilege_type: 'EXECUTE' }),
+    ]));
   });
 
   it('complete matching export reports expected confirmed matches', async () => {

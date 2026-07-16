@@ -10,8 +10,9 @@ const allowedRelations = new Set([
   'pg_namespace','pg_extension','pg_type','pg_enum','information_schema.columns','pg_constraint','pg_indexes','information_schema.triggers','pg_class','pg_policies','pg_proc','pg_language','information_schema.routine_privileges','storage.buckets','public.assets','public.creators','public.collections','public.blog_posts','public.asset_deliverables','unnest'
 ]);
 const allowedFunctions = new Set([
-  'jsonb_build_object','jsonb_agg','jsonb_build_array','coalesce','unnest','string_agg','pg_get_constraintdef','pg_get_function_identity_arguments','pg_get_function_result','count','array','order','where'
+  'jsonb_build_object','jsonb_agg','jsonb_build_array','coalesce','unnest','string_agg','pg_get_constraintdef','pg_get_function_identity_arguments','pg_get_function_result','count','lower'
 ]);
+const sqlKeywords = new Set(['select','with','where','as','in','values','order','filter','and','or','from','join','on','by','case','when','then','else','end','not','null','true','false']);
 
 export function stripCommentsPreserveSql(sql) {
   let out = '';
@@ -131,7 +132,7 @@ export function validateKnownReadOnlyAuditAccess(sql) {
   const cteNames = new Set([...masked.matchAll(/(?:with|,)\s+([a-z_][a-z0-9_]*)\s+as\s*\(/gi)].map(m => m[1].toLowerCase()));
   const relationMatches = [...masked.matchAll(/\b(?:from|join)\s+([a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)?)/gi)].map(m => m[1].toLowerCase());
   for (const relation of relationMatches) if (!allowedRelations.has(relation) && !cteNames.has(relation)) errors.push(`Unknown audit relation: ${relation}`);
-  const fnMatches = [...masked.matchAll(/\b([a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)?)\s*\(/gi)].map(m => m[1].toLowerCase()).filter(name => !['select','where','as','in','values','order','filter','and'].includes(name));
+  const fnMatches = [...masked.matchAll(/\b([a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)?)\s*\(/gi)].map(m => m[1].toLowerCase()).filter(name => !sqlKeywords.has(name));
   for (const fn of fnMatches) if (!allowedFunctions.has(fn)) errors.push(`Unknown audit function: ${fn}`);
   return [...new Set(errors)];
 }

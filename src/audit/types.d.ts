@@ -14,6 +14,7 @@ declare module '../../scripts/compare-production-audit.mjs' {
     policies: string[];
     triggers: string[];
   }>;
+  export function normalizeAudit(input: unknown): { functionGrants: Array<Record<string, unknown>> };
   export function compareAudit(options?: { auditJson?: unknown; migrationsDir?: string }): Promise<{
     status: string;
     confirmedMatches: string[];

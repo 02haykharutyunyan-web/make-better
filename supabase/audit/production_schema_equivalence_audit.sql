@@ -53,7 +53,7 @@ select jsonb_build_object(
   'public_function_grants', coalesce((
     select jsonb_agg(jsonb_build_object('function_name', routine_name, 'specific_name', specific_name, 'grantee', grantee, 'privilege_type', privilege_type, 'is_grantable', is_grantable) order by routine_name, grantee, privilege_type)
     from information_schema.routine_privileges
-    where routine_schema = 'public' and grantee in ('anon', 'authenticated', 'service_role', 'public')
+    where routine_schema = 'public' and lower(grantee) in ('anon', 'authenticated', 'service_role', 'public')
   ), '[]'::jsonb),
   'asset_deliverables_bucket', coalesce((
     select jsonb_agg(jsonb_build_object('id', id, 'name', name, 'public', public, 'file_size_limit', file_size_limit, 'allowed_mime_types', allowed_mime_types) order by id)
