@@ -395,6 +395,10 @@ export type Database = {
         Args: Record<string, never>;
         Returns: boolean;
       };
+      can_access_asset_delivery: {
+        Args: { target_asset_id: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       user_role: UserRole;
