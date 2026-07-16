@@ -3,6 +3,7 @@ import type { Asset, Creator, BlogPost, Collection, ProductType } from "@/data/m
 import { supabase } from "@/lib/supabase/client";
 import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
 import { requireSupabaseConfig } from "@/lib/supabase/errors";
+import { publicEnv } from "@/lib/env";
 import { claimFreeAssetBySlug, createCreator, getCreatorByProfileId, getPublishedAssetBySlug, listMyAssetClaims, upsertProfile } from "@/services";
 import type { Tables } from "@/types/database";
 
@@ -66,8 +67,6 @@ function load(): StoreShape {
   return EMPTY_STORE;
 }
 
-const devDemoAuthEnabled = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_AUTH === "true";
-
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
@@ -96,7 +95,6 @@ type Ctx = {
   authLoading: boolean;
   store: StoreShape;
   login: (email: string, password: string) => Promise<User | null>;
-  loginAs: (role: Role) => Promise<User | null>;
   logout: () => Promise<void>;
   signupBuyer: (data: { name: string; email: string; password: string; phone?: string }) => Promise<User | null>;
   signupCreator: (data: { name: string; email: string; password: string; phone?: string; brand: string; bio: string }) => Promise<User | null>;
@@ -205,6 +203,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     init();
 
+    if (!publicEnv.hasSupabaseConfig) {
+      return () => {
+        mounted = false;
+      };
+    }
+
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
       setAuthLoading(true);
       window.setTimeout(() => {
@@ -270,12 +274,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       return loadCurrentProfile();
     },
-    loginAs: async () => {
-      if (!devDemoAuthEnabled) {
-        throw new Error("Demo quick access is disabled. Sign in with a Supabase account.");
-      }
-      throw new Error("Demo quick access requires explicitly configured development credentials outside the production bundle.");
-    },
     logout: async () => {
       requireSupabaseConfig();
       await supabase.auth.signOut();
@@ -302,14 +300,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       if (error) throw error;
       if (data.user && data.session) await ensureCreatorProfile(data.user.id, { name, email, phone, brand, bio });
-
-      const slug = slugify(brand) || `creator-${Date.now()}`;
-      const creator: Creator = {
-        slug, name: brand, niche: bio.slice(0, 60), description: bio,
-        tags: [], followers: 0, assetsCount: 0, downloads: 0, rating: 0,
-        monthlyRevenue: "-", strengths: [],
-      };
-      update(s => s.creators.some(c => c.slug === slug) ? s : ({ ...s, creators: [...s.creators, creator] }));
 
       return loadCurrentProfile();
     },
