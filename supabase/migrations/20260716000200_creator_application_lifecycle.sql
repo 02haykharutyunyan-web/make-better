@@ -19,6 +19,11 @@ update public.creators creator
 set
   application_status = case
     when creator.profile_id is null
+      or creator.id in (
+        '6b6a8889-07bc-4cc0-a21e-c9c54769c56e'::uuid,
+        'f6841040-f99f-4020-8b96-69fea85d3cbb'::uuid,
+        '8c64ec1b-d99f-4549-a59b-c6afb121003f'::uuid
+      )
       or exists (
         select 1 from public.assets
         where assets.creator_id = creator.id and assets.status = 'published'
@@ -33,6 +38,11 @@ set
   application_submitted_at = coalesce(creator.created_at, now()),
   application_reviewed_at = case
     when creator.profile_id is null
+      or creator.id in (
+        '6b6a8889-07bc-4cc0-a21e-c9c54769c56e'::uuid,
+        'f6841040-f99f-4020-8b96-69fea85d3cbb'::uuid,
+        '8c64ec1b-d99f-4549-a59b-c6afb121003f'::uuid
+      )
       or exists (
         select 1 from public.assets
         where assets.creator_id = creator.id and assets.status = 'published'
