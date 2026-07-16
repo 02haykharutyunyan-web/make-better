@@ -4,7 +4,7 @@ import type { SubmittedAsset, AssetStatus } from "@/store/store";
 
 type DbCreator = Pick<Tables<"creators">, "slug" | "brand_name" | "niche" | "description" | "tags" | "followers" | "assets_count" | "downloads" | "rating" | "monthly_revenue" | "strengths">;
 
-type DbAsset = Tables<"assets"> & {
+export type DbAsset = Tables<"assets"> & {
   creators?: DbCreator | null;
 };
 

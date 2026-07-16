@@ -251,7 +251,10 @@ function lines(value: string) {
   return value.split("\n").map(item => item.trim()).filter(Boolean);
 }
 
-function Field({ label, value, onChange, required, type = "text" }: any) {
+type TextInputProps = { label: string; value: string; onChange: (value: string) => void; required?: boolean; type?: string };
+type TextareaInputProps = Omit<TextInputProps, "type"> & { rows?: number };
+
+function Field({ label, value, onChange, required, type = "text" }: TextInputProps) {
   return (
     <label className="block">
       <span className="text-xs text-[#CFCFCF]">{label}{required && <span className="text-white/30"> *</span>}</span>
@@ -260,7 +263,7 @@ function Field({ label, value, onChange, required, type = "text" }: any) {
   );
 }
 
-function Textarea({ label, value, onChange, required, rows = 3 }: any) {
+function Textarea({ label, value, onChange, required, rows = 3 }: TextareaInputProps) {
   return (
     <label className="block">
       <span className="text-xs text-[#CFCFCF]">{label}{required && <span className="text-white/30"> *</span>}</span>

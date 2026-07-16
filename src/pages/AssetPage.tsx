@@ -232,7 +232,7 @@ export default function AssetPage() {
         </div>
       </section>
 
-      <GetAssetModal asset={asset as any} open={modalOpen} onClose={() => setModalOpen(false)} />
+      <GetAssetModal asset={asset} open={modalOpen} onClose={() => setModalOpen(false)} />
     </SiteLayout>
   );
 }
