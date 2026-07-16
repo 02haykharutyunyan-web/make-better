@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/store/store";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminRoute from "@/components/AdminRoute";
+import CreatorApprovalGate from "@/components/CreatorApprovalGate";
 
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -62,10 +63,10 @@ const App = () => (
               <ProtectedRoute roles={["creator"]}><CreatorDashboard /></ProtectedRoute>
             } />
             <Route path="/creator-dashboard/submit-asset" element={
-              <ProtectedRoute roles={["creator"]}><SubmitAssetPage /></ProtectedRoute>
+              <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><SubmitAssetPage /></CreatorApprovalGate></ProtectedRoute>
             } />
             <Route path="/creator-dashboard/assets/:slug/edit" element={
-              <ProtectedRoute roles={["creator"]}><EditAssetPage /></ProtectedRoute>
+              <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><EditAssetPage /></CreatorApprovalGate></ProtectedRoute>
             } />
 
             <Route path="/admin" element={
