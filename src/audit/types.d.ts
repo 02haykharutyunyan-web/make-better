@@ -1,7 +1,19 @@
 declare module '../../scripts/audit-safety.mjs' {
+  export function splitStatements(sql: string): string[];
+  export function validateKnownReadOnlyAuditAccess(sql: string): string[];
   export function validateReadOnlySelectAudit(sql: string): string[];
 }
 declare module '../../scripts/compare-production-audit.mjs' {
+  export function expectedFromMigrations(dir: string): Promise<{
+    extensions: string[];
+    storageBuckets: string[];
+    enums: Array<{ name: string; values: string[] }>;
+    tables: string[];
+    functions: string[];
+    indexes: string[];
+    policies: string[];
+    triggers: string[];
+  }>;
   export function compareAudit(options?: { auditJson?: unknown; migrationsDir?: string }): Promise<{
     status: string;
     confirmedMatches: string[];
