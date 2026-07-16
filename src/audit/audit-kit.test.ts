@@ -10,7 +10,10 @@ async function completeMatchingExport() {
       schemas: [],
       extensions: expected.extensions.map((name) => ({ name })),
       public_enums: expected.enums.flatMap((e) => e.values.map((value) => ({ enum_name: e.name, value }))),
-      public_columns: expected.tables.map((table_name) => ({ table_name })),
+      public_columns: expected.columns.map((column) => {
+        const [table_name, column_name] = column.split('.');
+        return { table_name, column_name };
+      }),
       public_constraints: [],
       public_indexes: expected.indexes.map((index_name) => ({ index_name })),
       public_triggers: expected.triggers.map((t) => {
@@ -128,6 +131,7 @@ describe('production audit comparison', () => {
       'storage_policies',
       'demo_seed_existence',
     ]));
+    expect(report.confirmedMatches).toContain('columns:collections.related_tags');
     expect(report.confirmedMatches.some((item) => item.startsWith('public_columns:'))).toBe(false);
     expect(report.confirmedMatches.some((item) => item.startsWith('public_constraints:'))).toBe(false);
   });
@@ -148,13 +152,15 @@ describe('production audit comparison', () => {
     expect(report.unexpectedObjects).toContain('indexes:unexpected_explicit_idx');
   });
 
-  it('reports the confirmed missing Task 1D function and GIN indexes', async () => {
+  it('reports collections.related_tags from ALTER TABLE ADD COLUMN drift plus the Task 1E function and GIN indexes', async () => {
     const exportJson = await completeMatchingExport();
+    exportJson.audit_result.public_columns = exportJson.audit_result.public_columns.filter((row) => !(row.table_name === 'collections' && row.column_name === 'related_tags'));
     exportJson.audit_result.public_functions = exportJson.audit_result.public_functions.filter((row) => row.function_name !== 'can_access_asset_delivery');
     exportJson.audit_result.public_indexes = exportJson.audit_result.public_indexes.filter((row) => !['collections_related_tags_idx', 'assets_tags_idx'].includes(row.index_name));
     const report = await compareAudit({ auditJson: exportJson });
     expect(report.status).toBe('differences found');
     expect(report.missingObjects).toEqual(expect.arrayContaining([
+      'columns:collections.related_tags',
       'functions:can_access_asset_delivery',
       'indexes:collections_related_tags_idx',
       'indexes:assets_tags_idx',
@@ -172,6 +178,19 @@ describe('production audit comparison', () => {
 });
 
 describe('Task 1D repair assets', () => {
+
+  it('documentation describes the Task 1E four-object drift and readiness expression without stale Task 1D wording', () => {
+    const doc = readFileSync('docs/production-schema-reconciliation-2026-07-16.md', 'utf8');
+    expect(doc).not.toMatch(/three confirmed differences|three missing objects|required_dependencies_present/i);
+    expect(doc).toMatch(/Column `public\.collections\.related_tags`/);
+    expect(doc).toMatch(/Function `public\.can_access_asset_delivery\(target_asset_id uuid\)`/);
+    expect(doc).toMatch(/Index `collections_related_tags_idx`/);
+    expect(doc).toMatch(/Index `assets_tags_idx`/);
+    expect(doc).toMatch(new RegExp('ready_for_repair =\\s*\\n\\s*related_tags_column_missing\\s*\\n\\s*AND function_missing\\s*\\n\\s*AND collections_index_missing\\s*\\n\\s*AND assets_index_missing\\s*\\n\\s*AND base_dependencies_present'));
+    expect(doc).toMatch(/`ALTER TABLE \.\.\. ADD COLUMN` may acquire a table lock/);
+    expect(doc).toMatch(/approved low-traffic maintenance window/);
+    expect(doc).toMatch(/do not claim or assume zero downtime/i);
+  });
   it('preflight and verification SQL remain SELECT-only', () => {
     for (const file of ['supabase/audit/task_1d_repair_preflight.sql', 'supabase/audit/task_1d_repair_verification.sql']) {
       expect(validateReadOnlySelectAudit(readFileSync(file, 'utf8'))).toEqual([]);
@@ -181,29 +200,48 @@ describe('Task 1D repair assets', () => {
   it('repair migration contains no migration-history repair operations or destructive SQL', () => {
     const sql = readFileSync('supabase/migrations/20260716000100_repair_confirmed_production_schema_drift.sql', 'utf8');
     expect(sql).not.toMatch(/supabase_migrations|schema_migrations|migration\s+repair|db\s+push|db\s+reset/i);
-    expect(sql).not.toMatch(/\b(drop|delete|truncate|alter\s+table|insert|update)\b/i);
+    expect(sql).not.toMatch(/\b(drop|delete|truncate|insert|update)\b/i);
+    const alterStatements = sql.match(/alter\s+table[\s\S]*?;/gi) ?? [];
+    expect(alterStatements).toEqual(["alter table public.collections\nadd column related_tags text[] not null default '{}'::text[];"]);
+    expect(sql).not.toMatch(/add\s+column\s+if\s+not\s+exists/i);
     expect(sql).toMatch(/create function public\.can_access_asset_delivery/);
     expect(sql).not.toMatch(/create or replace function public\.can_access_asset_delivery/i);
+    const addColumn = sql.indexOf("alter table public.collections\nadd column related_tags text[] not null default '{}'::text[];");
+    const createFunction = sql.indexOf('create function public.can_access_asset_delivery(target_asset_id uuid)');
+    const collectionsIndex = sql.indexOf('create index if not exists collections_related_tags_idx');
+    const assetsIndex = sql.indexOf('create index if not exists assets_tags_idx');
+    expect(addColumn).toBeGreaterThan(-1);
+    expect(createFunction).toBeGreaterThan(addColumn);
     const revokePublic = sql.indexOf('revoke all on function public.can_access_asset_delivery(uuid) from public;');
     const revokeAnon = sql.indexOf('revoke all on function public.can_access_asset_delivery(uuid) from anon;');
     const grantAuthenticated = sql.indexOf('grant execute on function public.can_access_asset_delivery(uuid) to authenticated;');
     expect(revokePublic).toBeGreaterThan(-1);
     expect(revokeAnon).toBeGreaterThan(revokePublic);
     expect(grantAuthenticated).toBeGreaterThan(revokeAnon);
-    expect(sql).toMatch(/create index if not exists collections_related_tags_idx/);
-    expect(sql).toMatch(/create index if not exists assets_tags_idx/);
+    expect(collectionsIndex).toBeGreaterThan(grantAuthenticated);
+    expect(assetsIndex).toBeGreaterThan(collectionsIndex);
   });
 
   it('preflight readiness and verification privilege checks are explicit fail-closed booleans', () => {
     const preflight = readFileSync('supabase/audit/task_1d_repair_preflight.sql', 'utf8');
+    expect(preflight).toMatch(/'related_tags_column_missing'/);
+    expect(preflight).toMatch(/not exists \([\s\S]*table_name = 'collections'[\s\S]*column_name = 'related_tags'/);
     expect(preflight).toMatch(/'function_missing'/);
     expect(preflight).toMatch(/'collections_index_missing'/);
     expect(preflight).toMatch(/'assets_index_missing'/);
-    expect(preflight).toMatch(/'required_dependencies_present'/);
+    expect(preflight).toMatch(/'base_dependencies_present'/);
     expect(preflight).toMatch(/'ready_for_repair'/);
-    expect(preflight).toMatch(/state\.function_missing and state\.collections_index_missing and state\.assets_index_missing and state\.required_dependencies_present/);
+    expect(preflight).toMatch(/state\.related_tags_column_missing and state\.function_missing and state\.collections_index_missing and state\.assets_index_missing and state\.base_dependencies_present/);
 
     const verification = readFileSync('supabase/audit/task_1d_repair_verification.sql', 'utf8');
+    expect(verification).toMatch(/'related_tags_column_matches_expected_definition'/);
+    expect(verification).toMatch(/data_type = 'ARRAY'/);
+    expect(verification).toMatch(/udt_name = '_text'/);
+    expect(verification).toMatch(/is_nullable = 'NO'/);
+    expect(verification).toMatch(/column_default in/);
+    expect(verification).toMatch(/'relevant_rls_enabled'/);
+    expect(verification).toMatch(/'asset_deliverables_storage_policy_present'/);
+    expect(verification).toMatch(/'asset_deliverables_bucket_private'/);
     expect(verification).toMatch(/'authenticated_has_execute'/);
     expect(verification).toMatch(/'public_execute_revoked'/);
     expect(verification).toMatch(/'anon_execute_revoked'/);
