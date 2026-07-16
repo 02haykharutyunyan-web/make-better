@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- This module intentionally exports component-related helpers used by shadcn/ui consumers without changing runtime behavior. */
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast } from "sonner";
 

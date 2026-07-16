@@ -12,7 +12,7 @@ import {
   listAssetDeliverables,
   updateAsset as updateAssetInSupabase,
 } from "@/services/assets";
-import type { Tables } from "@/types/database";
+import type { Tables, Updates } from "@/types/database";
 
 const filters: (AssetStatus | "All")[] = ["All", "Pending Review", "Approved", "Rejected", "Published", "Draft"];
 const productTypes: ProductType[] = ["Prompts", "AI Agents", "AI Assistants", "API Tools", "Workflows", "Templates", "Automation Assets", "Creator Resources"];
@@ -61,7 +61,7 @@ export default function AdminAssets() {
   const list = filter === "All" ? remoteAssets : remoteAssets.filter(a => a.status === filter);
 
   const setStatus = async (id: string, patch: Partial<SubmittedAsset>) => {
-    const dbPatch: any = {};
+    const dbPatch: Updates<"assets"> = {};
     if (patch.status === "Published") {
       dbPatch.status = "published";
       dbPatch.published_at = new Date().toISOString();
@@ -227,7 +227,7 @@ export default function AdminAssets() {
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="text-xs text-[#CFCFCF]">Price type</span>
-                <select value={editing.price_type} onChange={e => setEditing({ ...editing, price_type: e.target.value as any, price: e.target.value === "free" ? 0 : editing.price, is_free: e.target.value === "free" })} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm">
+                <select value={editing.price_type} onChange={e => setEditing({ ...editing, price_type: e.target.value as Tables<"assets">["price_type"], price: e.target.value === "free" ? 0 : editing.price, is_free: e.target.value === "free" })} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm">
                   <option className="bg-black" value="free">Free</option>
                   <option className="bg-black" value="paid">Paid</option>
                 </select>
@@ -259,10 +259,13 @@ function splitLines(value: string) {
   return value.split("\n").map(item => item.trim()).filter(Boolean);
 }
 
-function Field({ label, value, onChange, required, type = "text" }: any) {
+type TextInputProps = { label: string; value: string; onChange: (value: string) => void; required?: boolean; type?: string };
+type TextareaInputProps = Omit<TextInputProps, "type"> & { rows?: number };
+
+function Field({ label, value, onChange, required, type = "text" }: TextInputProps) {
   return <label className="block"><span className="text-xs text-[#CFCFCF]">{label}{required && <span className="text-white/30"> *</span>}</span><input required={required} type={type} value={value} onChange={e => onChange(e.target.value)} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70" /></label>;
 }
 
-function Textarea({ label, value, onChange, rows = 3 }: any) {
+function Textarea({ label, value, onChange, rows = 3 }: TextareaInputProps) {
   return <label className="block"><span className="text-xs text-[#CFCFCF]">{label}</span><textarea value={value} rows={rows} onChange={e => onChange(e.target.value)} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70" /></label>;
 }

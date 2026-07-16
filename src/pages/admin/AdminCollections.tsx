@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import type { Collection } from "@/data/marketplace";
+import type { Collection, ProductType } from "@/data/marketplace";
 import { deleteCollection, listAdminCollections, updateCollection, upsertCollection } from "@/services/content";
 import { listAdminAssets } from "@/services/assets";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { dbCollectionToCollection } from "@/lib/content-mappers";
 import type { Tables } from "@/types/database";
+
+const productTypes: ProductType[] = ["Prompts", "AI Agents", "AI Assistants", "API Tools", "Workflows", "Templates", "Automation Assets", "Creator Resources"];
 
 type Draft = Collection & { id?: string; status?: string; selectedAssetIds?: string[]; relatedTags?: string[] };
 const blank: Draft = { slug: "", title: "", description: "", longDescription: "", bestFor: [], relatedTypes: [], relatedTags: [], status: "Published", selectedAssetIds: [] };
@@ -106,7 +108,7 @@ export default function AdminCollections() {
             <Textarea label="Description" rows={2} value={editing.description} onChange={v => setEditing({ ...editing, description: v })} />
             <Textarea label="SEO intro / long description" rows={4} value={editing.longDescription} onChange={v => setEditing({ ...editing, longDescription: v })} />
             <Field label="Best for (comma separated)" value={editing.bestFor.join(", ")} onChange={v => setEditing({ ...editing, bestFor: v.split(",").map(x => x.trim()).filter(Boolean) })} />
-            <Field label="Related product types (comma separated)" value={editing.relatedTypes.join(", ")} onChange={v => setEditing({ ...editing, relatedTypes: v.split(",").map(x => x.trim()).filter(Boolean) as any })} />
+            <Field label="Related product types (comma separated)" value={editing.relatedTypes.join(", ")} onChange={v => setEditing({ ...editing, relatedTypes: v.split(",").map(x => x.trim()).filter((type): type is ProductType => productTypes.includes(type as ProductType)) })} />
             <Field label="Related tags (comma separated)" value={(editing.relatedTags || []).join(", ")} onChange={v => setEditing({ ...editing, relatedTags: v.split(",").map(x => x.trim()).filter(Boolean) })} />
             <div><div className="text-xs text-[#CFCFCF] mb-2">Selected published assets</div><div className="max-h-40 overflow-y-auto rounded-xl border border-white/10 bg-[#0E0E0E]/70 p-3 space-y-1">
               {assets.filter(a => a.status === "published").map(a => <label key={a.id} className="flex items-center gap-2 text-sm py-1"><input type="checkbox" checked={(editing.selectedAssetIds || []).includes(a.id)} onChange={() => toggleAsset(a.id)} /><span className="text-white/80">{a.title}</span></label>)}
@@ -120,9 +122,12 @@ export default function AdminCollections() {
   );
 }
 
-function Field({ label, value, onChange, required, type = "text" }: any) {
+type TextInputProps = { label: string; value: string; onChange: (value: string) => void; required?: boolean; type?: string };
+type TextareaInputProps = Omit<TextInputProps, "type"> & { rows?: number };
+
+function Field({ label, value, onChange, required, type = "text" }: TextInputProps) {
   return <label className="block"><span className="text-xs text-[#CFCFCF]">{label}{required && <span className="text-white/30"> *</span>}</span><input required={required} type={type} value={value} onChange={e => onChange(e.target.value)} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70" /></label>;
 }
-function Textarea({ label, value, onChange, rows = 3 }: any) {
+function Textarea({ label, value, onChange, rows = 3 }: TextareaInputProps) {
   return <label className="block"><span className="text-xs text-[#CFCFCF]">{label}</span><textarea value={value} rows={rows} onChange={e => onChange(e.target.value)} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70" /></label>;
 }

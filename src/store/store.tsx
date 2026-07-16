@@ -1,7 +1,8 @@
+/* eslint-disable react-refresh/only-export-components -- This module intentionally exports component-related helpers used by shadcn/ui consumers without changing runtime behavior. */
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import type { Asset, Creator, BlogPost, Collection, ProductType } from "@/data/marketplace";
 import { supabase } from "@/lib/supabase/client";
-import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
+import { dbAssetToSubmittedAsset, type DbAsset } from "@/lib/asset-mappers";
 import { requireSupabaseConfig } from "@/lib/supabase/errors";
 import { publicEnv } from "@/lib/env";
 import { claimFreeAssetBySlug, createCreator, getCreatorByProfileId, getPublishedAssetBySlug, listMyAssetClaims, upsertProfile } from "@/services";
@@ -169,7 +170,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })).filter(c => c.assetSlug);
     setRemoteClaims(mappedClaims);
     const claimedAssets = claims
-      .map(c => c.assets ? dbAssetToSubmittedAsset(c.assets as any) : null)
+      .map(c => c.assets ? dbAssetToSubmittedAsset(c.assets as DbAsset) : null)
       .filter(Boolean) as SubmittedAsset[];
     if (claimedAssets.length > 0) {
       update(s => ({
@@ -225,6 +226,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       mounted = false;
       listener.subscription.unsubscribe();
     };
+  // The auth bootstrap must subscribe once on mount; these helpers close over stable React setters and Supabase services.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const ensureBuyerProfile = async (authUserId: string, data: { name: string; email: string; phone?: string }) => {
@@ -315,7 +318,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (asset.isFree) {
         const remoteClaim = await claimFreeAssetBySlug(asset.slug, currentUserId);
         const remoteAsset = await getPublishedAssetBySlug(asset.slug);
-        const claimedAsset = remoteAsset ? dbAssetToSubmittedAsset(remoteAsset as any) : asset;
+        const claimedAsset = remoteAsset ? dbAssetToSubmittedAsset(remoteAsset as DbAsset) : asset;
         const claim: Claim = {
           id: remoteClaim.id,
           userId: remoteClaim.user_id,
