@@ -137,20 +137,36 @@ export async function updateCreator(id: string, patch: Updates<"creators">) {
 }
 
 
-export async function reviewCreatorApplication(id: string, status: "approved" | "rejected", rejectionReason?: string) {
+export async function reviewCreatorApplication(
+  id: string,
+  status: "approved" | "rejected",
+  rejectionReason?: string,
+) {
   if (status === "rejected" && !rejectionReason?.trim()) {
     throw new Error("A rejection reason is required before rejecting a creator application.");
   }
 
-  const { data, error } = await supabase
-    .from("creators")
-    .update({
-      application_status: status,
-      application_rejection_reason: status === "rejected" ? rejectionReason!.trim() : null,
-    })
-    .eq("id", id)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc("review_creator_application", {
+    target_creator_id: id,
+    target_status: status,
+    rejection_reason: status === "rejected" ? rejectionReason!.trim() : null,
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function reapplyCreatorApplication() {
+  const { data, error } = await supabase.rpc("reapply_creator_application");
+  if (error) throw error;
+  return data;
+}
+
+export async function setCreatorFeatured(id: string, featured: boolean) {
+  const { data, error } = await supabase.rpc("set_creator_featured", {
+    target_creator_id: id,
+    target_featured: featured,
+  });
 
   if (error) throw error;
   return data;
