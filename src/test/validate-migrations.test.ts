@@ -30,7 +30,8 @@ async function createFixture(files: Record<string, string>) {
 function validFiles(overrides: Record<string, string> = {}) {
   const files: Record<string, string> = {};
   requiredNames.forEach((name, index) => {
-    files[`20260517000${index + 1}00_${name}.sql`] = "-- valid fixture\n";
+    const version = String((index + 1) * 100).padStart(6, "0");
+    files[`20260517${version}_${name}.sql`] = "-- valid fixture\\n";
   });
   return { ...files, ...overrides };
 }
