@@ -2,7 +2,7 @@
 -- Do not use this file for migration-history repair or replay of historical migrations.
 -- Contains only the confirmed missing function and explicit GIN indexes.
 
-create or replace function public.can_access_asset_delivery(target_asset_id uuid)
+create function public.can_access_asset_delivery(target_asset_id uuid)
 returns boolean
 language sql
 stable
@@ -29,6 +29,8 @@ as $$
     );
 $$;
 
+revoke all on function public.can_access_asset_delivery(uuid) from public;
+revoke all on function public.can_access_asset_delivery(uuid) from anon;
 grant execute on function public.can_access_asset_delivery(uuid) to authenticated;
 
 create index if not exists collections_related_tags_idx

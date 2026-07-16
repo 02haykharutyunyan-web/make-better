@@ -46,22 +46,22 @@ Static comparison still cannot fully prove equivalence for column definitions, c
 
 ## Safe forward-only repair preparation
 
-A new forward-only migration has been prepared with only the confirmed missing objects. It does not replay historical migrations, does not manipulate migration history, does not recreate tables, does not delete or rewrite data, and does not replace broad policies.
+A new forward-only migration has been prepared with only the confirmed missing objects. It does not replay historical migrations, does not manipulate migration history, does not recreate tables, does not delete or rewrite data, and does not replace broad policies. The function uses `CREATE FUNCTION` without `OR REPLACE` intentionally, so execution fails closed if a same-signature function appears before repair execution. Because PostgreSQL grants `EXECUTE` on new functions to `PUBLIC` by default, the migration explicitly revokes execution from `PUBLIC` and `anon`, then grants execution only to `authenticated`; no explicit `service_role` execute grant is included because it is not required for the gated authenticated-user access path being repaired.
 
 ## Safe rollout sequence
 
 1. Before any production change, obtain explicit human approval for this repair and a current production backup/recovery point.
 2. Run the SELECT-only preflight SQL from `supabase/audit/task_1d_repair_preflight.sql` manually in Supabase SQL Editor and save the metadata-only result.
-3. Confirm the preflight still shows only the expected missing function and indexes, and that required source tables, columns, RLS state, relevant policies, and the private bucket are present.
+3. Confirm `ready_for_repair` is true. This requires `function_missing`, `collections_index_missing`, `assets_index_missing`, and `required_dependencies_present` all to be true. If any readiness boolean is false, stop and review; do not run the repair.
 4. Apply only the forward-only repair statements from the new migration through the approved production change process. Do not run historical migrations and do not run migration-history repair.
 5. Run the SELECT-only verification SQL from `supabase/audit/task_1d_repair_verification.sql` manually in Supabase SQL Editor.
-6. Confirm the function signature, return type, security mode, search path, execute privileges, index definitions, RLS state, storage policy state, and bucket state.
+6. Confirm the function signature, return type, security mode, search path, explicit privilege booleans (`authenticated` has `EXECUTE`, `PUBLIC` does not, and `anon` does not), exact index table/access-method/column definitions, RLS state, storage policy state, and bucket state.
 7. Archive the preflight, executed repair SQL, verification result, approval, and backup reference in the production change record.
 8. Only after schema equivalence and an approved baseline-history strategy are established should future Supabase migration-history work be considered.
 
 ## Rollback and recovery considerations
 
-The prepared repair is additive/idempotent where reasonable. If an issue is discovered before execution, do not execute the repair. If an issue is discovered after execution, use the production backup/recovery plan and a separate reviewed rollback plan; do not improvise destructive SQL in production. Because the function is created with `CREATE OR REPLACE FUNCTION` and the indexes use `CREATE INDEX IF NOT EXISTS`, repeated execution should not create duplicate objects, but production execution still requires approval and verification.
+The prepared repair is additive/idempotent where reasonable. If an issue is discovered before execution, do not execute the repair. If an issue is discovered after execution, use the production backup/recovery plan and a separate reviewed rollback plan; do not improvise destructive SQL in production. Because the function is created with `CREATE FUNCTION` without `OR REPLACE`, a concurrent or unexpected same-signature function causes the repair to fail rather than overwrite production state. The indexes use `CREATE INDEX IF NOT EXISTS`, but production execution still requires approval and verification.
 
 ## Data handling
 

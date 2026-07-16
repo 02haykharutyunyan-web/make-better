@@ -182,9 +182,35 @@ describe('Task 1D repair assets', () => {
     const sql = readFileSync('supabase/migrations/20260716000100_repair_confirmed_production_schema_drift.sql', 'utf8');
     expect(sql).not.toMatch(/supabase_migrations|schema_migrations|migration\s+repair|db\s+push|db\s+reset/i);
     expect(sql).not.toMatch(/\b(drop|delete|truncate|alter\s+table|insert|update)\b/i);
-    expect(sql).toMatch(/create or replace function public\.can_access_asset_delivery/);
+    expect(sql).toMatch(/create function public\.can_access_asset_delivery/);
+    expect(sql).not.toMatch(/create or replace function public\.can_access_asset_delivery/i);
+    const revokePublic = sql.indexOf('revoke all on function public.can_access_asset_delivery(uuid) from public;');
+    const revokeAnon = sql.indexOf('revoke all on function public.can_access_asset_delivery(uuid) from anon;');
+    const grantAuthenticated = sql.indexOf('grant execute on function public.can_access_asset_delivery(uuid) to authenticated;');
+    expect(revokePublic).toBeGreaterThan(-1);
+    expect(revokeAnon).toBeGreaterThan(revokePublic);
+    expect(grantAuthenticated).toBeGreaterThan(revokeAnon);
     expect(sql).toMatch(/create index if not exists collections_related_tags_idx/);
     expect(sql).toMatch(/create index if not exists assets_tags_idx/);
+  });
+
+  it('preflight readiness and verification privilege checks are explicit fail-closed booleans', () => {
+    const preflight = readFileSync('supabase/audit/task_1d_repair_preflight.sql', 'utf8');
+    expect(preflight).toMatch(/'function_missing'/);
+    expect(preflight).toMatch(/'collections_index_missing'/);
+    expect(preflight).toMatch(/'assets_index_missing'/);
+    expect(preflight).toMatch(/'required_dependencies_present'/);
+    expect(preflight).toMatch(/'ready_for_repair'/);
+    expect(preflight).toMatch(/state\.function_missing and state\.collections_index_missing and state\.assets_index_missing and state\.required_dependencies_present/);
+
+    const verification = readFileSync('supabase/audit/task_1d_repair_verification.sql', 'utf8');
+    expect(verification).toMatch(/'authenticated_has_execute'/);
+    expect(verification).toMatch(/'public_execute_revoked'/);
+    expect(verification).toMatch(/'anon_execute_revoked'/);
+    expect(verification).toMatch(/not state\.public_has_execute/);
+    expect(verification).toMatch(/not state\.anon_has_execute/);
+    expect(verification).toMatch(/indexdef = 'CREATE INDEX collections_related_tags_idx ON public\.collections USING gin \(related_tags\)'/);
+    expect(verification).toMatch(/indexdef = 'CREATE INDEX assets_tags_idx ON public\.assets USING gin \(tags\)'/);
   });
 
 });
