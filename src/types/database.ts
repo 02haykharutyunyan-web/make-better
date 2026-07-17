@@ -408,6 +408,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      create_blog_draft: {
+        Args: { draft_slug: string; draft_title: string; draft_excerpt?: string | null; draft_category?: string | null; draft_body?: string | null };
+        Returns: Database["public"]["Tables"]["blog_posts"]["Row"];
+      };
       current_user_role: {
         Args: Record<string, never>;
         Returns: UserRole;

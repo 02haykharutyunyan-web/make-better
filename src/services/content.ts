@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import type { Inserts, Updates } from "@/types/database";
+import { formatSupabaseOperationError } from "@/lib/supabase/errors";
 
 export async function listPublishedBlogPosts() {
   const { data, error } = await supabase
@@ -74,26 +75,68 @@ export async function reviewBlogPost(blogPostId: string, status: "published" | "
   return data;
 }
 
-export async function upsertBlogPost(input: Inserts<"blog_posts">) {
+const editableBlogColumns = ["slug", "title", "excerpt", "category", "body", "creator_id", "status"] as const;
+
+type EditableBlogColumn = (typeof editableBlogColumns)[number];
+type BlogDraftInput = Pick<Inserts<"blog_posts">, EditableBlogColumn>;
+type CreatorBlogDraftInput = Pick<Inserts<"blog_posts">, "slug" | "title" | "excerpt" | "category" | "body">;
+
+function blogDraftPayload(input: Partial<BlogDraftInput>) {
+  return {
+    slug: input.slug,
+    title: input.title,
+    excerpt: input.excerpt ?? null,
+    category: input.category ?? null,
+    body: input.body ?? null,
+    creator_id: input.creator_id ?? null,
+    status: "draft" as const,
+  };
+}
+
+function rethrowBlogWriteError(error: unknown): never {
+  throw formatSupabaseOperationError(error, "Unable to save this blog draft.", {
+    duplicateMessage: "A blog post with this slug already exists. Choose a unique slug before saving.",
+  });
+}
+
+export async function createBlogPost(input: CreatorBlogDraftInput) {
+  const { data, error } = await supabase.rpc("create_blog_draft", {
+    draft_slug: input.slug,
+    draft_title: input.title,
+    draft_excerpt: input.excerpt ?? null,
+    draft_category: input.category ?? null,
+    draft_body: input.body ?? null,
+  });
+
+  if (error) rethrowBlogWriteError(error);
+  return data;
+}
+
+export async function createAdminBlogPost(input: BlogDraftInput) {
   const { data, error } = await supabase
     .from("blog_posts")
-    .upsert({ ...input, status: input.status || "draft" }, { onConflict: "slug" })
+    .insert(blogDraftPayload(input))
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) rethrowBlogWriteError(error);
   return data;
+}
+
+/** @deprecated Use createBlogPost or updateBlogPost so creator saves never UPSERT by slug. */
+export async function upsertBlogPost(input: Inserts<"blog_posts">) {
+  return createBlogPost(input);
 }
 
 export async function updateBlogPost(id: string, patch: Updates<"blog_posts">) {
   const { data, error } = await supabase
     .from("blog_posts")
-    .update(patch)
+    .update(blogDraftPayload(patch as Partial<BlogDraftInput>))
     .eq("id", id)
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) rethrowBlogWriteError(error);
   return data;
 }
 

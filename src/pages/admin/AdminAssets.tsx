@@ -37,6 +37,9 @@ export default function AdminAssets() {
   const [creatorNames, setCreatorNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [reviewIntent, setReviewIntent] = useState<{ id: string; status: "published" | "rejected" | "draft" } | null>(null);
+  const [reason, setReason] = useState("");
 
   const loadAssets = async () => {
     setLoading(true);
@@ -62,34 +65,46 @@ export default function AdminAssets() {
 
   const list = filter === "All" ? remoteAssets : remoteAssets.filter(a => a.status === filter);
 
+  const openReview = (id: string, status: "published" | "rejected" | "draft") => {
+    if (processingId) return;
+    setReason("");
+    setReviewIntent({ id, status });
+  };
+
+  const confirmReview = async () => {
+    if (!reviewIntent || processingId) return;
+    if (reviewIntent.status === "rejected" && !reason.trim()) { setErr("Enter a meaningful rejection reason before rejecting."); return; }
+    setProcessingId(reviewIntent.id); setErr("");
+    try {
+      const row = await reviewAsset(reviewIntent.id, reviewIntent.status, reason.trim());
+      const mapped = dbAssetToSubmittedAsset(row);
+      setRemoteAssets(prev => prev.map(asset => asset.id === mapped.id ? mapped : asset));
+      setAssetRows(prev => ({ ...prev, [row.id]: row }));
+      setReviewIntent(null);
+      void loadAssets();
+    } catch (error) {
+      setErr(explainSupabaseError(error, "Unable to review asset."));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const setStatus = async (id: string, patch: Partial<SubmittedAsset>) => {
     setErr("");
     try {
-      if (patch.status === "Published") {
-        if (!confirm("Approve and publish this asset?")) return;
-        await reviewAsset(id, "published");
-      } else if (patch.status === "Rejected") {
-        await reviewAsset(id, "rejected", patch.rejectionReason);
-      } else if (patch.status === "Draft") {
-        if (!confirm("Return this asset to draft for creator changes?")) return;
-        await reviewAsset(id, "draft");
-      } else if ("featured" in patch) {
-        await setAssetFeatured(id, Boolean(patch.featured));
+      if ("featured" in patch) {
+        const row = await setAssetFeatured(id, Boolean(patch.featured));
+        const mapped = dbAssetToSubmittedAsset(row);
+        setRemoteAssets(prev => prev.map(asset => asset.id === mapped.id ? mapped : asset));
+        setAssetRows(prev => ({ ...prev, [row.id]: row }));
+        void loadAssets();
       }
-      await loadAssets();
     } catch (error) {
       setErr(explainSupabaseError(error, "Unable to review asset."));
     }
   };
 
-  const reject = async (id: string) => {
-    const reason = prompt("Rejection reason:");
-    if (!reason?.trim()) { setErr("Enter a meaningful rejection reason before rejecting."); return; }
-    if (confirm("Reject this asset? The reason will be visible to the creator.")) await setStatus(id, { status: "Rejected", rejectionReason: reason.trim() });
-  };
-
   const remove = async (id: string) => {
-    if (!confirm("Delete this asset?")) return;
     setErr("");
     try {
       await deleteAssetFromSupabase(id);
@@ -182,18 +197,11 @@ export default function AdminAssets() {
                     <td className="px-5 py-4 text-right text-xs space-x-2 whitespace-nowrap">
                       <Link to={`/asset/${a.slug}`} className="text-[#CFCFCF] hover:text-white">View</Link>
                       <button onClick={() => setEditing(assetRows[a.id])} className="text-[#CFCFCF] hover:text-white">Edit</button>
-                      {a.status !== "Approved" && a.status !== "Published" && (
-                        <button onClick={() => setStatus(a.id, { status: "Published", rejectionReason: undefined })} className="text-[#FFD600] hover:text-[#FFD600]">Approve</button>
-                      )}
-                      {a.status !== "Rejected" && (
-                        <button onClick={() => reject(a.id)} className="text-[#CFCFCF] hover:text-[#CFCFCF]">Reject</button>
-                      )}
-                      {a.status !== "Published" ? (
-                        <button onClick={() => setStatus(a.id, { status: "Published" })} className="text-white hover:text-white">Publish</button>
-                      ) : (
-                        <button onClick={() => setStatus(a.id, { status: "Draft" })} className="text-[#CFCFCF] hover:text-white">Unpublish</button>
-                      )}
-                      <button onClick={() => setStatus(a.id, { featured: !a.featured })} className="text-[#FFD600] hover:text-[#FFD600]">{a.featured ? "Unfeature" : "Feature"}</button>
+                      {a.status === "Pending Review" && <button disabled={processingId === a.id} onClick={() => openReview(a.id, "published")} className="text-[#FFD600] hover:text-[#FFD600] disabled:opacity-50">Publish</button>}
+                      {a.status === "Pending Review" && <button disabled={processingId === a.id} onClick={() => openReview(a.id, "rejected")} className="text-[#CFCFCF] hover:text-[#CFCFCF] disabled:opacity-50">Reject</button>}
+                      {a.status === "Pending Review" && <button disabled={processingId === a.id} onClick={() => openReview(a.id, "draft")} className="text-[#CFCFCF] hover:text-white disabled:opacity-50">Return to draft</button>}
+                      {a.status === "Published" && <button disabled={processingId === a.id} onClick={() => openReview(a.id, "draft")} className="text-[#CFCFCF] hover:text-white disabled:opacity-50">Unpublish</button>}
+                      {a.status === "Published" && <button onClick={() => setStatus(a.id, { featured: !a.featured })} className="text-[#FFD600] hover:text-[#FFD600]">{a.featured ? "Unfeature" : "Feature"}</button>}
                       <button onClick={() => remove(a.id)} className="text-[#CFCFCF] hover:text-[#CFCFCF]">Delete</button>
                     </td>
                   </tr>
@@ -208,6 +216,19 @@ export default function AdminAssets() {
           </table>
         </div>
       </div>
+
+      {reviewIntent && (
+        <ReviewModal
+          title={reviewIntent.status === "published" ? "Publish asset" : reviewIntent.status === "draft" ? "Return asset to draft" : "Reject asset"}
+          description={reviewIntent.status === "rejected" ? "The reason will be visible to the creator." : reviewIntent.status === "draft" ? "The asset will leave public results and become creator-editable." : "The asset will become public after the database transition succeeds."}
+          requireReason={reviewIntent.status === "rejected"}
+          reason={reason}
+          onReason={setReason}
+          loading={processingId === reviewIntent.id}
+          onCancel={() => setReviewIntent(null)}
+          onConfirm={confirmReview}
+        />
+      )}
 
       {editing && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4">
@@ -268,4 +289,8 @@ function Field({ label, value, onChange, required, type = "text" }: TextInputPro
 
 function Textarea({ label, value, onChange, rows = 3 }: TextareaInputProps) {
   return <label className="block"><span className="text-xs text-[#CFCFCF]">{label}</span><textarea value={value} rows={rows} onChange={e => onChange(e.target.value)} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm focus:outline-none focus:border-[#FFD600]/70" /></label>;
+}
+
+function ReviewModal({ title, description, requireReason, reason, onReason, loading, onCancel, onConfirm }: { title: string; description: string; requireReason: boolean; reason: string; onReason: (value: string) => void; loading: boolean; onCancel: () => void; onConfirm: () => void }) {
+  return <div role="dialog" aria-modal="true" className="fixed inset-0 z-[110] flex items-end justify-center p-3 sm:items-center sm:p-4"><div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={loading ? undefined : onCancel} /><div className="relative w-full max-w-lg glass-modal p-5 sm:p-7"><h3 className="text-xl font-medium">{title}</h3><p className="mt-2 text-sm text-[#CFCFCF]">{description}</p>{requireReason && <label className="mt-4 block"><span className="text-xs text-[#CFCFCF]">Rejection reason</span><textarea autoFocus rows={4} value={reason} onChange={e => onReason(e.target.value)} disabled={loading} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm disabled:opacity-60" /></label>}<div className="mt-5 flex flex-col justify-end gap-3 sm:flex-row"><button type="button" disabled={loading} onClick={onCancel} className="min-h-11 rounded-full border border-white/10 px-4 py-2 text-sm disabled:opacity-50">Cancel</button><button type="button" disabled={loading || (requireReason && !reason.trim())} onClick={onConfirm} className="min-h-11 rounded-full btn-primary px-5 py-2 text-sm font-medium disabled:opacity-50">{loading ? "Saving..." : "Confirm"}</button></div></div></div>;
 }

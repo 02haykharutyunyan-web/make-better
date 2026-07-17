@@ -70,7 +70,7 @@ describe("Task 2B content moderation lifecycle", () => {
   it("routes creator submissions through draft, explicit submit RPCs, and no partial asset auto-submit", () => {
     expect(assetsService).toContain('status: input.status || "draft"');
     expect(assetsService).toContain('supabase.rpc("submit_asset_for_review"');
-    expect(contentService).toContain('status: input.status || "draft"');
+    expect(contentService).toContain('insert(blogDraftPayload(input))');
     expect(contentService).toContain('supabase.rpc("submit_blog_post_for_review"');
     expect(readFileSync("src/pages/creator/SubmitAssetPage.tsx", "utf8")).toContain("delivery upload failed");
   });
@@ -81,7 +81,7 @@ describe("Task 2B content moderation lifecycle", () => {
     expect(creatorBlogEditor).toContain("Submit for review");
     expect(creatorBlogEditor).toContain("Pending-review and published posts cannot be edited");
     expect(adminBlog).toContain("Moderation queue");
-    expect(adminBlog).toContain("reviewBlogPost(post.id, status");
+    expect(adminBlog).toContain("reviewBlogPost(reviewIntent.post.id, reviewIntent.status");
     expect(adminBlog).toContain("Enter a meaningful rejection reason");
     expect(adminBlog).not.toContain("status: editing.status");
   });
