@@ -14,6 +14,8 @@ import {
   submitAssetForReview,
   uploadAssetDeliverableFile,
   upsertAssetDeliverable,
+  validateDeliveryUrl,
+  validateTextDelivery,
 } from "@/services/assets";
 import type { DeliveryType, Tables } from "@/types/database";
 
@@ -111,8 +113,8 @@ export default function EditAssetPage() {
       if (!form.description.trim()) throw new Error("Add a short description.");
       if (form.priceType === "paid" && price <= 0) throw new Error("Paid assets need a price greater than 0.");
       if (form.deliveryType === "file" && !deliverable?.storage_path && !deliverableFile) throw new Error("Upload a deliverable file before saving.");
-      if (form.deliveryType === "external_link" && !form.externalUrl.trim()) throw new Error("Add the external delivery link before saving.");
-      if (form.deliveryType === "text" && !form.textContent.trim()) throw new Error("Add the private text or prompt content before saving.");
+      if (form.deliveryType === "external_link") validateDeliveryUrl(form.externalUrl);
+      if (form.deliveryType === "text") validateTextDelivery(form.textContent);
 
       await updateAsset(asset.id, {
         title: form.title.trim(),
@@ -124,9 +126,6 @@ export default function EditAssetPage() {
         price,
         is_free: form.priceType === "free",
         price_type: form.priceType,
-        status: "draft",
-        rejection_reason: null,
-        published_at: null,
         use_cases: lines(form.useCases),
         included: lines(form.included),
         before: lines(form.before),
@@ -145,18 +144,30 @@ export default function EditAssetPage() {
             storage_path: storagePath || "",
             file_name: deliverableFile?.name || deliverable?.file_name || "Deliverable file",
             file_size: deliverableFile?.size || deliverable?.file_size || null,
+            external_url: null,
+            text_content: null,
           });
         } else if (form.deliveryType === "external_link") {
           await upsertAssetDeliverable({
             asset_id: asset.id,
             delivery_type: "external_link",
-            external_url: form.externalUrl.trim(),
+            storage_bucket: null,
+            storage_path: null,
+            file_name: null,
+            file_size: null,
+            external_url: validateDeliveryUrl(form.externalUrl),
+            text_content: null,
           });
         } else {
           await upsertAssetDeliverable({
             asset_id: asset.id,
             delivery_type: "text",
-            text_content: form.textContent,
+            storage_bucket: null,
+            storage_path: null,
+            file_name: null,
+            file_size: null,
+            external_url: null,
+            text_content: validateTextDelivery(form.textContent),
           });
         }
       } catch (deliveryError) {

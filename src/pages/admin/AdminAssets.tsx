@@ -195,7 +195,7 @@ export default function AdminAssets() {
                     <td className="px-5 py-4 text-[#CFCFCF] text-xs">{new Date(a.submittedAt).toLocaleDateString()}</td>
                     <td className="px-5 py-4 text-white/65 text-xs">{a.downloads}/{a.rating}</td>
                     <td className="px-5 py-4 text-right text-xs space-x-2 whitespace-nowrap">
-                      <Link to={`/asset/${a.slug}`} className="text-[#CFCFCF] hover:text-white">View</Link>
+                      <a href={a.status === "Published" ? `/asset/${a.slug}` : `/admin/assets/${a.id}/preview`} target="_blank" rel="noopener noreferrer" className="text-[#CFCFCF] hover:text-white">{a.status === "Published" ? "View" : "Preview"}</a>
                       <button onClick={() => setEditing(assetRows[a.id])} className="text-[#CFCFCF] hover:text-white">Edit</button>
                       {a.status === "Pending Review" && <button disabled={processingId === a.id} onClick={() => openReview(a.id, "published")} className="text-[#FFD600] hover:text-[#FFD600] disabled:opacity-50">Publish</button>}
                       {a.status === "Pending Review" && <button disabled={processingId === a.id} onClick={() => openReview(a.id, "rejected")} className="text-[#CFCFCF] hover:text-[#CFCFCF] disabled:opacity-50">Reject</button>}
