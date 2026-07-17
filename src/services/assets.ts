@@ -85,10 +85,28 @@ export async function getCreatorAssetBySlug(slug: string) {
 export async function submitAsset(input: Inserts<"assets">) {
   const { data, error } = await supabase
     .from("assets")
-    .insert({ ...input, status: input.status || "pending_review" })
+    .insert({ ...input, status: input.status || "draft" })
     .select()
     .single();
 
+  if (error) throw error;
+  return data;
+}
+
+
+export async function submitAssetForReview(assetId: string) {
+  const { data, error } = await supabase.rpc("submit_asset_for_review", { target_asset_id: assetId });
+  if (error) throw error;
+  return data;
+}
+
+export async function reviewAsset(assetId: string, status: "published" | "rejected" | "draft", rejectionReason?: string | null) {
+  if (status === "rejected" && !rejectionReason?.trim()) throw new Error("A rejection reason is required.");
+  const { data, error } = await supabase.rpc("review_asset", {
+    target_asset_id: assetId,
+    target_status: status,
+    rejection_reason: status === "rejected" ? rejectionReason!.trim() : null,
+  });
   if (error) throw error;
   return data;
 }

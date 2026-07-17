@@ -8,6 +8,7 @@ import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
 import { getCreatorByProfileId, reapplyCreatorApplication } from "@/services/creators";
 import type { Tables } from "@/types/database";
 import { countAccessRequestsForAssets, listCreatorAssets } from "@/services/assets";
+import { listCreatorBlogPosts } from "@/services/content";
 
 const statusStyles: Record<string, string> = {
   "Draft": "bg-[#0E0E0E]/80 text-[#CFCFCF] border-white/10",
@@ -20,6 +21,7 @@ const statusStyles: Record<string, string> = {
 export default function CreatorDashboard() {
   const { user } = useStore();
   const [remoteAssets, setRemoteAssets] = useState<SubmittedAsset[]>([]);
+  const [blogPosts, setBlogPosts] = useState<Tables<"blog_posts">[]>([]);
   const [creator, setCreator] = useState<Tables<"creators"> | null>(null);
   const [requestCounts, setRequestCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -36,15 +38,17 @@ export default function CreatorDashboard() {
         const creator = await getCreatorByProfileId(user.id);
         if (!cancelled) setCreator(creator);
         if (!creator) {
-          if (!cancelled) setRemoteAssets([]);
+          if (!cancelled) { setRemoteAssets([]); setBlogPosts([]); }
           return;
         }
         const rows = await listCreatorAssets(creator.id);
         const mapped = rows.map(dbAssetToSubmittedAsset);
         const counts = await countAccessRequestsForAssets(mapped.map(a => a.id));
+        const posts = await listCreatorBlogPosts(creator.id);
         if (!cancelled) {
           setRemoteAssets(mapped);
           setRequestCounts(counts);
+          setBlogPosts(posts);
         }
       } catch (error) {
         if (!cancelled) {
@@ -77,6 +81,7 @@ export default function CreatorDashboard() {
   const totalDownloads = mine.reduce((s, a) => s + a.downloads, 0);
   const stats = [
     { label: "Total assets", v: mine.length },
+    { label: "Blog posts", v: blogPosts.length },
     { label: "Pending", v: mine.filter(a => a.status === "Pending Review").length },
     { label: "Published", v: mine.filter(a => a.status === "Published").length },
     { label: "Downloads", v: totalDownloads.toLocaleString() },
@@ -119,7 +124,7 @@ export default function CreatorDashboard() {
           </div>
         )}
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {stats.map(s => (
             <div key={s.label} className="card-premium p-5 sm:p-6">
               <div className="text-2xl sm:text-3xl font-medium">{s.v}</div>
@@ -163,7 +168,35 @@ export default function CreatorDashboard() {
             </div>
           )}
         </div>
+
+        <div className="mt-10">
+          <h2 className="text-2xl font-medium tracking-normal">Blog submissions</h2>
+          {!loading && blogPosts.length === 0 ? (
+            <div className="mt-6 card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No creator-blog posts yet.</div>
+          ) : !loading && (
+            <div className="mt-6 grid gap-3">
+              {blogPosts.map(post => (
+                <div key={post.id} className="card-premium p-5 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                  <div className="min-w-0">
+                    <div className="text-xs uppercase tracking-[0.14em] text-[#CFCFCF]/70">Creator blog • {post.category || "Uncategorized"}</div>
+                    <h3 className="mt-1 text-lg font-medium tracking-normal">{post.title}</h3>
+                    {post.status === "rejected" && post.rejection_reason && (
+                      <p className="mt-2 text-sm text-[#CFCFCF]/90">Rejection reason: {post.rejection_reason}</p>
+                    )}
+                  </div>
+                  <span className={`rounded-full border px-3 py-1 text-xs ${statusStyles[statusLabel(post.status)]}`}>{statusLabel(post.status)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </SiteLayout>
   );
+}
+
+
+function statusLabel(status: Tables<"blog_posts">["status"]) {
+  if (status === "pending_review") return "Pending Review";
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
