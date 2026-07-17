@@ -15,7 +15,8 @@
     "validate:migrations": "node scripts/validate-migrations.mjs",
     "audit:safety": "node scripts/audit-safety.mjs",
     "audit:compare": "node scripts/compare-production-audit.mjs",
-    "ci:check": "npm run audit:safety && npm run validate:migrations && npm run typecheck && npm run lint && npm test && npm run build"
+    "ci:check": "npm run audit:safety && npm run validate:migrations && npm run typecheck && npm run lint && npm test && npm run build",
+    "test:e2e": "vitest run src/test/task-2c-moderation-repair.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -6,6 +6,29 @@ export function requireSupabaseConfig() {
   }
 }
 
+type SupabaseLikeError = Error & { code?: string; details?: string; hint?: string };
+
+function isSupabaseLikeError(error: unknown): error is SupabaseLikeError {
+  return error instanceof Error;
+}
+
+function safePart(value: unknown) {
+  if (typeof value !== "string") return "";
+  return value.replace(/https?:\/\/\S+/g, "[url]").replace(/eyJ[a-zA-Z0-9._-]+/g, "[token]").slice(0, 500);
+}
+
+export function formatSupabaseOperationError(error: unknown, fallback = "Supabase request failed.", options?: { operation?: string; duplicateMessage?: string }) {
+  if (!isSupabaseLikeError(error)) return new Error(fallback);
+  const code = safePart(error.code);
+  const details = safePart(error.details);
+  const hint = safePart(error.hint);
+  const message = safePart(error.message) || fallback;
+  const friendly = options?.duplicateMessage && (code === "23505" || message.toLowerCase().includes("duplicate key")) ? options.duplicateMessage : message;
+  const suffix = [code && `code: ${code}`, details && `details: ${details}`, hint && `hint: ${hint}`].filter(Boolean).join("; ");
+  if (import.meta.env.DEV && options?.operation) console.warn(`[supabase:${options.operation}]`, { code, message, details, hint });
+  return new Error(suffix ? `${friendly} (${suffix})` : friendly);
+}
+
 export function explainSupabaseError(error: unknown, fallback = "Supabase request failed.") {
   if (!(error instanceof Error)) return fallback;
 

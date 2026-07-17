@@ -4,7 +4,7 @@ import SiteLayout from "@/components/layout/SiteLayout";
 import { ArrowLeft } from "lucide-react";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { getCurrentCreatorForSubmission } from "@/services/creators";
-import { getCreatorBlogPostBySlug, submitBlogPostForReview, updateBlogPost, upsertBlogPost } from "@/services/content";
+import { getCreatorBlogPostBySlug, submitBlogPostForReview, updateBlogPost, createBlogPost } from "@/services/content";
 import type { Tables } from "@/types/database";
 
 type FormState = { title: string; slug: string; category: string; excerpt: string; body: string };
@@ -58,7 +58,7 @@ export default function EditBlogPostPage() {
     try {
       const cleanSlug = (form.slug || form.title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const payload = { slug: cleanSlug, title: form.title.trim(), excerpt: form.excerpt.trim() || null, category: form.category.trim() || null, body: form.body.trim() || null, creator_id: creator.id, status: "draft" as const };
-      const saved = post ? await updateBlogPost(post.id, payload) : await upsertBlogPost(payload);
+      const saved = post ? await updateBlogPost(post.id, payload) : await createBlogPost(payload);
       setPost(saved);
       setForm(current => ({ ...current, slug: saved.slug }));
       setSuccess("Draft saved.");

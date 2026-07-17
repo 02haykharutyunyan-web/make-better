@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { deleteBlogPost, listAdminBlogPosts, reviewBlogPost, updateBlogPost, upsertBlogPost } from "@/services/content";
+import { deleteBlogPost, listAdminBlogPosts, reviewBlogPost, updateBlogPost, createBlogPost } from "@/services/content";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { listActiveCreators } from "@/services/creators";
 import type { PublishStatus, Tables } from "@/types/database";
@@ -20,6 +20,8 @@ export default function AdminBlog() {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const [success, setSuccess] = useState("");
+  const [reviewIntent, setReviewIntent] = useState<{ post: BlogRow; status: "published" | "rejected" | "draft" } | null>(null);
+  const [reason, setReason] = useState("");
 
   const load = async () => {
     setLoading(true); setErr("");
@@ -57,7 +59,7 @@ export default function AdminBlog() {
       const creator = creators.find(c => c.slug === editing.creatorSlug);
       const payload = { slug, title: editing.title, excerpt: editing.excerpt || null, category: editing.category || null, body: editing.body || null, creator_id: creator?.id || null, status: "draft" as const };
       if (editing.id) await updateBlogPost(editing.id, payload);
-      else await upsertBlogPost(payload);
+      else await createBlogPost(payload);
       setEditing(null);
       setSuccess("Blog draft saved. Publish through the moderation queue after review.");
       await load();
@@ -68,17 +70,22 @@ export default function AdminBlog() {
     }
   };
 
-  const review = async (post: BlogRow, status: "published" | "rejected" | "draft") => {
+  const review = (post: BlogRow, status: "published" | "rejected" | "draft") => {
     if (processingId) return;
-    const reason = status === "rejected" ? prompt("Rejection reason:") : null;
-    if (status === "rejected" && !reason?.trim()) { setErr("Enter a meaningful rejection reason before rejecting."); return; }
-    const message = status === "published" ? `Approve and publish ${post.title}?` : status === "draft" ? `Return ${post.title} to draft for changes?` : `Reject ${post.title}? The reason will be visible to the creator.`;
-    if (!confirm(message)) return;
-    setProcessingId(post.id); setErr(""); setSuccess("");
+    setReason("");
+    setReviewIntent({ post, status });
+  };
+
+  const confirmReview = async () => {
+    if (!reviewIntent || processingId) return;
+    if (reviewIntent.status === "rejected" && !reason.trim()) { setErr("Enter a meaningful rejection reason before rejecting."); return; }
+    setProcessingId(reviewIntent.post.id); setErr(""); setSuccess("");
     try {
-      await reviewBlogPost(post.id, status, reason?.trim());
-      setSuccess(status === "published" ? "Blog post published." : status === "draft" ? "Blog post returned to draft." : "Blog post rejected.");
-      await load();
+      const updated = await reviewBlogPost(reviewIntent.post.id, reviewIntent.status, reason.trim());
+      setPosts(prev => prev.map(post => post.id === updated.id ? { ...(updated as BlogRow), creators: reviewIntent.post.creators } : post));
+      setReviewIntent(null);
+      setSuccess(reviewIntent.status === "published" ? "Blog post published." : reviewIntent.status === "draft" ? "Blog post returned to draft." : "Blog post rejected.");
+      void load();
     } catch (error) {
       setErr(explainSupabaseError(error, "Unable to review blog post."));
     } finally {
@@ -87,7 +94,7 @@ export default function AdminBlog() {
   };
 
   const remove = async (post: BlogRow) => {
-    if (processingId || !confirm("Delete post?")) return;
+    if (processingId) return;
     setProcessingId(post.id); setErr(""); setSuccess("");
     try {
       await deleteBlogPost(post.id);
@@ -130,6 +137,19 @@ export default function AdminBlog() {
 
       {!loading && visiblePosts.length === 0 && <div className="mt-3 card-premium p-8 text-center text-[#CFCFCF] lg:hidden">No blog posts in this queue.</div>}
 
+      {reviewIntent && (
+        <ReviewModal
+          title={reviewIntent.status === "published" ? "Publish blog post" : reviewIntent.status === "draft" ? "Return blog post to draft" : "Reject blog post"}
+          description={reviewIntent.status === "rejected" ? "The reason will be visible to the creator." : reviewIntent.status === "draft" ? "The post will leave public results and become creator-editable." : "The post will become public after the database transition succeeds."}
+          requireReason={reviewIntent.status === "rejected"}
+          reason={reason}
+          onReason={setReason}
+          loading={processingId === reviewIntent.post.id}
+          onCancel={() => setReviewIntent(null)}
+          onConfirm={confirmReview}
+        />
+      )}
+
       {editing && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setEditing(null)} />
@@ -157,7 +177,7 @@ function BlogTableRow({ post, disabled, onEdit, onReview, onDelete }: { post: Bl
   return <tr className="border-t border-white/5 align-top"><td className="px-5 py-4 text-white"><div className="font-medium">{post.title}</div>{post.rejection_reason && <div className="mt-1 text-xs text-[#CFCFCF]/80">Reason: {post.rejection_reason}</div>}</td><td className="px-5 py-4 text-white/65">{post.creators?.brand_name || "Make Better"}</td><td className="px-5 py-4 text-white/65">{post.category || "—"}</td><td className="px-5 py-4"><Badge status={post.status} /></td><td className="px-5 py-4 text-[#CFCFCF] text-xs">{post.submitted_at ? new Date(post.submitted_at).toLocaleDateString() : "—"}</td><td className="px-5 py-4 text-right text-xs space-x-2 whitespace-nowrap"><Actions post={post} disabled={disabled} onEdit={onEdit} onReview={onReview} onDelete={onDelete} /></td></tr>;
 }
 function Actions({ post, disabled, onEdit, onReview, onDelete }: { post: BlogRow; disabled: boolean; onEdit: () => void; onReview: (status: "published" | "rejected" | "draft") => void; onDelete: () => void }) {
-  return <>{(post.status === "draft" || post.status === "rejected") && <button disabled={disabled} onClick={onEdit} className="min-h-9 rounded-full border border-white/10 px-3 text-xs text-[#CFCFCF] disabled:opacity-50">Edit</button>}{post.status === "pending_review" && <button disabled={disabled} onClick={() => onReview("published")} className="min-h-9 rounded-full border border-[#FFD600]/40 px-3 text-xs text-[#FFD600] disabled:opacity-50">Approve</button>}{post.status === "pending_review" && <button disabled={disabled} onClick={() => onReview("rejected")} className="min-h-9 rounded-full border border-white/10 px-3 text-xs text-[#CFCFCF] disabled:opacity-50">Reject</button>}{(post.status === "published" || post.status === "pending_review") && <button disabled={disabled} onClick={() => onReview("draft")} className="min-h-9 rounded-full border border-white/10 px-3 text-xs text-[#CFCFCF] disabled:opacity-50">Return to draft</button>}<button disabled={disabled} onClick={onDelete} className="min-h-9 rounded-full border border-white/10 px-3 text-xs text-[#CFCFCF] disabled:opacity-50">Delete</button></>;
+  return <>{(post.status === "draft" || post.status === "rejected") && <button disabled={disabled} onClick={onEdit} className="min-h-9 rounded-full border border-white/10 px-3 text-xs text-[#CFCFCF] disabled:opacity-50">Edit</button>}{post.status === "pending_review" && <button disabled={disabled} onClick={() => onReview("published")} className="min-h-9 rounded-full border border-[#FFD600]/40 px-3 text-xs text-[#FFD600] disabled:opacity-50">Publish</button>}{post.status === "pending_review" && <button disabled={disabled} onClick={() => onReview("rejected")} className="min-h-9 rounded-full border border-white/10 px-3 text-xs text-[#CFCFCF] disabled:opacity-50">Reject</button>}{(post.status === "published" || post.status === "pending_review") && <button disabled={disabled} onClick={() => onReview("draft")} className="min-h-9 rounded-full border border-white/10 px-3 text-xs text-[#CFCFCF] disabled:opacity-50">Return to draft</button>}<button disabled={disabled} onClick={onDelete} className="min-h-9 rounded-full border border-white/10 px-3 text-xs text-[#CFCFCF] disabled:opacity-50">Delete</button></>;
 }
 function Badge({ status }: { status: PublishStatus }) { return <span className="rounded-full border border-white/10 px-3 py-1 text-xs capitalize text-[#CFCFCF]">{status.replace("_", " ")}</span>; }
 function statusLabel(status: PublishStatus | "all") { return status === "all" ? "All" : status.replace("_", " "); }
@@ -166,3 +186,7 @@ type TextInputProps = { label: string; value: string; onChange: (value: string) 
 type TextareaInputProps = TextInputProps & { rows?: number };
 function Field({ label, value, onChange, required, disabled }: TextInputProps) { return <label className="block"><span className="text-xs text-[#CFCFCF]">{label}{required && <span className="text-white/30"> *</span>}</span><input required={required} disabled={disabled} value={value} onChange={e => onChange(e.target.value)} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm disabled:opacity-60" /></label>; }
 function Textarea({ label, value, onChange, rows = 3, disabled }: TextareaInputProps) { return <label className="block"><span className="text-xs text-[#CFCFCF]">{label}</span><textarea disabled={disabled} value={value} rows={rows} onChange={e => onChange(e.target.value)} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm disabled:opacity-60" /></label>; }
+
+function ReviewModal({ title, description, requireReason, reason, onReason, loading, onCancel, onConfirm }: { title: string; description: string; requireReason: boolean; reason: string; onReason: (value: string) => void; loading: boolean; onCancel: () => void; onConfirm: () => void }) {
+  return <div role="dialog" aria-modal="true" className="fixed inset-0 z-[110] flex items-end justify-center p-3 sm:items-center sm:p-4"><div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={loading ? undefined : onCancel} /><div className="relative w-full max-w-lg glass-modal p-5 sm:p-7"><h3 className="text-xl font-medium">{title}</h3><p className="mt-2 text-sm text-[#CFCFCF]">{description}</p>{requireReason && <label className="mt-4 block"><span className="text-xs text-[#CFCFCF]">Rejection reason</span><textarea autoFocus rows={4} value={reason} onChange={e => onReason(e.target.value)} disabled={loading} className="mt-1 w-full rounded-xl bg-[#0E0E0E]/75 border border-white/10 px-3.5 py-3 text-base sm:text-sm disabled:opacity-60" /></label>}<div className="mt-5 flex flex-col justify-end gap-3 sm:flex-row"><button type="button" disabled={loading} onClick={onCancel} className="min-h-11 rounded-full border border-white/10 px-4 py-2 text-sm disabled:opacity-50">Cancel</button><button type="button" disabled={loading || (requireReason && !reason.trim())} onClick={onConfirm} className="min-h-11 rounded-full btn-primary px-5 py-2 text-sm font-medium disabled:opacity-50">{loading ? "Saving..." : "Confirm"}</button></div></div></div>;
+}
