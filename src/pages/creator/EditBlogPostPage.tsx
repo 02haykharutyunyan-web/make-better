@@ -57,7 +57,7 @@ export default function EditBlogPostPage() {
     setSaving(true); setErr(""); setSuccess("");
     try {
       const cleanSlug = (form.slug || form.title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      const payload = { slug: cleanSlug, title: form.title.trim(), excerpt: form.excerpt.trim() || null, category: form.category.trim() || null, body: form.body.trim() || null, creator_id: creator.id, status: "draft" as const };
+      const payload = { slug: cleanSlug, title: form.title.trim(), excerpt: form.excerpt.trim() || null, category: form.category.trim() || null, body: form.body.trim() || null };
       const saved = post ? await updateBlogPost(post.id, payload) : await createBlogPost(payload);
       setPost(saved);
       setForm(current => ({ ...current, slug: saved.slug }));

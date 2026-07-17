@@ -15,7 +15,7 @@ describe("Task 2C moderation workflow repair contracts", () => {
     expect(contentService).toContain("export async function createBlogPost");
     expect(contentService).toContain('.from("blog_posts")\n    .insert(blogDraftPayload(input))');
     expect(contentService).toContain('.from("blog_posts")\n    .update(blogDraftPayload');
-    expect(contentService.slice(contentService.indexOf("export async function createBlogPost"), contentService.indexOf("export async function listPublishedCollections"))).not.toContain("onConflict");
+    expect(contentService.slice(contentService.indexOf("export async function createBlogPost"), contentService.indexOf("export async function createAdminBlogPost"))).not.toContain("onConflict");
     expect(creatorBlog).toContain("createBlogPost(payload)");
   });
 
@@ -56,6 +56,7 @@ describe("Task 2C moderation workflow repair contracts", () => {
   });
 
   it("adds forward-only migration and SELECT-only audits without touching Task 2B files", () => {
+    expect(repair).toContain("create or replace function public.create_blog_draft");
     expect(repair).toContain("create or replace function public.review_asset");
     expect(repair).toContain("for update");
     expect(repair).toContain("revoke all on function public.review_asset(uuid, public.asset_status, text) from public, anon");

@@ -79,6 +79,7 @@ const editableBlogColumns = ["slug", "title", "excerpt", "category", "body", "cr
 
 type EditableBlogColumn = (typeof editableBlogColumns)[number];
 type BlogDraftInput = Pick<Inserts<"blog_posts">, EditableBlogColumn>;
+type CreatorBlogDraftInput = Pick<Inserts<"blog_posts">, "slug" | "title" | "excerpt" | "category" | "body">;
 
 function blogDraftPayload(input: Partial<BlogDraftInput>) {
   return {
@@ -98,7 +99,20 @@ function rethrowBlogWriteError(error: unknown): never {
   });
 }
 
-export async function createBlogPost(input: BlogDraftInput) {
+export async function createBlogPost(input: CreatorBlogDraftInput) {
+  const { data, error } = await supabase.rpc("create_blog_draft", {
+    draft_slug: input.slug,
+    draft_title: input.title,
+    draft_excerpt: input.excerpt ?? null,
+    draft_category: input.category ?? null,
+    draft_body: input.body ?? null,
+  });
+
+  if (error) rethrowBlogWriteError(error);
+  return data;
+}
+
+export async function createAdminBlogPost(input: BlogDraftInput) {
   const { data, error } = await supabase
     .from("blog_posts")
     .insert(blogDraftPayload(input))
@@ -111,7 +125,7 @@ export async function createBlogPost(input: BlogDraftInput) {
 
 /** @deprecated Use createBlogPost or updateBlogPost so creator saves never UPSERT by slug. */
 export async function upsertBlogPost(input: Inserts<"blog_posts">) {
-  return createBlogPost(input as BlogDraftInput);
+  return createBlogPost(input);
 }
 
 export async function updateBlogPost(id: string, patch: Updates<"blog_posts">) {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
-import { deleteBlogPost, listAdminBlogPosts, reviewBlogPost, updateBlogPost, createBlogPost } from "@/services/content";
+import { createAdminBlogPost, deleteBlogPost, listAdminBlogPosts, reviewBlogPost, updateBlogPost } from "@/services/content";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { listActiveCreators } from "@/services/creators";
 import type { PublishStatus, Tables } from "@/types/database";
@@ -59,7 +59,7 @@ export default function AdminBlog() {
       const creator = creators.find(c => c.slug === editing.creatorSlug);
       const payload = { slug, title: editing.title, excerpt: editing.excerpt || null, category: editing.category || null, body: editing.body || null, creator_id: creator?.id || null, status: "draft" as const };
       if (editing.id) await updateBlogPost(editing.id, payload);
-      else await createBlogPost(payload);
+      else await createAdminBlogPost(payload);
       setEditing(null);
       setSuccess("Blog draft saved. Publish through the moderation queue after review.");
       await load();

@@ -16,7 +16,7 @@
     "audit:safety": "node scripts/audit-safety.mjs",
     "audit:compare": "node scripts/compare-production-audit.mjs",
     "ci:check": "npm run audit:safety && npm run validate:migrations && npm run typecheck && npm run lint && npm test && npm run build",
-    "test:e2e": "vitest run src/test/task-2c-moderation-repair.test.ts"
+    "test:moderation-contract": "vitest run src/test/task-2c-moderation-repair.test.ts src/test/moderation-metadata-contract.test.ts src/test/moderation-workflow-components-*.test.tsx"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
