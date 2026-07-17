@@ -5,7 +5,8 @@ import type { AccessRequestStatus, DeliveryType, Inserts, Tables, Updates } from
 export type AssetWithCreator = Awaited<ReturnType<typeof listPublishedAssets>>[number];
 export const ASSET_DELIVERABLES_BUCKET = "asset-deliverables";
 export const MAX_DELIVERABLE_FILE_SIZE = 50 * 1024 * 1024;
-const blockedFileExtensions = [".exe", ".bat", ".cmd", ".msi", ".scr", ".ps1", ".vbs", ".js"];
+const blockedFileExtensions = [".exe", ".bat", ".cmd", ".msi", ".scr", ".ps1", ".vbs", ".js", ".sh", ".php", ".jar", ".com"];
+const allowedFileExtensions = [".pdf", ".zip", ".json", ".csv", ".txt", ".md", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".fig", ".sketch", ".template"];
 
 const assetSelect = `
   *,
@@ -145,9 +146,27 @@ export function validateDeliverableFile(file: File) {
   }
 
   const lower = file.name.toLowerCase();
+  const extension = lower.includes(".") ? lower.slice(lower.lastIndexOf(".")) : "";
   if (blockedFileExtensions.some(ext => lower.endsWith(ext))) {
-    throw new Error("Unsupported file type. Upload a document, archive, image, CSV, JSON, or template file instead.");
+    throw new Error("Executable or script files are blocked. Upload a document, archive, image, CSV, JSON, or template file instead.");
   }
+  if (!allowedFileExtensions.includes(extension)) {
+    throw new Error("Unsupported file type. Upload a PDF, ZIP, document, spreadsheet, presentation, image, CSV, JSON, TXT/MD, Figma/Sketch, or template file.");
+  }
+}
+
+export function validateDeliveryUrl(url: string) {
+  let parsed: URL;
+  try { parsed = new URL(url.trim()); } catch { throw new Error("Enter a valid HTTPS delivery URL."); }
+  if (parsed.protocol !== "https:") throw new Error("Delivery links must use HTTPS.");
+  if (!parsed.hostname || ["localhost", "127.0.0.1"].includes(parsed.hostname)) throw new Error("Use a public HTTPS delivery URL.");
+  return parsed.toString();
+}
+
+export function validateTextDelivery(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error("Add the private text, prompt, or template content before submitting.");
+  return trimmed;
 }
 
 export async function uploadAssetDeliverableFile(creatorId: string, assetId: string, file: File) {
@@ -163,12 +182,27 @@ export async function uploadAssetDeliverableFile(creatorId: string, assetId: str
   return data.path;
 }
 
+export async function removeUploadedDeliverableFile(storagePath: string) {
+  await supabase.storage.from(ASSET_DELIVERABLES_BUCKET).remove([storagePath]);
+}
+
 export async function upsertAssetDeliverable(input: Inserts<"asset_deliverables">) {
   const { data, error } = await supabase
     .from("asset_deliverables")
     .upsert(input, { onConflict: "asset_id" })
     .select()
     .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getModerationAssetById(id: string) {
+  const { data, error } = await supabase
+    .from("assets")
+    .select(assetSelect)
+    .eq("id", id)
+    .maybeSingle();
 
   if (error) throw error;
   return data;

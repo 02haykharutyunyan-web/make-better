@@ -34,6 +34,8 @@ import AdminAssets from "./pages/admin/AdminAssets.tsx";
 import AdminAccessRequests from "./pages/admin/AdminAccessRequests.tsx";
 import AdminBlog from "./pages/admin/AdminBlog.tsx";
 import AdminCollections from "./pages/admin/AdminCollections.tsx";
+import AssetPreviewPage from "./pages/preview/AssetPreviewPage.tsx";
+import BlogPreviewPage from "./pages/preview/BlogPreviewPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -66,11 +68,17 @@ const App = () => (
             <Route path="/creator-dashboard/submit-asset" element={
               <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><SubmitAssetPage /></CreatorApprovalGate></ProtectedRoute>
             } />
+            <Route path="/creator-dashboard/assets/:id/preview" element={
+              <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><AssetPreviewPage /></CreatorApprovalGate></ProtectedRoute>
+            } />
             <Route path="/creator-dashboard/assets/:slug/edit" element={
               <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><EditAssetPage /></CreatorApprovalGate></ProtectedRoute>
             } />
             <Route path="/creator-dashboard/blog/new" element={
               <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><EditBlogPostPage /></CreatorApprovalGate></ProtectedRoute>
+            } />
+            <Route path="/creator-dashboard/blog/:id/preview" element={
+              <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><BlogPreviewPage /></CreatorApprovalGate></ProtectedRoute>
             } />
             <Route path="/creator-dashboard/blog/:slug/edit" element={
               <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><EditBlogPostPage /></CreatorApprovalGate></ProtectedRoute>
@@ -85,11 +93,17 @@ const App = () => (
             <Route path="/admin/creators" element={
               <AdminRoute><AdminCreators /></AdminRoute>
             } />
+            <Route path="/admin/assets/:id/preview" element={
+              <AdminRoute><AssetPreviewPage /></AdminRoute>
+            } />
             <Route path="/admin/assets" element={
               <AdminRoute><AdminAssets /></AdminRoute>
             } />
             <Route path="/admin/requests" element={
               <AdminRoute><AdminAccessRequests /></AdminRoute>
+            } />
+            <Route path="/admin/blog/:id/preview" element={
+              <AdminRoute><BlogPreviewPage /></AdminRoute>
             } />
             <Route path="/admin/blog" element={
               <AdminRoute><AdminBlog /></AdminRoute>

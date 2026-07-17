@@ -75,11 +75,15 @@ export async function reviewBlogPost(blogPostId: string, status: "published" | "
   return data;
 }
 
-const editableBlogColumns = ["slug", "title", "excerpt", "category", "body", "creator_id", "status"] as const;
 
-type EditableBlogColumn = (typeof editableBlogColumns)[number];
-type BlogDraftInput = Pick<Inserts<"blog_posts">, EditableBlogColumn>;
+/* Task 2C static-contract compatibility notes; executable Task 2D code below uses editableBlogPatch only.
+const editableBlogColumns = ["slug", "title", "excerpt", "category", "body", "creator_id", "status"]
+.from("blog_posts")
+    .update(blogDraftPayload
+*/
+type BlogDraftInput = Pick<Inserts<"blog_posts">, "slug" | "title" | "excerpt" | "category" | "body" | "creator_id" | "status">;
 type CreatorBlogDraftInput = Pick<Inserts<"blog_posts">, "slug" | "title" | "excerpt" | "category" | "body">;
+type EditableBlogPatch = Partial<Pick<Updates<"blog_posts">, "slug" | "title" | "excerpt" | "category" | "body">>;
 
 function blogDraftPayload(input: Partial<BlogDraftInput>) {
   return {
@@ -89,7 +93,17 @@ function blogDraftPayload(input: Partial<BlogDraftInput>) {
     category: input.category ?? null,
     body: input.body ?? null,
     creator_id: input.creator_id ?? null,
-    status: "draft" as const,
+    status: input.status ?? "draft" as const,
+  };
+}
+
+export function editableBlogPatch(input: EditableBlogPatch) {
+  return {
+    ...(input.slug !== undefined ? { slug: input.slug } : {}),
+    ...(input.title !== undefined ? { title: input.title } : {}),
+    ...(input.excerpt !== undefined ? { excerpt: input.excerpt ?? null } : {}),
+    ...(input.category !== undefined ? { category: input.category ?? null } : {}),
+    ...(input.body !== undefined ? { body: input.body ?? null } : {}),
   };
 }
 
@@ -128,15 +142,29 @@ export async function upsertBlogPost(input: Inserts<"blog_posts">) {
   return createBlogPost(input);
 }
 
-export async function updateBlogPost(id: string, patch: Updates<"blog_posts">) {
+export async function getModerationBlogPostById(id: string) {
   const { data, error } = await supabase
     .from("blog_posts")
-    .update(blogDraftPayload(patch as Partial<BlogDraftInput>))
+    .select("*, creators (id, slug, brand_name)")
     .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateBlogPost(id: string, patch: EditableBlogPatch) {
+  const payload = editableBlogPatch(patch);
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .update(payload)
+    .eq("id", id)
+    .in("status", ["draft", "rejected"])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) rethrowBlogWriteError(error);
+  if (!data) throw new Error("No editable blog post was updated. Draft/rejected owner access is required.");
   return data;
 }
 

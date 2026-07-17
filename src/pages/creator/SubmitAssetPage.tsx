@@ -12,6 +12,9 @@ import {
   submitAssetForReview,
   uploadAssetDeliverableFile,
   upsertAssetDeliverable,
+  removeUploadedDeliverableFile,
+  validateDeliveryUrl,
+  validateTextDelivery,
 } from "@/services/assets";
 import type { DeliveryType } from "@/types/database";
 
@@ -48,8 +51,8 @@ export default function SubmitAssetPage() {
 
       const baseSlug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "asset";
       if (form.deliveryType === "file" && !deliverableFile) throw new Error("Upload a deliverable file before submitting.");
-      if (form.deliveryType === "external_link" && !form.externalUrl.trim()) throw new Error("Add the external delivery link before submitting.");
-      if (form.deliveryType === "text" && !form.textContent.trim()) throw new Error("Add the private text or prompt content before submitting.");
+      if (form.deliveryType === "external_link") validateDeliveryUrl(form.externalUrl);
+      if (form.deliveryType === "text") validateTextDelivery(form.textContent);
 
       const asset = await submitAssetToSupabase({
         creator_id: creator.id,
@@ -70,38 +73,48 @@ export default function SubmitAssetPage() {
         after: form.after.split("\n").map(t => t.trim()).filter(Boolean),
       });
 
-      let deliveryWarning = "";
+      let uploadedPath: string | null = null;
       try {
         if (form.deliveryType === "file" && deliverableFile) {
-          const storagePath = await uploadAssetDeliverableFile(creator.id, asset.id, deliverableFile);
+          uploadedPath = await uploadAssetDeliverableFile(creator.id, asset.id, deliverableFile);
           await upsertAssetDeliverable({
             asset_id: asset.id,
             delivery_type: "file",
             storage_bucket: ASSET_DELIVERABLES_BUCKET,
-            storage_path: storagePath,
+            storage_path: uploadedPath,
             file_name: deliverableFile.name,
             file_size: deliverableFile.size,
+            external_url: null,
+            text_content: null,
           });
         } else if (form.deliveryType === "external_link") {
           await upsertAssetDeliverable({
             asset_id: asset.id,
             delivery_type: "external_link",
-            external_url: form.externalUrl.trim(),
+            storage_bucket: null,
+            storage_path: null,
+            file_name: null,
+            file_size: null,
+            external_url: validateDeliveryUrl(form.externalUrl),
+            text_content: null,
           });
         } else {
           await upsertAssetDeliverable({
             asset_id: asset.id,
             delivery_type: "text",
-            text_content: form.textContent,
+            storage_bucket: null,
+            storage_path: null,
+            file_name: null,
+            file_size: null,
+            external_url: null,
+            text_content: validateTextDelivery(form.textContent),
           });
         }
       } catch (deliveryError) {
-        deliveryWarning = explainDeliverableError(deliveryError);
+        if (uploadedPath) void removeUploadedDeliverableFile(uploadedPath);
+        const deliveryWarning = explainDeliverableError(deliveryError);
         setPartialWarning(deliveryWarning);
-      }
-
-      if (deliveryWarning) {
-        throw new Error("Asset draft was saved, but delivery upload failed. Fix the delivery and submit again from the edit screen.");
+        throw new Error(`Asset draft was saved, but delivery upload failed: ${deliveryWarning}`);
       }
       await submitAssetForReview(asset.id);
       setDone(true);
