@@ -457,9 +457,9 @@ export type Database = {
         Args: { target_blog_post_id: string; target_status: PublishStatus; rejection_reason?: string | null };
         Returns: Database["public"]["Tables"]["blog_posts"]["Row"];
       };
-      content_is_creator_editable: {
-        Args: { content_status: string };
-        Returns: boolean;
+      set_asset_featured: {
+        Args: { target_asset_id: string; target_featured: boolean };
+        Returns: Database["public"]["Tables"]["assets"]["Row"];
       };
       set_creator_featured: {
         Args: { target_creator_id: string; target_featured: boolean };

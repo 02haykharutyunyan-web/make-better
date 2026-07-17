@@ -45,6 +45,18 @@ export async function listCreatorBlogPosts(creatorId: string) {
   return data || [];
 }
 
+
+export async function getCreatorBlogPostBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*, creators (id, slug, brand_name)")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function submitBlogPostForReview(blogPostId: string) {
   const { data, error } = await supabase.rpc("submit_blog_post_for_review", { target_blog_post_id: blogPostId });
   if (error) throw error;

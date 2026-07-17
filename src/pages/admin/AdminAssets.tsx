@@ -12,6 +12,7 @@ import {
   listAssetDeliverables,
   updateAsset as updateAssetInSupabase,
   reviewAsset,
+  setAssetFeatured,
 } from "@/services/assets";
 import type { Tables, Updates } from "@/types/database";
 
@@ -73,7 +74,7 @@ export default function AdminAssets() {
         if (!confirm("Return this asset to draft for creator changes?")) return;
         await reviewAsset(id, "draft");
       } else if ("featured" in patch) {
-        await updateAssetInSupabase(id, { featured: patch.featured });
+        await setAssetFeatured(id, Boolean(patch.featured));
       }
       await loadAssets();
     } catch (error) {

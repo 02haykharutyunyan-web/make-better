@@ -100,9 +100,12 @@ export default function SubmitAssetPage() {
         setPartialWarning(deliveryWarning);
       }
 
+      if (deliveryWarning) {
+        throw new Error("Asset draft was saved, but delivery upload failed. Fix the delivery and submit again from the edit screen.");
+      }
       await submitAssetForReview(asset.id);
       setDone(true);
-      setTimeout(() => navigate("/creator-dashboard"), deliveryWarning ? 2800 : 1200);
+      setTimeout(() => navigate("/creator-dashboard"), 1200);
     } catch (error) {
       setErr(explainSupabaseError(error, "Unable to submit this asset."));
     } finally {

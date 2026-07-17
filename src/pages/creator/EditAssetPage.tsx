@@ -160,7 +160,9 @@ export default function EditAssetPage() {
           });
         }
       } catch (deliveryError) {
-        setWarning(explainDeliverableError(deliveryError));
+        const deliveryMessage = explainDeliverableError(deliveryError);
+        setWarning(deliveryMessage);
+        throw new Error(`Asset draft was saved, but delivery update failed: ${deliveryMessage}`);
       }
 
       await submitAssetForReview(asset.id);

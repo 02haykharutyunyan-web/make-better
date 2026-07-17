@@ -97,9 +97,14 @@ export default function CreatorDashboard() {
             <p className="mt-3 text-[#CFCFCF]">Brand: <span className="text-white">{user?.creatorSlug}</span></p>
           </div>
           {approved ? (
-            <Link to="/creator-dashboard/submit-asset" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full btn-primary px-5 py-3 text-sm font-medium transition sm:w-auto">
-              <Plus className="h-4 w-4" /> Submit new asset
-            </Link>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <Link to="/creator-dashboard/submit-asset" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full btn-primary px-5 py-3 text-sm font-medium transition sm:w-auto">
+                <Plus className="h-4 w-4" /> Submit new asset
+              </Link>
+              <Link to="/creator-dashboard/blog/new" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/10 px-5 py-3 text-sm font-medium text-white/80 transition hover:border-[#FFD600]/60 sm:w-auto">
+                <Plus className="h-4 w-4" /> New blog draft
+              </Link>
+            </div>
           ) : (
             <div className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-[#CFCFCF] sm:w-auto">
               Application status: <span className="capitalize text-white">{creator?.application_status || "pending"}</span>
@@ -184,7 +189,10 @@ export default function CreatorDashboard() {
                       <p className="mt-2 text-sm text-[#CFCFCF]/90">Rejection reason: {post.rejection_reason}</p>
                     )}
                   </div>
-                  <span className={`rounded-full border px-3 py-1 text-xs ${statusStyles[statusLabel(post.status)]}`}>{statusLabel(post.status)}</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className={`rounded-full border px-3 py-1 text-xs ${statusStyles[statusLabel(post.status)]}`}>{statusLabel(post.status)}</span>
+                    {(post.status === "draft" || post.status === "rejected") && <Link to={`/creator-dashboard/blog/${post.slug}/edit`} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 hover:border-[#FFD600]/60 hover:text-white transition">Edit</Link>}
+                  </div>
                 </div>
               ))}
             </div>

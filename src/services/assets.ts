@@ -111,6 +111,13 @@ export async function reviewAsset(assetId: string, status: "published" | "reject
   return data;
 }
 
+
+export async function setAssetFeatured(assetId: string, featured: boolean) {
+  const { data, error } = await supabase.rpc("set_asset_featured", { target_asset_id: assetId, target_featured: featured });
+  if (error) throw error;
+  return data;
+}
+
 export async function updateAsset(id: string, patch: Updates<"assets">) {
   const { data, error } = await supabase
     .from("assets")
