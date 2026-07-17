@@ -59,7 +59,7 @@ export function dbAssetToSubmittedAsset(asset: DbAsset): SubmittedAsset {
     status: statusMap[asset.status],
     isFree: asset.is_free,
     priceType: asset.price_type,
-    submittedAt: asset.submitted_at,
+    submittedAt: asset.submitted_at || asset.created_at,
     rejectionReason: asset.rejection_reason || undefined,
     featured: asset.featured,
     useCases: asset.use_cases || [],

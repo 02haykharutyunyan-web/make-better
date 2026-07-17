@@ -34,10 +34,50 @@ export async function getPublishedBlogPostBySlug(slug: string) {
   return data;
 }
 
+export async function listCreatorBlogPosts(creatorId: string) {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*, creators (id, slug, brand_name)")
+    .eq("creator_id", creatorId)
+    .order("submitted_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+
+export async function getCreatorBlogPostBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*, creators (id, slug, brand_name)")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function submitBlogPostForReview(blogPostId: string) {
+  const { data, error } = await supabase.rpc("submit_blog_post_for_review", { target_blog_post_id: blogPostId });
+  if (error) throw error;
+  return data;
+}
+
+export async function reviewBlogPost(blogPostId: string, status: "published" | "rejected" | "draft", rejectionReason?: string | null) {
+  if (status === "rejected" && !rejectionReason?.trim()) throw new Error("A rejection reason is required.");
+  const { data, error } = await supabase.rpc("review_blog_post", {
+    target_blog_post_id: blogPostId,
+    target_status: status,
+    rejection_reason: status === "rejected" ? rejectionReason!.trim() : null,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function upsertBlogPost(input: Inserts<"blog_posts">) {
   const { data, error } = await supabase
     .from("blog_posts")
-    .upsert(input, { onConflict: "slug" })
+    .upsert({ ...input, status: input.status || "draft" }, { onConflict: "slug" })
     .select()
     .single();
 
@@ -141,7 +181,7 @@ export async function listPublishedAssetsForCollection(collection: { selected_as
 export async function upsertCollection(input: Inserts<"collections">) {
   const { data, error } = await supabase
     .from("collections")
-    .upsert(input, { onConflict: "slug" })
+    .upsert({ ...input, status: input.status || "draft" }, { onConflict: "slug" })
     .select()
     .single();
 

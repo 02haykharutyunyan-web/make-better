@@ -9,6 +9,7 @@ import { getCurrentCreatorForSubmission } from "@/services/creators";
 import {
   ASSET_DELIVERABLES_BUCKET,
   submitAsset as submitAssetToSupabase,
+  submitAssetForReview,
   uploadAssetDeliverableFile,
   upsertAssetDeliverable,
 } from "@/services/assets";
@@ -62,7 +63,7 @@ export default function SubmitAssetPage() {
         price,
         is_free: form.priceType === "free",
         price_type: form.priceType,
-        status: "pending_review",
+        status: "draft",
         use_cases: form.useCases.split("\n").map(t => t.trim()).filter(Boolean),
         included: form.included.split("\n").map(t => t.trim()).filter(Boolean),
         before: form.before.split("\n").map(t => t.trim()).filter(Boolean),
@@ -99,8 +100,12 @@ export default function SubmitAssetPage() {
         setPartialWarning(deliveryWarning);
       }
 
+      if (deliveryWarning) {
+        throw new Error("Asset draft was saved, but delivery upload failed. Fix the delivery and submit again from the edit screen.");
+      }
+      await submitAssetForReview(asset.id);
       setDone(true);
-      setTimeout(() => navigate("/creator-dashboard"), deliveryWarning ? 2800 : 1200);
+      setTimeout(() => navigate("/creator-dashboard"), 1200);
     } catch (error) {
       setErr(explainSupabaseError(error, "Unable to submit this asset."));
     } finally {

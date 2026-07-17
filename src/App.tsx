@@ -26,6 +26,7 @@ import CreatorSignupPage from "./pages/CreatorSignupPage.tsx";
 import CreatorDashboard from "./pages/creator/CreatorDashboard.tsx";
 import SubmitAssetPage from "./pages/creator/SubmitAssetPage.tsx";
 import EditAssetPage from "./pages/creator/EditAssetPage.tsx";
+import EditBlogPostPage from "./pages/creator/EditBlogPostPage.tsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminCreators from "./pages/admin/AdminCreators.tsx";
@@ -67,6 +68,12 @@ const App = () => (
             } />
             <Route path="/creator-dashboard/assets/:slug/edit" element={
               <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><EditAssetPage /></CreatorApprovalGate></ProtectedRoute>
+            } />
+            <Route path="/creator-dashboard/blog/new" element={
+              <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><EditBlogPostPage /></CreatorApprovalGate></ProtectedRoute>
+            } />
+            <Route path="/creator-dashboard/blog/:slug/edit" element={
+              <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><EditBlogPostPage /></CreatorApprovalGate></ProtectedRoute>
             } />
 
             <Route path="/admin" element={

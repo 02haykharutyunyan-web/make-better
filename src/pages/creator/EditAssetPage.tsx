@@ -11,6 +11,7 @@ import {
   getAssetDeliverable,
   getCreatorAssetBySlug,
   updateAsset,
+  submitAssetForReview,
   uploadAssetDeliverableFile,
   upsertAssetDeliverable,
 } from "@/services/assets";
@@ -123,7 +124,7 @@ export default function EditAssetPage() {
         price,
         is_free: form.priceType === "free",
         price_type: form.priceType,
-        status: "pending_review",
+        status: "draft",
         rejection_reason: null,
         published_at: null,
         use_cases: lines(form.useCases),
@@ -159,9 +160,12 @@ export default function EditAssetPage() {
           });
         }
       } catch (deliveryError) {
-        setWarning(explainDeliverableError(deliveryError));
+        const deliveryMessage = explainDeliverableError(deliveryError);
+        setWarning(deliveryMessage);
+        throw new Error(`Asset draft was saved, but delivery update failed: ${deliveryMessage}`);
       }
 
+      await submitAssetForReview(asset.id);
       setSuccess("Asset saved and returned to review.");
       window.setTimeout(() => navigate("/creator-dashboard"), 1400);
     } catch (error) {

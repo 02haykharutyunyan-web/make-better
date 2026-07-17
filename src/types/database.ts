@@ -4,7 +4,7 @@ export type UserRole = "buyer" | "creator" | "admin";
 export type AssetStatus = "draft" | "pending_review" | "approved" | "rejected" | "published";
 export type PriceType = "free" | "paid";
 export type ClaimStatus = "unlocked" | "pending_payment" | "paid_mock";
-export type PublishStatus = "draft" | "published";
+export type PublishStatus = "draft" | "pending_review" | "rejected" | "published";
 export type DeliveryType = "file" | "external_link" | "text";
 export type AccessRequestStatus = "new" | "contacted" | "closed";
 export type CreatorStatus = "pending" | "approved" | "rejected";
@@ -122,7 +122,9 @@ export type Database = {
           included: string[];
           before: string[];
           after: string[];
-          submitted_at: string;
+          submitted_at: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
           published_at: string | null;
           created_at: string;
           updated_at: string;
@@ -154,7 +156,9 @@ export type Database = {
           included?: string[];
           before?: string[];
           after?: string[];
-          submitted_at?: string;
+          submitted_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           published_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -331,6 +335,10 @@ export type Database = {
           body: string | null;
           creator_id: string | null;
           status: PublishStatus;
+          rejection_reason: string | null;
+          submitted_at: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
           published_at: string | null;
           created_at: string;
           updated_at: string;
@@ -344,6 +352,10 @@ export type Database = {
           body?: string | null;
           creator_id?: string | null;
           status?: PublishStatus;
+          rejection_reason?: string | null;
+          submitted_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           published_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -427,6 +439,27 @@ export type Database = {
       reapply_creator_application: {
         Args: Record<string, never>;
         Returns: Database["public"]["Tables"]["creators"]["Row"];
+      };
+
+      submit_asset_for_review: {
+        Args: { target_asset_id: string };
+        Returns: Database["public"]["Tables"]["assets"]["Row"];
+      };
+      submit_blog_post_for_review: {
+        Args: { target_blog_post_id: string };
+        Returns: Database["public"]["Tables"]["blog_posts"]["Row"];
+      };
+      review_asset: {
+        Args: { target_asset_id: string; target_status: AssetStatus; rejection_reason?: string | null };
+        Returns: Database["public"]["Tables"]["assets"]["Row"];
+      };
+      review_blog_post: {
+        Args: { target_blog_post_id: string; target_status: PublishStatus; rejection_reason?: string | null };
+        Returns: Database["public"]["Tables"]["blog_posts"]["Row"];
+      };
+      set_asset_featured: {
+        Args: { target_asset_id: string; target_featured: boolean };
+        Returns: Database["public"]["Tables"]["assets"]["Row"];
       };
       set_creator_featured: {
         Args: { target_creator_id: string; target_featured: boolean };

@@ -11,6 +11,8 @@ import {
   listAdminAssets,
   listAssetDeliverables,
   updateAsset as updateAssetInSupabase,
+  reviewAsset,
+  setAssetFeatured,
 } from "@/services/assets";
 import type { Tables, Updates } from "@/types/database";
 
@@ -61,31 +63,29 @@ export default function AdminAssets() {
   const list = filter === "All" ? remoteAssets : remoteAssets.filter(a => a.status === filter);
 
   const setStatus = async (id: string, patch: Partial<SubmittedAsset>) => {
-    const dbPatch: Updates<"assets"> = {};
-    if (patch.status === "Published") {
-      dbPatch.status = "published";
-      dbPatch.published_at = new Date().toISOString();
-      dbPatch.rejection_reason = null;
-    }
-    if (patch.status === "Approved") dbPatch.status = "approved";
-    if (patch.status === "Rejected") dbPatch.status = "rejected";
-    if (patch.status === "Draft") dbPatch.status = "draft";
-    if (patch.status === "Pending Review") dbPatch.status = "pending_review";
-    if ("rejectionReason" in patch) dbPatch.rejection_reason = patch.rejectionReason || null;
-    if ("featured" in patch) dbPatch.featured = patch.featured;
-
     setErr("");
     try {
-      await updateAssetInSupabase(id, dbPatch);
+      if (patch.status === "Published") {
+        if (!confirm("Approve and publish this asset?")) return;
+        await reviewAsset(id, "published");
+      } else if (patch.status === "Rejected") {
+        await reviewAsset(id, "rejected", patch.rejectionReason);
+      } else if (patch.status === "Draft") {
+        if (!confirm("Return this asset to draft for creator changes?")) return;
+        await reviewAsset(id, "draft");
+      } else if ("featured" in patch) {
+        await setAssetFeatured(id, Boolean(patch.featured));
+      }
       await loadAssets();
     } catch (error) {
-      setErr(explainSupabaseError(error, "Unable to update asset status."));
+      setErr(explainSupabaseError(error, "Unable to review asset."));
     }
   };
 
   const reject = async (id: string) => {
     const reason = prompt("Rejection reason:");
-    if (reason) await setStatus(id, { status: "Rejected", rejectionReason: reason });
+    if (!reason?.trim()) { setErr("Enter a meaningful rejection reason before rejecting."); return; }
+    if (confirm("Reject this asset? The reason will be visible to the creator.")) await setStatus(id, { status: "Rejected", rejectionReason: reason.trim() });
   };
 
   const remove = async (id: string) => {
@@ -191,7 +191,7 @@ export default function AdminAssets() {
                       {a.status !== "Published" ? (
                         <button onClick={() => setStatus(a.id, { status: "Published" })} className="text-white hover:text-white">Publish</button>
                       ) : (
-                        <button onClick={() => setStatus(a.id, { status: "Approved" })} className="text-[#CFCFCF] hover:text-white">Unpublish</button>
+                        <button onClick={() => setStatus(a.id, { status: "Draft" })} className="text-[#CFCFCF] hover:text-white">Unpublish</button>
                       )}
                       <button onClick={() => setStatus(a.id, { featured: !a.featured })} className="text-[#FFD600] hover:text-[#FFD600]">{a.featured ? "Unfeature" : "Feature"}</button>
                       <button onClick={() => remove(a.id)} className="text-[#CFCFCF] hover:text-[#CFCFCF]">Delete</button>
