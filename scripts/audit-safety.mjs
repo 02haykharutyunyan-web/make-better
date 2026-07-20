@@ -7,7 +7,7 @@ const writableCtePattern = /\bas\s*\(\s*(insert|update|delete|merge|create|alter
 const forbiddenPhrasePattern = /\b(db\s+push|db\s+reset|migration\s+repair|select\s+[^;]*\binto\b)\b/i;
 
 const allowedRelations = new Set([
-  'pg_namespace','pg_extension','pg_type','pg_enum','information_schema.columns','information_schema.tables','pg_constraint','pg_indexes','information_schema.triggers','pg_class','pg_policies','pg_proc','pg_language','information_schema.routine_privileges','storage.buckets','public.assets','public.creators','public.collections','public.blog_posts','public.asset_deliverables','public.asset_claims','unnest'
+  'pg_namespace','pg_extension','pg_type','pg_enum','information_schema.columns','information_schema.tables','information_schema.column_privileges','information_schema.table_privileges','pg_constraint','pg_indexes','information_schema.triggers','pg_class','pg_policies','pg_proc','pg_language','information_schema.routine_privileges','storage.buckets','public.assets','public.creators','public.collections','public.blog_posts','public.asset_deliverables','public.asset_claims','unnest'
 ]);
 const allowedFunctions = new Set([
   'jsonb_build_object','jsonb_agg','jsonb_build_array','array_to_string','coalesce','nullif','btrim','unnest','string_agg','pg_get_constraintdef','pg_get_function_identity_arguments','pg_get_function_result','count','lower','gin'
