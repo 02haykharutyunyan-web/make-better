@@ -110,6 +110,7 @@ export default function EditBlogPostPage() {
               <Textarea label="Excerpt" rows={3} value={form.excerpt} onChange={v => setForm({ ...form, excerpt: v })} disabled={!editable || saving || submitting} />
               <Textarea label="Post content" rows={10} value={form.body} onChange={v => setForm({ ...form, body: v })} disabled={!editable || saving || submitting} />
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                {post && <Link to={`/creator-dashboard/blog/${post.slug}/preview`} className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 px-5 py-2 text-sm">Preview</Link>}
                 <button type="submit" disabled={!editable || saving || submitting} className="min-h-11 rounded-full border border-white/10 px-5 py-2 text-sm disabled:opacity-50">{saving ? "Saving..." : "Save draft"}</button>
                 <button type="button" disabled={!editable || saving || submitting} onClick={submitForReview} className="min-h-11 rounded-full btn-primary px-5 py-2 text-sm font-medium disabled:opacity-50">{submitting ? "Submitting..." : post?.status === "rejected" ? "Resubmit for review" : "Submit for review"}</button>
               </div>

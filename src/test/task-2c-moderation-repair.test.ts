@@ -13,14 +13,14 @@ const verification = readFileSync("supabase/audit/task_2c_moderation_repair_veri
 describe("Task 2C moderation workflow repair contracts", () => {
   it("removes creator-side blog UPSERT and separates insert/update draft writes", () => {
     expect(contentService).toContain("export async function createBlogPost");
-    expect(contentService).toContain('.from("blog_posts")\n    .insert(blogDraftPayload(input))');
-    expect(contentService).toContain('.from("blog_posts")\n    .update(blogDraftPayload');
+    expect(contentService).toContain('.from("blog_posts")\n    .insert({ ...editableBlogPayload(input)');
+    expect(contentService).toContain('.from("blog_posts")\n    .update(editableBlogPayload');
     expect(contentService.slice(contentService.indexOf("export async function createBlogPost"), contentService.indexOf("export async function createAdminBlogPost"))).not.toContain("onConflict");
     expect(creatorBlog).toContain("createBlogPost(payload)");
   });
 
   it("does not browser-write protected lifecycle fields during blog saves", () => {
-    expect(contentService).toContain('const editableBlogColumns = ["slug", "title", "excerpt", "category", "body", "creator_id", "status"]');
+    expect(contentService).toContain('const editableBlogColumns = ["slug", "title", "excerpt", "category", "body"]');
     for (const protectedField of ["published_at", "submitted_at", "reviewed_at", "reviewed_by", "rejection_reason"]) {
       expect(contentService).not.toContain(`${protectedField}: input`);
       expect(contentService).not.toContain(`${protectedField}: patch`);

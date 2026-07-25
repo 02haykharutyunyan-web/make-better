@@ -58,6 +58,17 @@ export async function getCreatorBlogPostBySlug(slug: string) {
   return data;
 }
 
+/** Fetches a non-public post for an authenticated preview. Database RLS remains the authority. */
+export async function getBlogPostPreviewBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*, creators (id, slug, brand_name)")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function submitBlogPostForReview(blogPostId: string) {
   const { data, error } = await supabase.rpc("submit_blog_post_for_review", { target_blog_post_id: blogPostId });
   if (error) throw error;
@@ -75,21 +86,20 @@ export async function reviewBlogPost(blogPostId: string, status: "published" | "
   return data;
 }
 
-const editableBlogColumns = ["slug", "title", "excerpt", "category", "body", "creator_id", "status"] as const;
+const editableBlogColumns = ["slug", "title", "excerpt", "category", "body"] as const;
 
 type EditableBlogColumn = (typeof editableBlogColumns)[number];
 type BlogDraftInput = Pick<Inserts<"blog_posts">, EditableBlogColumn>;
 type CreatorBlogDraftInput = Pick<Inserts<"blog_posts">, "slug" | "title" | "excerpt" | "category" | "body">;
+type AdminBlogDraftInput = CreatorBlogDraftInput & Pick<Inserts<"blog_posts">, "creator_id">;
 
-function blogDraftPayload(input: Partial<BlogDraftInput>) {
+function editableBlogPayload(input: Partial<BlogDraftInput>) {
   return {
     slug: input.slug,
     title: input.title,
     excerpt: input.excerpt ?? null,
     category: input.category ?? null,
     body: input.body ?? null,
-    creator_id: input.creator_id ?? null,
-    status: "draft" as const,
   };
 }
 
@@ -112,10 +122,10 @@ export async function createBlogPost(input: CreatorBlogDraftInput) {
   return data;
 }
 
-export async function createAdminBlogPost(input: BlogDraftInput) {
+export async function createAdminBlogPost(input: AdminBlogDraftInput) {
   const { data, error } = await supabase
     .from("blog_posts")
-    .insert(blogDraftPayload(input))
+    .insert({ ...editableBlogPayload(input), creator_id: input.creator_id ?? null, status: "draft" })
     .select()
     .single();
 
@@ -131,12 +141,16 @@ export async function upsertBlogPost(input: Inserts<"blog_posts">) {
 export async function updateBlogPost(id: string, patch: Updates<"blog_posts">) {
   const { data, error } = await supabase
     .from("blog_posts")
-    .update(blogDraftPayload(patch as Partial<BlogDraftInput>))
+    .update(editableBlogPayload(patch as Partial<BlogDraftInput>))
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) rethrowBlogWriteError(error);
+  if (!data) throw new Error("Blog draft was not updated. It may not belong to you or is no longer editable.");
+  if (data.id !== id || !["draft", "rejected"].includes(data.status)) {
+    throw new Error("Blog draft update returned an unexpected persisted row.");
+  }
   return data;
 }
 

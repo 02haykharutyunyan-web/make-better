@@ -191,6 +191,7 @@ export default function CreatorDashboard() {
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                     <span className={`rounded-full border px-3 py-1 text-xs ${statusStyles[statusLabel(post.status)]}`}>{statusLabel(post.status)}</span>
+                    <Link to={`/creator-dashboard/blog/${post.slug}/preview`} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 hover:border-[#FFD600]/60">Preview</Link>
                     {(post.status === "draft" || post.status === "rejected") && <Link to={`/creator-dashboard/blog/${post.slug}/edit`} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 hover:border-[#FFD600]/60 hover:text-white transition">Edit</Link>}
                   </div>
                 </div>
