@@ -70,7 +70,7 @@ describe("Task 2B content moderation lifecycle", () => {
   it("routes creator submissions through draft, explicit submit RPCs, and no partial asset auto-submit", () => {
     expect(assetsService).toContain('status: input.status || "draft"');
     expect(assetsService).toContain('supabase.rpc("submit_asset_for_review"');
-    expect(contentService).toContain('insert(blogDraftPayload(input))');
+    expect(contentService).toContain('supabase.rpc("create_blog_draft"');
     expect(contentService).toContain('supabase.rpc("submit_blog_post_for_review"');
     expect(readFileSync("src/pages/creator/SubmitAssetPage.tsx", "utf8")).toContain("delivery upload failed");
   });

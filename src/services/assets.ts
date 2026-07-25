@@ -140,6 +140,7 @@ export async function deleteAsset(id: string) {
 }
 
 export function validateDeliverableFile(file: File) {
+  if (!file.name.trim() || file.size <= 0) throw new Error("Choose a non-empty deliverable file.");
   if (file.size > MAX_DELIVERABLE_FILE_SIZE) {
     throw new Error("File is too large. Upload a file smaller than 50 MB.");
   }
@@ -150,10 +151,26 @@ export function validateDeliverableFile(file: File) {
   }
 }
 
+export function validateExternalDeliveryUrl(value: string) {
+  let url: URL;
+  try { url = new URL(value.trim()); } catch { throw new Error("Enter a valid delivery URL."); }
+  if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("Delivery links must use http or https.");
+  return url.toString();
+}
+
+export function validateTextDelivery(value: string) {
+  const text = value.trim();
+  if (!text) throw new Error("Add the private text or prompt content.");
+  if (text.length > 100_000) throw new Error("Private text delivery must be 100,000 characters or fewer.");
+  return text;
+}
+
 export async function uploadAssetDeliverableFile(creatorId: string, assetId: string, file: File) {
   validateDeliverableFile(file);
+  const safeId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!safeId(creatorId) || !safeId(assetId)) throw new Error("Unable to create a safe upload path.");
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-|-$/g, "") || "deliverable";
-  const storagePath = `${creatorId}/${assetId}/${Date.now()}-${safeName}`;
+  const storagePath = `${safeId(creatorId)}/${safeId(assetId)}/${Date.now()}-${safeName}`;
 
   const { data, error } = await supabase.storage
     .from(ASSET_DELIVERABLES_BUCKET)
@@ -161,6 +178,11 @@ export async function uploadAssetDeliverableFile(creatorId: string, assetId: str
 
   if (error) throw error;
   return data.path;
+}
+
+export async function removeAssetDeliverableFile(storagePath: string) {
+  const { error } = await supabase.storage.from(ASSET_DELIVERABLES_BUCKET).remove([storagePath]);
+  if (error) throw error;
 }
 
 export async function upsertAssetDeliverable(input: Inserts<"asset_deliverables">) {

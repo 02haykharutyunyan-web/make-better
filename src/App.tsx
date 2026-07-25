@@ -34,6 +34,7 @@ import AdminAssets from "./pages/admin/AdminAssets.tsx";
 import AdminAccessRequests from "./pages/admin/AdminAccessRequests.tsx";
 import AdminBlog from "./pages/admin/AdminBlog.tsx";
 import AdminCollections from "./pages/admin/AdminCollections.tsx";
+import BlogPreviewPage from "./pages/BlogPreviewPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,9 @@ const App = () => (
             <Route path="/creator-dashboard/blog/:slug/edit" element={
               <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><EditBlogPostPage /></CreatorApprovalGate></ProtectedRoute>
             } />
+            <Route path="/creator-dashboard/blog/:slug/preview" element={
+              <ProtectedRoute roles={["creator"]}><CreatorApprovalGate><BlogPreviewPage audience="creator" /></CreatorApprovalGate></ProtectedRoute>
+            } />
 
             <Route path="/admin" element={
               <AdminRoute><AdminDashboard /></AdminRoute>
@@ -93,6 +97,9 @@ const App = () => (
             } />
             <Route path="/admin/blog" element={
               <AdminRoute><AdminBlog /></AdminRoute>
+            } />
+            <Route path="/admin/blog/:slug/preview" element={
+              <AdminRoute><BlogPreviewPage audience="admin" /></AdminRoute>
             } />
             <Route path="/admin/collections" element={
               <AdminRoute><AdminCollections /></AdminRoute>

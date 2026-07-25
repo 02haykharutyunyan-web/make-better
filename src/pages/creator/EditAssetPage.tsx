@@ -14,6 +14,9 @@ import {
   submitAssetForReview,
   uploadAssetDeliverableFile,
   upsertAssetDeliverable,
+  removeAssetDeliverableFile,
+  validateExternalDeliveryUrl,
+  validateTextDelivery,
 } from "@/services/assets";
 import type { DeliveryType, Tables } from "@/types/database";
 
@@ -111,8 +114,8 @@ export default function EditAssetPage() {
       if (!form.description.trim()) throw new Error("Add a short description.");
       if (form.priceType === "paid" && price <= 0) throw new Error("Paid assets need a price greater than 0.");
       if (form.deliveryType === "file" && !deliverable?.storage_path && !deliverableFile) throw new Error("Upload a deliverable file before saving.");
-      if (form.deliveryType === "external_link" && !form.externalUrl.trim()) throw new Error("Add the external delivery link before saving.");
-      if (form.deliveryType === "text" && !form.textContent.trim()) throw new Error("Add the private text or prompt content before saving.");
+      const externalUrl = form.deliveryType === "external_link" ? validateExternalDeliveryUrl(form.externalUrl) : null;
+      const textContent = form.deliveryType === "text" ? validateTextDelivery(form.textContent) : null;
 
       await updateAsset(asset.id, {
         title: form.title.trim(),
@@ -138,25 +141,28 @@ export default function EditAssetPage() {
           const storagePath = deliverableFile
             ? await uploadAssetDeliverableFile(creator.id, asset.id, deliverableFile)
             : deliverable?.storage_path;
-          await upsertAssetDeliverable({
+          try { await upsertAssetDeliverable({
             asset_id: asset.id,
             delivery_type: "file",
             storage_bucket: ASSET_DELIVERABLES_BUCKET,
             storage_path: storagePath || "",
             file_name: deliverableFile?.name || deliverable?.file_name || "Deliverable file",
             file_size: deliverableFile?.size || deliverable?.file_size || null,
-          });
+          }); } catch (error) {
+            if (deliverableFile && storagePath) await removeAssetDeliverableFile(storagePath).catch(() => undefined);
+            throw error;
+          }
         } else if (form.deliveryType === "external_link") {
           await upsertAssetDeliverable({
             asset_id: asset.id,
             delivery_type: "external_link",
-            external_url: form.externalUrl.trim(),
+            external_url: externalUrl,
           });
         } else {
           await upsertAssetDeliverable({
             asset_id: asset.id,
             delivery_type: "text",
-            text_content: form.textContent,
+            text_content: textContent,
           });
         }
       } catch (deliveryError) {
