@@ -13,6 +13,10 @@
 3. Optional local Supabase values may be placed in `.env.local` for manual development. CI and repository validation do not require production Supabase secrets and must not connect to production.
 4. Run `npm run dev` for local development.
 
+## Browser end-to-end tests
+
+The blog moderation lifecycle has a Playwright suite for a dedicated QA Supabase project. Account requirements, safe configuration, commands, artifacts, and cleanup are documented in [`docs/playwright-blog-lifecycle.md`](docs/playwright-blog-lifecycle.md). Do not run it against production.
+
 ## Required validation commands
 
 Before opening or updating a PR, run:

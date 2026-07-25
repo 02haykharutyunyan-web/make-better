@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
 import { ArrowLeft } from "lucide-react";
@@ -22,6 +22,7 @@ export default function EditBlogPostPage() {
   const [err, setErr] = useState("");
   const [success, setSuccess] = useState("");
   const [notFound, setNotFound] = useState(false);
+  const operationRunning = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,34 +50,47 @@ export default function EditBlogPostPage() {
 
   const editable = !post || post.status === "draft" || post.status === "rejected";
 
-  const saveDraft = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const persistDraft = async (showSavedMessage: boolean) => {
     if (!creator) return;
     if (!editable) { setErr("Pending-review and published posts cannot be edited. Ask an admin to return it to draft first."); return; }
     if (!form.title.trim()) { setErr("Add a title before saving."); return; }
-    setSaving(true); setErr(""); setSuccess("");
     try {
       const cleanSlug = (form.slug || form.title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const payload = { slug: cleanSlug, title: form.title.trim(), excerpt: form.excerpt.trim() || null, category: form.category.trim() || null, body: form.body.trim() || null };
       const saved = post ? await updateBlogPost(post.id, payload) : await createBlogPost(payload);
       setPost(saved);
       setForm(current => ({ ...current, slug: saved.slug }));
-      setSuccess("Draft saved.");
+      if (showSavedMessage) setSuccess("Draft saved.");
       return saved;
     } catch (error) {
-      setErr(explainSupabaseError(error, "Unable to save this blog draft."));
+      const message = explainSupabaseError(error, "Unable to save the latest changes.");
+      setErr(`${message} The blog was not submitted.`);
       return null;
+    }
+  };
+
+  const saveDraft = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (operationRunning.current) return;
+    operationRunning.current = true;
+    setSaving(true); setErr(""); setSuccess("");
+    try {
+      return await persistDraft(true);
     } finally {
       setSaving(false);
+      operationRunning.current = false;
     }
   };
 
   const submitForReview = async () => {
+    if (operationRunning.current) return;
     if (!creator) return;
     if (!editable) { setErr("Only draft or rejected posts can be submitted for review."); return; }
+    operationRunning.current = true;
     setSubmitting(true); setErr(""); setSuccess("");
     try {
-      const saved = post || await saveDraft();
+      // Always persist the live form first: an existing `post` may contain stale values.
+      const saved = await persistDraft(false);
       if (!saved) return;
       const submitted = await submitBlogPostForReview(saved.id);
       setPost(submitted);
@@ -86,6 +100,7 @@ export default function EditBlogPostPage() {
       setErr(explainSupabaseError(error, "Unable to submit this blog post for review."));
     } finally {
       setSubmitting(false);
+      operationRunning.current = false;
     }
   };
 
