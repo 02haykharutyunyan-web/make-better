@@ -29,6 +29,16 @@ function saveState(state) {
 function checkError(error, context) {
   if (error) throw new Error(`${context}: ${error.message}`);
 }
+function sanitizeDetail(value) {
+  let detail = String(value);
+  for (const name of required) {
+    const secret = process.env[name];
+    if (secret) detail = detail.replaceAll(secret, `[${name}]`);
+  }
+  return detail
+    .replaceAll(/([?&#](?:code|token|access_token|refresh_token|otp|secret)=)[^&#\s]+/gi, "$1[REDACTED]")
+    .slice(0, 2000);
+}
 function makeReport(results, status, detail = "") {
   const lines = [
     "# Production free-asset QA",
@@ -40,7 +50,7 @@ function makeReport(results, status, detail = "") {
     "|---|---|",
     ...results.map(({ name, pass }) => `| ${name} | ${pass ? "PASS" : "FAIL"} |`),
   ];
-  if (detail) lines.push("", "## Failure", "", detail.replaceAll(process.env.SUPABASE_URL, "[SUPABASE_URL]").slice(0, 2000));
+  if (detail) lines.push("", "## Failure", "", sanitizeDetail(detail));
   fs.writeFileSync(reportPath, `${lines.join("\n")}\n`);
 }
 
@@ -131,14 +141,50 @@ async function run() {
     page.on("requestfailed", (request) => failedRequests.push(`${request.method()} ${new URL(request.url()).pathname}`));
     const rpcResponses = [];
     page.on("response", async (response) => {
-      if (response.url().includes("/rpc/claim_free_asset")) rpcResponses.push({ status: response.status(), body: await response.json().catch(() => null) });
+      if (response.url().includes("/rpc/claim_free_asset")) {
+        const rpc = { status: response.status(), outcome: null, errorCode: null };
+        rpcResponses.push(rpc);
+        const body = await response.json().catch(() => null);
+        rpc.outcome = typeof body?.outcome === "string" ? body.outcome : null;
+        rpc.errorCode = typeof body?.code === "string" ? body.code : null;
+      }
     });
+    const claimFailureDetail = async (expectedHeading) => {
+      const heading = (await page.locator("h1").first().textContent().catch(() => null))?.trim() || "[no heading]";
+      const body = (await page.locator("main, section").first().innerText().catch(() => null))?.replace(/\s+/g, " ").trim().slice(0, 500) || "[no page text]";
+      const pathname = new URL(page.url()).pathname;
+      return [
+        `Expected heading: ${expectedHeading}`,
+        `Observed heading: ${heading}`,
+        `Path: ${pathname}`,
+        `Claim RPC: ${JSON.stringify(rpcResponses.at(-1) || { status: "not_observed" })}`,
+        `Page text: ${body}`,
+        `Console errors: ${JSON.stringify(consoleErrors.slice(-3))}`,
+        `Failed requests: ${JSON.stringify(failedRequests.slice(-5))}`,
+      ].join("\n");
+    };
+    const waitForClaimState = async (expectedHeading) => {
+      try {
+        await page.getByRole("heading", { name: expectedHeading }).waitFor({ timeout: 30_000 });
+      } catch {
+        throw new Error(await claimFailureDetail(expectedHeading));
+      }
+    };
+    const waitForRpcOutcome = async (afterIndex) => {
+      const deadline = Date.now() + 5_000;
+      while ((!rpcResponses[afterIndex]?.outcome) && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      return rpcResponses[afterIndex]?.outcome;
+    };
+    const firstRpcIndex = rpcResponses.length;
     await page.goto(link.properties.action_link, { waitUntil: "networkidle" });
-    await page.getByRole("heading", { name: "Asset claimed" }).waitFor();
-    record("magic-link authentication and first browser claim", rpcResponses.at(-1)?.body?.outcome === "claimed");
+    await waitForClaimState("Asset claimed");
+    record("magic-link authentication and first browser claim", await waitForRpcOutcome(firstRpcIndex) === "claimed");
+    const duplicateRpcIndex = rpcResponses.length;
     await page.goto(`${siteUrl}/auth/free-claim?asset=${freeAsset.id}`, { waitUntil: "networkidle" });
-    await page.getByRole("heading", { name: "Already claimed" }).waitFor();
-    record("duplicate claim", rpcResponses.at(-1)?.body?.outcome === "already_claimed");
+    await waitForClaimState("Already claimed");
+    record("duplicate claim", await waitForRpcOutcome(duplicateRpcIndex) === "already_claimed");
     const { count, error: countError } = await admin.from("asset_claims").select("id", { count: "exact", head: true }).eq("asset_id", freeAsset.id).eq("user_id", claimant.id);
     checkError(countError, "count claims"); record("exactly one claim row", count === 1);
     await page.goto(`${siteUrl}/my-assets`, { waitUntil: "networkidle" });
