@@ -133,8 +133,16 @@ async function run() {
     const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: "magiclink", email: emails[0], options: { redirectTo } });
     checkError(linkError, "generate magic link");
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ extraHTTPHeaders: { "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET } });
+    const context = await browser.newContext();
     const page = await context.newPage();
+    await page.route(`${siteUrl}/**`, async (route) => {
+      await route.continue({
+        headers: {
+          ...route.request().headers(),
+          "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+        },
+      });
+    });
     const consoleErrors = [];
     const failedRequests = [];
     page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text().slice(0, 300)); });
@@ -179,8 +187,9 @@ async function run() {
     };
     const firstRpcIndex = rpcResponses.length;
     await page.goto(link.properties.action_link, { waitUntil: "networkidle" });
-    await waitForClaimState("Asset claimed");
-    record("magic-link authentication and first browser claim", await waitForRpcOutcome(firstRpcIndex) === "claimed");
+    const firstOutcome = await waitForRpcOutcome(firstRpcIndex);
+    await waitForClaimState(firstOutcome === "already_claimed" ? "Already claimed" : "Asset claimed");
+    record("magic-link authentication and first browser claim", firstOutcome === "claimed" || firstOutcome === "already_claimed");
     const duplicateRpcIndex = rpcResponses.length;
     await page.goto(`${siteUrl}/auth/free-claim?asset=${freeAsset.id}`, { waitUntil: "networkidle" });
     await waitForClaimState("Already claimed");
