@@ -1,0 +1,82 @@
+name: Production free-asset QA
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-free-asset-qa
+  cancel-in-progress: false
+
+jobs:
+  production-qa:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    environment: production-qa
+    timeout-minutes: 20
+    steps:
+      - name: Checkout trusted workflow revision
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Initialize sanitized QA report
+        env:
+          QA_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          printf '# Production free-asset QA\n\n**Run:** `%s`\n**Overall:** **NOT RUN**\n' "$QA_RUN_ID" > production-qa-report.md
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Install ephemeral browser driver
+        run: npm install --no-save --no-package-lock playwright@1.54.1 && npx playwright install --with-deps chromium
+
+      - name: Validate repository
+        run: npm run lint && npm run typecheck && npm test && npm run build
+
+      - name: Run production integration QA
+        id: e2e
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          QA_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/production-free-asset-qa.mjs run
+
+      - name: Clean up this run's QA data
+        id: cleanup
+        if: ${{ always() }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          QA_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/production-free-asset-qa.mjs cleanup
+
+      - name: Upload sanitized QA report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: production-free-asset-qa-${{ github.run_id }}-${{ github.run_attempt }}
+          path: production-qa-report.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce QA result
+        if: ${{ always() }}
+        env:
+          E2E_OUTCOME: ${{ steps.e2e.outcome }}
+          CLEANUP_OUTCOME: ${{ steps.cleanup.outcome }}
+        run: |
+          test "$E2E_OUTCOME" = success
+          test "$CLEANUP_OUTCOME" = success
