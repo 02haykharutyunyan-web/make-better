@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase/client";
 import { requireSupabaseConfig } from "@/lib/supabase/errors";
 import type { AccessRequestStatus, DeliveryType, Inserts, Tables, Updates } from "@/types/database";
+import type { FreeClaimResult } from "@/lib/free-claim";
 
 export type AssetWithCreator = Awaited<ReturnType<typeof listPublishedAssets>>[number];
 export const ASSET_DELIVERABLES_BUCKET = "asset-deliverables";
@@ -345,28 +346,7 @@ export async function countAccessRequestsForAssets(assetIds: string[]) {
   }, {});
 }
 
-export async function claimAsset(assetId: string, userId: string, status: Inserts<"asset_claims">["status"] = "unlocked") {
-  const { data: existing, error: existingError } = await supabase
-    .from("asset_claims")
-    .select("*")
-    .eq("asset_id", assetId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (existingError) throw existingError;
-  if (existing) return existing;
-
-  const { data, error } = await supabase
-    .from("asset_claims")
-    .insert({ asset_id: assetId, user_id: userId, status })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function claimFreeAssetBySlug(slug: string, userId: string) {
+export async function claimFreeAssetBySlug(slug: string) {
   const { data: asset, error: assetError } = await supabase
     .from("assets")
     .select("id, slug, is_free, status")
@@ -380,7 +360,26 @@ export async function claimFreeAssetBySlug(slug: string, userId: string) {
     throw new Error("This free asset is not available in Supabase yet. Seed the marketplace assets migration, then try again.");
   }
 
-  return claimAsset(asset.id, userId, "unlocked");
+  return claimFreeAssetSecure(asset.id);
+}
+
+export async function claimFreeAssetSecure(assetId: string) {
+  requireSupabaseConfig();
+  const { data, error } = await supabase.rpc("claim_free_asset", { target_asset_id: assetId });
+  if (error) throw error;
+  return data as unknown as FreeClaimResult;
+}
+
+export async function sendFreeClaimMagicLink(email: string, assetId: string) {
+  requireSupabaseConfig();
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email.trim(),
+    options: {
+      emailRedirectTo: new URL(`/auth/free-claim?asset=${encodeURIComponent(assetId)}`, window.location.origin).toString(),
+      data: { role: "buyer" },
+    },
+  });
+  if (error) throw error;
 }
 
 export async function listMyAssetClaims(userId: string) {

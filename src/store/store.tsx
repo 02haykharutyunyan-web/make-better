@@ -316,15 +316,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (existingRemote) return existingRemote;
 
       if (asset.isFree) {
-        const remoteClaim = await claimFreeAssetBySlug(asset.slug, currentUserId);
+        const remoteClaim = await claimFreeAssetBySlug(asset.slug);
         const remoteAsset = await getPublishedAssetBySlug(asset.slug);
         const claimedAsset = remoteAsset ? dbAssetToSubmittedAsset(remoteAsset as DbAsset) : asset;
         const claim: Claim = {
-          id: remoteClaim.id,
-          userId: remoteClaim.user_id,
+          id: remoteClaim.claim_id,
+          userId: currentUserId,
           assetSlug: asset.slug,
           status: "Unlocked",
-          createdAt: remoteClaim.created_at,
+          createdAt: new Date().toISOString(),
         };
         setRemoteClaims(prev => [claim, ...prev.filter(c => c.assetSlug !== claim.assetSlug)]);
         update(s => ({

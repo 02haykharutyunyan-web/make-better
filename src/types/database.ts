@@ -408,6 +408,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      claim_free_asset: {
+        Args: { target_asset_id: string };
+        Returns: Record<string, unknown>;
+      };
       create_blog_draft: {
         Args: { draft_slug: string; draft_title: string; draft_excerpt?: string | null; draft_category?: string | null; draft_body?: string | null };
         Returns: Database["public"]["Tables"]["blog_posts"]["Row"];

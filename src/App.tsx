@@ -35,6 +35,7 @@ import AdminAccessRequests from "./pages/admin/AdminAccessRequests.tsx";
 import AdminBlog from "./pages/admin/AdminBlog.tsx";
 import AdminCollections from "./pages/admin/AdminCollections.tsx";
 import BlogPreviewPage from "./pages/BlogPreviewPage.tsx";
+import FreeClaimCallbackPage from "./pages/FreeClaimCallbackPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -58,8 +59,9 @@ const App = () => (
             <Route path="/submit" element={<SubmitPage />} />
 
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/free-claim" element={<FreeClaimCallbackPage />} />
             <Route path="/creator-signup" element={<CreatorSignupPage />} />
-            <Route path="/my-assets" element={<MyAssetsPage />} />
+            <Route path="/my-assets" element={<ProtectedRoute><MyAssetsPage /></ProtectedRoute>} />
 
             <Route path="/creator-dashboard" element={
               <ProtectedRoute roles={["creator"]}><CreatorDashboard /></ProtectedRoute>

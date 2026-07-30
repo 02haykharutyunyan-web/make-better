@@ -15,6 +15,7 @@ import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
 export default function AssetPage() {
   const { slug } = useParams();
   const [asset, setAsset] = useState<Asset | null>(null);
+  const [assetId, setAssetId] = useState("");
   const [creator, setCreator] = useState<Creator | null>(null);
   const [useCases, setUseCases] = useState<string[]>([]);
   const [included, setIncluded] = useState<string[]>([]);
@@ -46,6 +47,7 @@ export default function AssetPage() {
 
         if (!cancelled) {
           setAsset(mappedAsset);
+          setAssetId(row.id);
           setCreator(dbCreatorToCreator(row.creators));
           setUseCases(row.use_cases || []);
           setIncluded(row.included || []);
@@ -114,7 +116,7 @@ export default function AssetPage() {
                 onClick={() => setModalOpen(true)}
                 className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full btn-primary px-7 py-3.5 text-sm font-medium transition sm:w-auto"
               >
-                {asset.price === 0 ? "Get Asset" : "Join Waitlist"} <ArrowUpRight className="h-4 w-4" />
+                {asset.price === 0 ? "Claim free asset" : "Join Waitlist"} <ArrowUpRight className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -232,7 +234,7 @@ export default function AssetPage() {
         </div>
       </section>
 
-      <GetAssetModal asset={asset} open={modalOpen} onClose={() => setModalOpen(false)} />
+      <GetAssetModal asset={asset} assetId={assetId} open={modalOpen} onClose={() => setModalOpen(false)} />
     </SiteLayout>
   );
 }
