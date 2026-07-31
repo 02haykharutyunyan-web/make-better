@@ -75,6 +75,14 @@ describe("Task 2B content moderation lifecycle", () => {
     expect(readFileSync("src/pages/creator/SubmitAssetPage.tsx", "utf8")).toContain("delivery upload failed");
   });
 
+  it("uses insert-only private file uploads and preserves a written submission draft", () => {
+    expect(assetsService).toContain(".upload(storagePath, file, { upsert: false })");
+    const submitPage = readFileSync("src/pages/creator/SubmitAssetPage.tsx", "utf8");
+    expect(submitPage).toContain('"makebetter:submit-asset-draft:v1"');
+    expect(submitPage).toContain("localStorage.setItem(SUBMIT_ASSET_DRAFT_KEY, JSON.stringify(form))");
+    expect(submitPage).toContain("localStorage.removeItem(SUBMIT_ASSET_DRAFT_KEY)");
+  });
+
   it("provides complete creator and admin blog moderation UI", () => {
     expect(dashboard).toContain("New blog draft");
     expect(creatorBlogEditor).toContain("Save draft");

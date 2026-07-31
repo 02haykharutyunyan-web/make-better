@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
 import { useStore } from "@/store/store";
@@ -16,26 +16,53 @@ import {
   validateExternalDeliveryUrl,
   validateTextDelivery,
 } from "@/services/assets";
-import type { DeliveryType } from "@/types/database";
+import type { DeliveryType, PriceType } from "@/types/database";
 
 const productTypes: ProductType[] = ["Prompts","AI Agents","AI Assistants","API Tools","Workflows","Templates","Automation Assets","Creator Resources"];
+const SUBMIT_ASSET_DRAFT_KEY = "makebetter:submit-asset-draft:v1";
+
+const emptyForm = {
+  title: "", productType: "Prompts" as ProductType, description: "", fullDescription: "",
+  tags: "", priceType: "free" as "free" | "paid", price: "",
+  useCases: "", included: "", before: "", after: "",
+  deliveryType: "file" as DeliveryType,
+  externalUrl: "",
+  textContent: "",
+};
+
+function readSavedDraft(): typeof emptyForm {
+  try {
+    const value = localStorage.getItem(SUBMIT_ASSET_DRAFT_KEY);
+    if (!value) return emptyForm;
+    const saved = JSON.parse(value) as Partial<typeof emptyForm>;
+    return {
+      ...emptyForm,
+      ...saved,
+      productType: productTypes.includes(saved.productType as ProductType) ? saved.productType as ProductType : emptyForm.productType,
+      priceType: (saved.priceType === "paid" ? "paid" : "free") as PriceType,
+      deliveryType: ["file", "external_link", "text"].includes(saved.deliveryType as string) ? saved.deliveryType as DeliveryType : "file",
+    };
+  } catch {
+    return emptyForm;
+  }
+}
 
 export default function SubmitAssetPage() {
   const { user } = useStore();
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    title: "", productType: "Prompts" as ProductType, description: "", fullDescription: "",
-    tags: "", priceType: "free" as "free" | "paid", price: "",
-    useCases: "", included: "", before: "", after: "",
-    deliveryType: "file" as DeliveryType,
-    externalUrl: "",
-    textContent: "",
-  });
+  const [form, setForm] = useState(readSavedDraft);
   const [deliverableFile, setDeliverableFile] = useState<File | null>(null);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState("");
   const [partialWarning, setPartialWarning] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Keep written details when a browser unloads this route (for example after
+  // switching tabs and returning). Files cannot be restored by browsers for
+  // security, so the creator only needs to choose the file again.
+  useEffect(() => {
+    localStorage.setItem(SUBMIT_ASSET_DRAFT_KEY, JSON.stringify(form));
+  }, [form]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +132,7 @@ export default function SubmitAssetPage() {
         throw new Error("Asset draft was saved, but delivery upload failed. Fix the delivery and submit again from the edit screen.");
       }
       await submitAssetForReview(asset.id);
+      localStorage.removeItem(SUBMIT_ASSET_DRAFT_KEY);
       setDone(true);
       setTimeout(() => navigate("/creator-dashboard"), 1200);
     } catch (error) {
@@ -241,7 +269,7 @@ function UploadField({ label, file, onChange }: { label: string; file: File | nu
         <Upload className="h-4 w-4" /> {file ? file.name : "Upload file"}
         <input type="file" className="hidden" onChange={e => onChange(e.target.files?.[0] || null)} />
       </div>
-      <p className="mt-2 text-xs text-white/35">Max 50 MB. Executable/script files are blocked.</p>
+      <p className="mt-2 text-xs text-white/35">Max 50 MB. Executable/script files are blocked. If the page is refreshed, choose the file again.</p>
     </label>
   );
 }
