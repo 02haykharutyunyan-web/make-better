@@ -4,12 +4,16 @@ import type { SubmittedAsset, AssetStatus } from "@/store/store";
 
 type DbCreator = Pick<Tables<"creators">, "slug" | "brand_name" | "niche" | "description" | "tags" | "followers" | "assets_count" | "downloads" | "rating" | "monthly_revenue" | "strengths">;
 
-type MarketplaceAssetFields = Pick<Tables<"assets">,
+type MarketplaceCreator = Pick<Tables<"creators">, "slug" | "brand_name">;
+
+type MarketplaceAsset = Pick<Tables<"assets">,
   "slug" | "title" | "category" | "product_type" | "short_description" |
   "tags" | "price" | "downloads" | "rating" | "review_count"
-> & Partial<Pick<Tables<"assets">, "long_description">>;
+> & Partial<Pick<Tables<"assets">, "long_description">> & {
+  creators?: MarketplaceCreator | null;
+};
 
-export type DbAsset = MarketplaceAssetFields & {
+export type DbAsset = Tables<"assets"> & {
   creators?: DbCreator | null;
 };
 
@@ -38,7 +42,7 @@ export function dbCreatorToCreator(creator?: DbCreator | null): Creator | null {
   };
 }
 
-export function dbAssetToAsset(asset: DbAsset): Asset {
+export function dbAssetToAsset(asset: MarketplaceAsset): Asset {
   return {
     slug: asset.slug,
     title: asset.title,
@@ -57,7 +61,7 @@ export function dbAssetToAsset(asset: DbAsset): Asset {
   };
 }
 
-export function dbAssetToSubmittedAsset(asset: Tables<"assets"> & { creators?: DbCreator | null }): SubmittedAsset {
+export function dbAssetToSubmittedAsset(asset: DbAsset): SubmittedAsset {
   return {
     ...dbAssetToAsset(asset),
     id: asset.id,
