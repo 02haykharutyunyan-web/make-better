@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
+// This workflow verifies both first-claim and idempotent terminal states in production.
 const mode = process.argv[2] || "run";
 const required = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "VERCEL_AUTOMATION_BYPASS_SECRET", "QA_RUN_ID"];
 const missing = required.filter((name) => !process.env[name]);
