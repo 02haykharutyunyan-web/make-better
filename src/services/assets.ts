@@ -175,7 +175,11 @@ export async function uploadAssetDeliverableFile(creatorId: string, assetId: str
 
   const { data, error } = await supabase.storage
     .from(ASSET_DELIVERABLES_BUCKET)
-    .upload(storagePath, file, { upsert: true });
+    // Each delivery gets a new timestamped path. Using upsert here makes
+    // Supabase also evaluate UPDATE/SELECT access for an object that does not
+    // exist yet, which blocks a creator's first upload under private-bucket
+    // RLS. A new path only needs INSERT access.
+    .upload(storagePath, file, { upsert: false });
 
   if (error) throw error;
   return data.path;
