@@ -116,7 +116,7 @@ export default function AssetPage() {
                 onClick={() => setModalOpen(true)}
                 className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full btn-primary px-7 py-3.5 text-sm font-medium transition sm:w-auto"
               >
-                {asset.price === 0 ? "Claim free asset" : "Join Waitlist"} <ArrowUpRight className="h-4 w-4" />
+                {asset.price === 0 ? "Claim free asset" : `Buy for $${asset.price}`} <ArrowUpRight className="h-4 w-4" />
               </button>
             </div>
           </div>
