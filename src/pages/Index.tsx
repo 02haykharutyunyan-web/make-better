@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
+import Seo from "@/components/Seo";
 import AssetCard from "@/components/AssetCard";
 import type { Asset, BlogPost, Collection, Creator } from "@/data/marketplace";
 import { productTypes, platformStats } from "@/data/marketplace-meta";
@@ -39,7 +40,7 @@ export default function Index() {
     async function loadAssets() {
       setLoadingAssets(true);
       try {
-        const rows = await listPublishedAssets();
+        const rows = await listPublishedAssets(6);
         if (!cancelled) {
           setRemoteAssets(rows.map(row => ({
             asset: dbAssetToAsset(row),
@@ -62,9 +63,9 @@ export default function Index() {
     async function loadContent() {
       try {
         const [collectionRows, creatorRows, postRows] = await Promise.all([
-          listPublishedCollections(),
-          listActiveCreators(),
-          listPublishedBlogPosts(),
+          listPublishedCollections(6),
+          listActiveCreators(3),
+          listPublishedBlogPosts(3),
         ]);
         if (!cancelled) {
           setRemoteCollections(collectionRows.map(dbCollectionToCollection).slice(0, 6));
@@ -120,6 +121,10 @@ export default function Index() {
 
   return (
     <SiteLayout>
+      <Seo title="Make Better — AI Assets Marketplace" description="Discover ready-to-use AI prompts, agents, workflows, playbooks, and templates that help you work smarter." path="/" schema={[
+        { "@context": "https://schema.org", "@type": "Organization", name: "Make Better", url: "https://www.makebetter.im/" },
+        { "@context": "https://schema.org", "@type": "WebSite", name: "Make Better", url: "https://www.makebetter.im/" },
+      ]} />
       {/* HERO */}
       <section className="section-rich relative pt-14 pb-20 sm:pt-20 sm:pb-24 md:pt-28 md:pb-32 overflow-hidden">
         <SectionVisual variant="market" />
@@ -140,6 +145,7 @@ export default function Index() {
               <form onSubmit={handleSearch} className="hero-search-panel glass-panel flex flex-col gap-2 rounded-2xl p-2 transition sm:flex-row sm:items-center sm:gap-3 sm:pl-5">
                 <Search className="h-5 w-5 text-[#CFCFCF]/70" />
                 <input
+                  aria-label="Search AI assets"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Find assets for dropshipping"

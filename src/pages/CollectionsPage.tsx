@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
+import Seo from "@/components/Seo";
 import type { Collection } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
@@ -35,6 +36,7 @@ export default function CollectionsPage() {
 
   return (
     <SiteLayout>
+      <Seo title="AI Asset Collections" description="Browse curated collections of AI assets organized around practical business goals and workflows." path="/collections" />
       <section className="container-mb section-rich pt-12 sm:pt-16 md:pt-24">
         <SectionVisual variant="mesh" />
         <div className="eyebrow">Collections</div>

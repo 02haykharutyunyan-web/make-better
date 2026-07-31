@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
+import Seo from "@/components/Seo";
 import type { BlogPost } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { listPublishedBlogPosts } from "@/services/content";
@@ -34,6 +35,7 @@ export default function BlogPage() {
 
   return (
     <SiteLayout>
+      <Seo title="AI Asset Guides and Resources" description="Read practical guides for choosing and using AI prompts, agents, workflows, and templates." path="/blog" />
       <section className="container-mb section-rich pt-12 sm:pt-16 md:pt-24">
         <SectionVisual variant="lines" />
         <div className="eyebrow">Blog</div>

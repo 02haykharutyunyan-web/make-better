@@ -1,4 +1,4 @@
-import { Navigate, useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
@@ -8,6 +8,8 @@ import { dbCollectionToCollection, dbBlogToBlogPost } from "@/lib/content-mapper
 import { dbAssetToAsset } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
+import Seo from "@/components/Seo";
+import { SITE_URL } from "@/lib/seo";
 
 export default function CollectionPage() {
   const { slug } = useParams();
@@ -30,7 +32,7 @@ export default function CollectionPage() {
           setCollection(dbCollectionToCollection(row));
           const assetRows = await listPublishedAssetsForCollection(row);
           setAssets(assetRows.map(dbAssetToAsset));
-          const posts = await listPublishedBlogPosts();
+          const posts = await listPublishedBlogPosts(3);
           setRelatedPosts(posts.slice(0, 3).map(dbBlogToBlogPost));
         }
       } catch (error) {
@@ -47,13 +49,13 @@ export default function CollectionPage() {
   }, [slug]);
 
   const c = collection;
-  if (!c && !loading) return <Navigate to="/collections" replace />;
-  if (!c) return null;
+  if (!c) return <SiteLayout><Seo title={loading ? "Loading collection" : "Collection not found"} description="This marketplace collection is not available." path={`/collections/${slug || ""}`} noindex /><section className="container-mb pt-24"><div className="card-premium p-8 text-center text-[#CFCFCF]" aria-live="polite">{loading ? "Loading collection…" : err || "This collection could not be found."}</div></section></SiteLayout>;
   const list = assets;
   const posts = relatedPosts;
 
   return (
     <SiteLayout>
+      <Seo title={c.title} description={c.description} path={`/collections/${c.slug}`} schema={{ "@context": "https://schema.org", "@type": "CollectionPage", name: c.title, description: c.description, url: `${SITE_URL}/collections/${c.slug}` }} />
       {err && <section className="container-mb pt-6"><div className="rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div></section>}
       <section className="container-mb section-rich pt-12 sm:pt-16 md:pt-24">
         <SectionVisual variant="market" />

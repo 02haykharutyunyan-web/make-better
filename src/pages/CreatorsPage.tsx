@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
+import Seo from "@/components/Seo";
 import type { Creator } from "@/data/marketplace";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
@@ -35,6 +36,7 @@ export default function CreatorsPage() {
 
   return (
     <SiteLayout>
+      <Seo title="AI Asset Creators" description="Discover approved creators building practical AI prompts, agents, workflows, and templates." path="/creators" />
       <section className="container-mb section-rich pt-12 sm:pt-16 md:pt-24">
         <SectionVisual variant="market" />
         <div className="eyebrow">Creators</div>

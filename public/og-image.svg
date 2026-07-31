@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Make Better AI Assets Marketplace</title>
+  <desc id="desc">Ready-to-use AI assets that help people work smarter.</desc>
+  <rect width="1200" height="630" fill="#050505"/>
+  <circle cx="1010" cy="50" r="370" fill="#FFD600" opacity=".1"/>
+  <path d="M0 500L1200 170M0 570L1200 240" stroke="#FFD600" stroke-opacity=".13" stroke-width="2"/>
+  <text x="90" y="170" fill="#FFD600" font-family="Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="5">MAKEBETTER.IM</text>
+  <text x="90" y="310" fill="white" font-family="Arial,sans-serif" font-size="76" font-weight="700">AI assets that help</text>
+  <text x="90" y="402" fill="white" font-family="Arial,sans-serif" font-size="76" font-weight="700">you work smarter.</text>
+  <text x="90" y="500" fill="#cfcfcf" font-family="Arial,sans-serif" font-size="30">Prompts · Agents · Workflows · Templates</text>
+</svg>

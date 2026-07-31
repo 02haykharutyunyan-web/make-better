@@ -1,4 +1,4 @@
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
@@ -9,6 +9,8 @@ import { dbAssetToAsset, dbCreatorToCreator } from "@/lib/asset-mappers";
 import { dbBlogToBlogPost } from "@/lib/content-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
+import Seo from "@/components/Seo";
+import { SITE_URL } from "@/lib/seo";
 
 export default function CreatorPage() {
   const { slug } = useParams();
@@ -45,10 +47,10 @@ export default function CreatorPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  if (!creator && !loading && !err) return <Navigate to="/creators" replace />;
   if (!creator) {
     return (
       <SiteLayout>
+        <Seo title="Creator not found" description="This creator profile is not available." path={`/creator/${slug || ""}`} noindex />
         <section className="container-mb pt-16 sm:pt-24 pb-20">
           {loading ? (
             <div className="card-premium p-6 text-[#CFCFCF]">Loading creator...</div>
@@ -68,6 +70,7 @@ export default function CreatorPage() {
 
   return (
     <SiteLayout>
+      <Seo title={creator.name} description={creator.description || `View approved AI assets from ${creator.name}.`} path={`/creator/${creator.slug}`} schema={{ "@context": "https://schema.org", "@type": "ProfilePage", mainEntity: { "@type": "Organization", name: creator.name, description: creator.description, url: `${SITE_URL}/creator/${creator.slug}` } }} />
       <section className="container-mb section-rich pt-10 sm:pt-12 md:pt-16">
         <SectionVisual variant="market" />
         <div className="card-premium p-5 sm:p-8 md:p-10 grid min-w-0 gap-6 sm:gap-8 md:grid-cols-[minmax(0,1fr)_auto] items-start">

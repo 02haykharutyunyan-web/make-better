@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,37 +9,50 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminRoute from "@/components/AdminRoute";
 import CreatorApprovalGate from "@/components/CreatorApprovalGate";
 
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
-import AssetsPage from "./pages/Assets.tsx";
-import AssetPage from "./pages/AssetPage.tsx";
-import CreatorsPage from "./pages/CreatorsPage.tsx";
-import CreatorPage from "./pages/CreatorPage.tsx";
-import CollectionsPage from "./pages/CollectionsPage.tsx";
-import CollectionPage from "./pages/CollectionPage.tsx";
-import BlogPage from "./pages/BlogPage.tsx";
-import BlogPostPage from "./pages/BlogPostPage.tsx";
-import SubmitPage from "./pages/SubmitPage.tsx";
-import TrustPages from "./pages/TrustPages.tsx";
+import Seo from "@/components/Seo";
 
-import LoginPage from "./pages/LoginPage.tsx";
-import MyAssetsPage from "./pages/MyAssetsPage.tsx";
-import CreatorSignupPage from "./pages/CreatorSignupPage.tsx";
-import CreatorDashboard from "./pages/creator/CreatorDashboard.tsx";
-import SubmitAssetPage from "./pages/creator/SubmitAssetPage.tsx";
-import EditAssetPage from "./pages/creator/EditAssetPage.tsx";
-import EditBlogPostPage from "./pages/creator/EditBlogPostPage.tsx";
-import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
-import AdminUsers from "./pages/admin/AdminUsers.tsx";
-import AdminCreators from "./pages/admin/AdminCreators.tsx";
-import AdminAssets from "./pages/admin/AdminAssets.tsx";
-import AdminAccessRequests from "./pages/admin/AdminAccessRequests.tsx";
-import AdminBlog from "./pages/admin/AdminBlog.tsx";
-import AdminCollections from "./pages/admin/AdminCollections.tsx";
-import BlogPreviewPage from "./pages/BlogPreviewPage.tsx";
-import FreeClaimCallbackPage from "./pages/FreeClaimCallbackPage.tsx";
+const Index = lazy(() => import("./pages/Index.tsx"));
+const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const AssetsPage = lazy(() => import("./pages/Assets.tsx"));
+const AssetPage = lazy(() => import("./pages/AssetPage.tsx"));
+const CreatorsPage = lazy(() => import("./pages/CreatorsPage.tsx"));
+const CreatorPage = lazy(() => import("./pages/CreatorPage.tsx"));
+const CollectionsPage = lazy(() => import("./pages/CollectionsPage.tsx"));
+const CollectionPage = lazy(() => import("./pages/CollectionPage.tsx"));
+const BlogPage = lazy(() => import("./pages/BlogPage.tsx"));
+const BlogPostPage = lazy(() => import("./pages/BlogPostPage.tsx"));
+const SubmitPage = lazy(() => import("./pages/SubmitPage.tsx"));
+const TrustPages = lazy(() => import("./pages/TrustPages.tsx"));
+const LoginPage = lazy(() => import("./pages/LoginPage.tsx"));
+const MyAssetsPage = lazy(() => import("./pages/MyAssetsPage.tsx"));
+const CreatorSignupPage = lazy(() => import("./pages/CreatorSignupPage.tsx"));
+const CreatorDashboard = lazy(() => import("./pages/creator/CreatorDashboard.tsx"));
+const SubmitAssetPage = lazy(() => import("./pages/creator/SubmitAssetPage.tsx"));
+const EditAssetPage = lazy(() => import("./pages/creator/EditAssetPage.tsx"));
+const EditBlogPostPage = lazy(() => import("./pages/creator/EditBlogPostPage.tsx"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard.tsx"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers.tsx"));
+const AdminCreators = lazy(() => import("./pages/admin/AdminCreators.tsx"));
+const AdminAssets = lazy(() => import("./pages/admin/AdminAssets.tsx"));
+const AdminAccessRequests = lazy(() => import("./pages/admin/AdminAccessRequests.tsx"));
+const AdminBlog = lazy(() => import("./pages/admin/AdminBlog.tsx"));
+const AdminCollections = lazy(() => import("./pages/admin/AdminCollections.tsx"));
+const BlogPreviewPage = lazy(() => import("./pages/BlogPreviewPage.tsx"));
+const FreeClaimCallbackPage = lazy(() => import("./pages/FreeClaimCallbackPage.tsx"));
 
 const queryClient = new QueryClient();
+
+function RouteSeoDefaults() {
+  const { pathname, search } = useLocation();
+  const privateRoute = /^\/(admin|creator-dashboard|my-assets|login|auth)(\/|$)/.test(pathname);
+  const filteredListing = pathname === "/assets" && Boolean(search);
+  return <Seo
+    title="Make Better — AI Assets Marketplace"
+    description="Discover ready-to-use AI prompts, agents, workflows, playbooks, and templates built to save time and improve output."
+    path={pathname}
+    noindex={privateRoute || filteredListing}
+  />;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -47,7 +61,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
+          <RouteSeoDefaults />
+          <Suspense fallback={<main className="min-h-screen bg-[#050505] pt-24 text-center text-[#CFCFCF]" aria-live="polite">Loading page…</main>}>
+            <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/assets" element={<AssetsPage />} />
             <Route path="/asset/:slug" element={<AssetPage />} />
@@ -114,7 +130,8 @@ const App = () => (
             } />
 
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </StoreProvider>

@@ -1,13 +1,14 @@
 import { supabase } from "@/lib/supabase/client";
 import type { Inserts, Updates } from "@/types/database";
 
-export async function listActiveCreators() {
+export async function listActiveCreators(limit = 50) {
   const { data, error } = await supabase
     .from("creators")
     .select("*")
     .eq("active", true)
     .order("featured", { ascending: false })
-    .order("brand_name", { ascending: true });
+    .order("brand_name", { ascending: true })
+    .limit(limit);
 
   if (error) throw error;
   return data || [];
