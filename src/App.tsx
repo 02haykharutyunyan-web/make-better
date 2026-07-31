@@ -19,6 +19,7 @@ import CollectionPage from "./pages/CollectionPage.tsx";
 import BlogPage from "./pages/BlogPage.tsx";
 import BlogPostPage from "./pages/BlogPostPage.tsx";
 import SubmitPage from "./pages/SubmitPage.tsx";
+import TrustPages from "./pages/TrustPages.tsx";
 
 import LoginPage from "./pages/LoginPage.tsx";
 import MyAssetsPage from "./pages/MyAssetsPage.tsx";
@@ -57,6 +58,11 @@ const App = () => (
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/submit" element={<SubmitPage />} />
+            <Route path="/privacy" element={<TrustPages page="privacy" />} />
+            <Route path="/terms" element={<TrustPages page="terms" />} />
+            <Route path="/contact" element={<TrustPages page="contact" />} />
+            <Route path="/creator-guidelines" element={<TrustPages page="creator-guidelines" />} />
+            <Route path="/payouts" element={<TrustPages page="payouts" />} />
 
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/free-claim" element={<FreeClaimCallbackPage />} />
