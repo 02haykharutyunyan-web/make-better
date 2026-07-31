@@ -5,7 +5,7 @@ const workflow = readFileSync(".github/workflows/production-free-asset-qa.yml", 
 const runner = readFileSync("scripts/production-free-asset-qa.mjs", "utf8");
 
 describe("production free-asset QA workflow security contract", () => {
-  it("is manual-only, main-only, serialized, and minimally privileged", () => {
+  it("is manually runnable, QA-change triggered, main-only, serialized, and minimally privileged", () => {
     expect(workflow).toMatch(/on:\s*\n\s+workflow_dispatch:\s*\n/);
     expect(workflow).not.toMatch(/^\s+(push|pull_request):/m);
     expect(workflow).toContain("contents: read");
