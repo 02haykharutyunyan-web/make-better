@@ -1,0 +1,9 @@
+# Make Better
+
+Make Better is a marketplace for ready-to-use AI assets, including prompts, agents, workflows, playbooks, and templates.
+
+- [Browse assets](/assets)
+- [Explore collections](/collections)
+- [Meet creators](/creators)
+- [Read the blog](/blog)
+- [Create and list an asset](/create)

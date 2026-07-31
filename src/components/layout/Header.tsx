@@ -134,6 +134,7 @@ export default function Header() {
             type="button"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
             onClick={() => setMobileOpen(open => !open)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full glass-panel text-white transition hover:border-[#FFD600]/20 hover:bg-[#FFD600]/10 md:hidden"
           >
@@ -142,11 +143,11 @@ export default function Header() {
         </div>
       </div>
 
-      <div
+      {mobileOpen && <div
+        id="mobile-navigation"
         className={`fixed inset-x-0 bottom-0 top-16 z-40 md:hidden transition-all duration-300 ${
           mobileOpen ? "pointer-events-auto opacity-100 translate-y-0" : "pointer-events-none opacity-0 -translate-y-3"
         }`}
-        aria-hidden={!mobileOpen}
       >
         <button
           type="button"
@@ -236,7 +237,7 @@ export default function Header() {
             </div>
           </nav>
         </div>
-      </div>
+      </div>}
     </header>
   );
 }
