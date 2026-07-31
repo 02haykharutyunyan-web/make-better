@@ -7,7 +7,11 @@ const runner = readFileSync("scripts/production-free-asset-qa.mjs", "utf8");
 describe("production free-asset QA workflow security contract", () => {
   it("is manually runnable, QA-change triggered, main-only, serialized, and minimally privileged", () => {
     expect(workflow).toMatch(/on:\s*\n\s+workflow_dispatch:\s*\n/);
-    expect(workflow).not.toMatch(/^\s+(push|pull_request):/m);
+    expect(workflow).toMatch(/\n\s+push:\s*\n\s+branches:\s*\n\s+- main\s*\n/);
+    expect(workflow).toContain(".github/workflows/production-free-asset-qa.yml");
+    expect(workflow).toContain("scripts/production-free-asset-qa.mjs");
+    expect(workflow).toContain("src/test/production-free-asset-qa-workflow.test.ts");
+    expect(workflow).not.toMatch(/^\s+pull_request:/m);
     expect(workflow).toContain("contents: read");
     expect(workflow).toContain("github.ref == 'refs/heads/main'");
     expect(workflow).toContain("group: production-free-asset-qa");
