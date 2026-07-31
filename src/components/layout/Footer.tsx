@@ -28,8 +28,8 @@ export default function Footer() {
           <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">Creators</div>
           <ul className="mt-4 space-y-2.5 text-sm">
             <li><Link to="/submit" className="text-[#CFCFCF] transition hover:text-[#FFD600]">List your asset</Link></li>
-            <li><a className="text-[#CFCFCF] transition hover:text-[#FFD600]" href="#">Creator guidelines</a></li>
-            <li><a className="text-[#CFCFCF] transition hover:text-[#FFD600]" href="#">Payouts</a></li>
+            <li><Link to="/creator-guidelines" className="text-[#CFCFCF] transition hover:text-[#FFD600]">Creator guidelines</Link></li>
+            <li><Link to="/payouts" className="text-[#CFCFCF] transition hover:text-[#FFD600]">Payouts</Link></li>
           </ul>
         </div>
       </div>
@@ -37,9 +37,9 @@ export default function Footer() {
         <div className="container-mb py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-[#CFCFCF]/70">
           <div>© 2026 Make Better. All rights reserved.</div>
           <div className="flex flex-wrap gap-5">
-            <a href="#" className="transition hover:text-[#FFD600]">Privacy</a>
-            <a href="#" className="transition hover:text-[#FFD600]">Terms</a>
-            <a href="#" className="transition hover:text-[#FFD600]">Contact</a>
+            <Link to="/privacy" className="transition hover:text-[#FFD600]">Privacy</Link>
+            <Link to="/terms" className="transition hover:text-[#FFD600]">Terms</Link>
+            <Link to="/contact" className="transition hover:text-[#FFD600]">Contact</Link>
           </div>
         </div>
       </div>
