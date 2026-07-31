@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/production-free-asset-qa.yml'
       - 'scripts/production-free-asset-qa.mjs'
+      - 'src/test/production-free-asset-qa-workflow.test.ts'
 
 permissions:
   contents: read
