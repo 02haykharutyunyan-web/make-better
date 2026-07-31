@@ -204,8 +204,18 @@ async function run() {
     const sessionRaw = await page.evaluate(() => Object.values(localStorage).find((value) => value.includes('"access_token"')) || "");
     const claimantSession = JSON.parse(sessionRaw);
     const claimantClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${claimantSession.access_token}` } } });
+    const { data: claimantDelivery, error: claimantDeliveryError } = await claimantClient
+      .from("asset_deliverables")
+      .select("asset_id, storage_path, delivery_type")
+      .eq("asset_id", freeAsset.id)
+      .maybeSingle();
+    record("claimant private delivery metadata access", !claimantDeliveryError && claimantDelivery?.storage_path === storagePath);
     const { data: claimantFile, error: claimantFileError } = await claimantClient.storage.from(bucket).download(storagePath);
     record("claimant deliverable access", !claimantFileError && (await claimantFile.text()).includes(runId));
+    const { data: claimantSignedUrl, error: claimantSignedUrlError } = await claimantClient.storage.from(bucket).createSignedUrl(storagePath, 60, { download: true });
+    const signedResponse = claimantSignedUrl?.signedUrl ? await fetch(claimantSignedUrl.signedUrl) : null;
+    const signedBody = signedResponse?.ok ? await signedResponse.text() : "";
+    record("claimant signed delivery URL", !claimantSignedUrlError && signedResponse?.ok && signedBody.includes(runId));
     const anonymous = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
     const { error: anonymousError } = await anonymous.storage.from(bucket).download(storagePath);
     record("anonymous deliverable denied", Boolean(anonymousError));
@@ -213,8 +223,28 @@ async function run() {
     const { data: otherLogin, error: otherLoginError } = await otherClient.auth.signInWithPassword({ email: emails[1], password });
     checkError(otherLoginError, "sign in non-claimant");
     const authedOther = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${otherLogin.session.access_token}` } } });
+    const { data: otherDelivery, error: otherDeliveryError } = await authedOther
+      .from("asset_deliverables")
+      .select("asset_id, storage_path")
+      .eq("asset_id", freeAsset.id)
+      .maybeSingle();
+    record("authenticated non-claimant private metadata denied", !otherDeliveryError && otherDelivery === null);
     const { error: otherFileError } = await authedOther.storage.from(bucket).download(storagePath);
     record("authenticated non-claimant deliverable denied", Boolean(otherFileError));
+    const { error: otherSignedUrlError } = await authedOther.storage.from(bucket).createSignedUrl(storagePath, 60, { download: true });
+    record("authenticated non-claimant signed URL denied", Boolean(otherSignedUrlError));
+    const creatorClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+    const { data: creatorLogin, error: creatorLoginError } = await creatorClient.auth.signInWithPassword({ email: emails[2], password });
+    checkError(creatorLoginError, "sign in creator");
+    const authedCreator = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${creatorLogin.session.access_token}` } } });
+    const { data: creatorDelivery, error: creatorDeliveryError } = await authedCreator
+      .from("asset_deliverables")
+      .select("asset_id, storage_path")
+      .eq("asset_id", freeAsset.id)
+      .maybeSingle();
+    record("owning creator private delivery metadata access", !creatorDeliveryError && creatorDelivery?.storage_path === storagePath);
+    const { data: creatorFile, error: creatorFileError } = await authedCreator.storage.from(bucket).download(storagePath);
+    record("owning creator deliverable access", !creatorFileError && (await creatorFile.text()).includes(runId));
     for (const [name, asset] of [["unpublished asset denied", bySlug[`${prefix}-unpublished`]], ["paid asset denied", bySlug[`${prefix}-paid`]]]) {
       const { error } = await claimantClient.rpc("claim_free_asset", { target_asset_id: asset.id });
       record(name, Boolean(error));
