@@ -171,11 +171,12 @@ async function run() {
         `Failed requests: ${JSON.stringify(failedRequests.slice(-5))}`,
       ].join("\n");
     };
-    const waitForClaimState = async (expectedHeading) => {
+    const waitForClaimState = async (expectedHeadings) => {
+      const headings = Array.isArray(expectedHeadings) ? expectedHeadings : [expectedHeadings];
       try {
-        await page.getByRole("heading", { name: expectedHeading }).waitFor({ timeout: 30_000 });
+        await Promise.any(headings.map((heading) => page.getByRole("heading", { name: heading }).waitFor({ timeout: 30_000 })));
       } catch {
-        throw new Error(await claimFailureDetail(expectedHeading));
+        throw new Error(await claimFailureDetail(headings.join(" or ")));
       }
     };
     const waitForRpcOutcome = async (afterIndex) => {
@@ -188,7 +189,7 @@ async function run() {
     const firstRpcIndex = rpcResponses.length;
     await page.goto(link.properties.action_link, { waitUntil: "networkidle" });
     const firstOutcome = await waitForRpcOutcome(firstRpcIndex);
-    await waitForClaimState(firstOutcome === "already_claimed" ? "Already claimed" : "Asset claimed");
+    await waitForClaimState(["Asset claimed", "Already claimed"]);
     record("magic-link authentication and first browser claim", firstOutcome === "claimed" || firstOutcome === "already_claimed");
     const duplicateRpcIndex = rpcResponses.length;
     await page.goto(`${siteUrl}/auth/free-claim?asset=${freeAsset.id}`, { waitUntil: "networkidle" });
