@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase/client";
 import { requireSupabaseConfig } from "@/lib/supabase/errors";
 import type { AccessRequestStatus, DeliveryType, Inserts, Tables, Updates } from "@/types/database";
 import type { FreeClaimResult } from "@/lib/free-claim";
+import { trackMarketplaceEvent } from "@/lib/analytics";
 
 export type AssetWithCreator = Awaited<ReturnType<typeof listPublishedAssets>>[number];
 export const ASSET_DELIVERABLES_BUCKET = "asset-deliverables";
@@ -98,6 +99,7 @@ export async function submitAsset(input: Inserts<"assets">) {
 export async function submitAssetForReview(assetId: string) {
   const { data, error } = await supabase.rpc("submit_asset_for_review", { target_asset_id: assetId });
   if (error) throw error;
+  trackMarketplaceEvent("creator_asset_submitted", assetId);
   return data;
 }
 
@@ -109,6 +111,7 @@ export async function reviewAsset(assetId: string, status: "published" | "reject
     rejection_reason: status === "rejected" ? rejectionReason!.trim() : null,
   });
   if (error) throw error;
+  trackMarketplaceEvent("admin_asset_reviewed", assetId, { status });
   return data;
 }
 
@@ -262,6 +265,7 @@ export async function getClaimedAssetDelivery(assetId: string) {
 
   const delivery = await getAssetDeliverable(assetId);
   if (!delivery) throw new Error("No deliverable attached. Ask the creator or admin to add a file, link, or text delivery.");
+  trackMarketplaceEvent("delivery_opened", assetId, { delivery_type: delivery.delivery_type });
   return delivery;
 }
 
@@ -273,31 +277,12 @@ export function deliveryLabel(type?: DeliveryType | null) {
 }
 
 export async function requestPaidAssetAccessBySlug(input: { slug: string; name: string; email: string; phone?: string; userId?: string | null }) {
-  const { data: asset, error: assetError } = await supabase
-    .from("assets")
-    .select("id, is_free, status")
-    .eq("slug", input.slug)
-    .eq("status", "published")
-    .maybeSingle();
-
-  if (assetError) throw assetError;
-  if (!asset) throw new Error("This asset is not available for access requests yet.");
-  if (asset.is_free) throw new Error("This asset is free. Use the free claim flow instead.");
-
-  const { data, error } = await supabase
-    .from("asset_access_requests")
-    .insert({
-      asset_id: asset.id,
-      buyer_user_id: input.userId || null,
-      buyer_name: input.name,
-      buyer_email: input.email,
-      buyer_phone: input.phone || null,
-      status: "new",
-    })
-    .select()
-    .single();
-
-  if (error && "code" in error && error.code === "23505") return null;
+  const { data, error } = await supabase.rpc("request_paid_asset_access", {
+    target_asset_slug: input.slug,
+    request_name: input.name,
+    request_email: input.email,
+    request_phone: input.phone || null,
+  });
   if (error) throw error;
   return data;
 }
@@ -371,6 +356,7 @@ export async function claimFreeAssetSecure(assetId: string) {
   requireSupabaseConfig();
   const { data, error } = await supabase.rpc("claim_free_asset", { target_asset_id: assetId });
   if (error) throw error;
+  trackMarketplaceEvent("free_claim_completed", assetId);
   return data as unknown as FreeClaimResult;
 }
 

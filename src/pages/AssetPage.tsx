@@ -11,6 +11,7 @@ import { dbAssetToAsset, dbCreatorToCreator } from "@/lib/asset-mappers";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { getPublishedAssetBySlug, listPublishedAssets } from "@/services/assets";
 import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
+import { trackMarketplaceEvent } from "@/lib/analytics";
 
 export default function AssetPage() {
   const { slug } = useParams();
@@ -54,6 +55,7 @@ export default function AssetPage() {
           setBefore(row.before || []);
           setAfter(row.after || []);
           setRelated(relatedRows.map(dbAssetToAsset));
+          trackMarketplaceEvent("asset_view", row.id, { price_type: row.price_type });
         }
       } catch (error) {
         if (!cancelled) setErr(explainSupabaseError(error, "Unable to load this published asset."));
