@@ -473,6 +473,18 @@ export type Database = {
         Args: { target_creator_id: string; target_featured: boolean };
         Returns: Database["public"]["Tables"]["creators"]["Row"];
       };
+      track_marketplace_event: {
+        Args: { target_event_name: string; target_asset_id?: string | null; client_session_id?: string | null; safe_metadata?: Json };
+        Returns: undefined;
+      };
+      request_paid_asset_access: {
+        Args: { target_asset_slug: string; request_name: string; request_email: string; request_phone?: string | null };
+        Returns: string | null;
+      };
+      get_marketplace_observability: {
+        Args: Record<string, never>;
+        Returns: { asset_views: number; free_claim_starts: number; free_claims_completed: number; deliveries_opened: number; creator_submissions: number; admin_reviews: number; client_errors_24h: number }[];
+      };
     };
     Enums: {
       user_role: UserRole;

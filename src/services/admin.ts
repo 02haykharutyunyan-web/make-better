@@ -10,6 +10,7 @@ export type AdminOverview = {
   publishedCount: number;
   totalClaims: number;
   totalDownloads: number;
+  observability: { assetViews: number; freeClaimStarts: number; freeClaimsCompleted: number; deliveriesOpened: number; creatorSubmissions: number; adminReviews: number; clientErrors24h: number };
 };
 
 export type AdminCreatorRow = Tables<"creators"> & {
@@ -21,14 +22,17 @@ export type AdminCreatorRow = Tables<"creators"> & {
 };
 
 export async function getAdminOverview(): Promise<AdminOverview> {
-  const [creators, assets, claims] = await Promise.all([
+  const [creators, assets, claims, observability] = await Promise.all([
     supabase.from("creators").select("id", { count: "exact" }),
     listAdminAssets(),
     supabase.from("asset_claims").select("id", { count: "exact", head: true }),
+    supabase.rpc("get_marketplace_observability"),
   ]);
 
   if (creators.error) throw creators.error;
   if (claims.error) throw claims.error;
+  if (observability.error) throw observability.error;
+  const metrics = observability.data?.[0];
 
   return {
     totalCreators: creators.count || creators.data?.length || 0,
@@ -37,6 +41,15 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     publishedCount: assets.filter(a => a.status === "published").length,
     totalClaims: claims.count || 0,
     totalDownloads: assets.reduce((sum, asset) => sum + (asset.downloads || 0), 0),
+    observability: {
+      assetViews: metrics?.asset_views || 0,
+      freeClaimStarts: metrics?.free_claim_starts || 0,
+      freeClaimsCompleted: metrics?.free_claims_completed || 0,
+      deliveriesOpened: metrics?.deliveries_opened || 0,
+      creatorSubmissions: metrics?.creator_submissions || 0,
+      adminReviews: metrics?.admin_reviews || 0,
+      clientErrors24h: metrics?.client_errors_24h || 0,
+    },
   };
 }
 

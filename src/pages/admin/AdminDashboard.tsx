@@ -49,6 +49,23 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      <section className="mt-10">
+        <div className="eyebrow">Last 7 days</div>
+        <h2 className="mt-2 text-xl font-medium">Marketplace funnel</h2>
+        <p className="mt-2 text-sm text-[#CFCFCF]">Aggregate activity only. MakeBetter does not store contact or private delivery data in analytics.</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            ["Asset views", overview?.observability.assetViews ?? 0],
+            ["Free claim starts", overview?.observability.freeClaimStarts ?? 0],
+            ["Free claims completed", overview?.observability.freeClaimsCompleted ?? 0],
+            ["Deliveries opened", overview?.observability.deliveriesOpened ?? 0],
+            ["Creator submissions", overview?.observability.creatorSubmissions ?? 0],
+            ["Admin reviews", overview?.observability.adminReviews ?? 0],
+          ].map(([label, value]) => <div key={String(label)} className="card-premium p-5"><div className="text-2xl font-medium">{value}</div><div className="mt-2 text-xs uppercase tracking-wider text-[#CFCFCF]/80">{label}</div></div>)}
+        </div>
+        <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-[#CFCFCF]">Client errors in the last 24 hours: <span className="text-white">{overview?.observability.clientErrors24h ?? 0}</span></div>
+      </section>
+
       {(overview?.pendingReviewCount || 0) > 0 && (
         <div className="mt-10 card-premium p-5 sm:p-6">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:flex-wrap sm:items-center">

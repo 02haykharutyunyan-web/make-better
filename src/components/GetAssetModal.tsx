@@ -5,6 +5,7 @@ import { useStore } from "@/store/store";
 import type { Asset } from "@/data/marketplace";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { claimFreeAssetSecure, requestPaidAssetAccessBySlug, sendFreeClaimMagicLink } from "@/services/assets";
+import { trackMarketplaceEvent } from "@/lib/analytics";
 
 type Step = "form" | "sending" | "sent" | "claiming" | "checkout" | "success" | "already";
 const RESEND_SECONDS = 60;
@@ -36,6 +37,7 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
         setStep("checkout");
       } else if (user) {
         setStep("claiming");
+        trackMarketplaceEvent("free_claim_started", assetId, { signed_in: true });
         const result = await claimFreeAssetSecure(assetId);
         setStep(result.outcome === "already_claimed" ? "already" : "success");
       } else {
@@ -45,6 +47,7 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
           return;
         }
         setStep("sending");
+        trackMarketplaceEvent("free_claim_started", assetId, { signed_in: false });
         await sendFreeClaimMagicLink(form.email, assetId);
         setCooldown(RESEND_SECONDS);
         setStep("sent");
