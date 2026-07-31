@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { useStore } from "@/store/store";
@@ -17,6 +17,8 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", phone: user?.phone || "" });
   const [err, setErr] = useState("");
   const [cooldown, setCooldown] = useState(0);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const isPaid = asset.price > 0;
 
   useEffect(() => {
@@ -24,6 +26,28 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
     const timer = window.setInterval(() => setCooldown(value => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(timer);
   }, [cooldown]);
+
+  useEffect(() => {
+    if (!open) return;
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    const frame = window.requestAnimationFrame(() => dialogRef.current?.querySelector<HTMLElement>("button, input")?.focus());
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = [...dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href]')];
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [onClose, open]);
 
   if (!open) return null;
 
@@ -62,7 +86,7 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="claim-title" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 animate-fade-up">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full max-w-md glass-modal max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-5 sm:p-7">
+      <div ref={dialogRef} className="relative w-full max-w-md glass-modal max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-5 sm:p-7">
         <button aria-label="Close" onClick={onClose} className="absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full text-[#CFCFCF] hover:bg-[#FFD600]/10"><X className="h-4 w-4" /></button>
 
         {(step === "success" || step === "already" || step === "checkout") ? (

@@ -1,4 +1,4 @@
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import AssetCard from "@/components/AssetCard";
@@ -12,6 +12,8 @@ import { explainSupabaseError } from "@/lib/supabase/errors";
 import { getPublishedAssetBySlug, listPublishedAssets } from "@/services/assets";
 import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
 import { trackMarketplaceEvent } from "@/lib/analytics";
+import Seo from "@/components/Seo";
+import { SITE_URL } from "@/lib/seo";
 
 export default function AssetPage() {
   const { slug } = useParams();
@@ -40,7 +42,7 @@ export default function AssetPage() {
         }
 
         const mappedAsset = dbAssetToAsset(row);
-        const rows = await listPublishedAssets();
+        const rows = await listPublishedAssets(24);
         const relatedRows = rows
           .filter(item => item.slug !== row.slug)
           .filter(item => item.product_type === row.product_type || (item.tags || []).some(tag => (row.tags || []).includes(tag)))
@@ -67,10 +69,10 @@ export default function AssetPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  if (!asset && !loading && !err) return <Navigate to="/assets" replace />;
   if (!asset) {
     return (
       <SiteLayout>
+        <Seo title="Asset not found" description="This marketplace asset is not available." path={`/asset/${slug || ""}`} noindex />
         <section className="container-mb pt-16 sm:pt-24 pb-20">
           {loading ? (
             <div className="card-premium p-6 text-[#CFCFCF]">Loading asset...</div>
@@ -90,10 +92,23 @@ export default function AssetPage() {
 
   return (
     <SiteLayout>
+      <Seo
+        title={asset.title}
+        description={asset.description}
+        path={`/asset/${asset.slug}`}
+        schema={[
+          { "@context": "https://schema.org", "@type": "CreativeWork", name: asset.title, description: asset.description, url: `${SITE_URL}/asset/${asset.slug}`, creator: creator ? { "@type": "Organization", name: creator.name, url: `${SITE_URL}/creator/${creator.slug}` } : undefined },
+          { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
+            { "@type": "ListItem", position: 1, name: "AI Assets", item: `${SITE_URL}/assets` },
+            { "@type": "ListItem", position: 2, name: asset.title, item: `${SITE_URL}/asset/${asset.slug}` },
+          ] },
+        ]}
+      />
       {err && <section className="container-mb pt-6"><div className="rounded-xl border border-[#FFD600]/20 bg-[#FFD600]/10 p-4 text-sm text-[#CFCFCF]">{err}</div></section>}
 
       <section className="container-mb section-rich pt-10 sm:pt-12 md:pt-16">
         <SectionVisual variant="market" />
+        <nav aria-label="Breadcrumb" className="relative mb-7 text-sm text-[#CFCFCF]"><Link to="/assets" className="hover:text-white">AI Assets</Link><span aria-hidden="true"> / </span><span aria-current="page">{asset.title}</span></nav>
         <div className="grid min-w-0 gap-8 sm:gap-12 lg:grid-cols-[1.1fr_minmax(0,1fr)] items-start">
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">{asset.category}</div>

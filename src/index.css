@@ -60,6 +60,11 @@
     border-color: hsl(var(--hairline) / 0.08);
   }
 
+  :focus-visible {
+    outline: 2px solid #FFD600;
+    outline-offset: 3px;
+  }
+
   html {
     background: #050505;
     color-scheme: dark;

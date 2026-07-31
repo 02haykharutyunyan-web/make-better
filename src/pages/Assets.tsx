@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
+import Seo from "@/components/Seo";
 import AssetCard from "@/components/AssetCard";
 import type { Asset, ProductType } from "@/data/marketplace";
 import { ArrowUpRight, Search } from "lucide-react";
@@ -66,6 +67,7 @@ export default function AssetsPage() {
 
   return (
     <SiteLayout>
+      <Seo title="Browse AI Assets" description="Explore approved AI prompts, agents, assistants, workflows, and templates from marketplace creators." path="/assets" />
       <section className="container-mb pt-12 sm:pt-16 md:pt-24 pb-8 sm:pb-10">
         <div className="eyebrow">AI Assets</div>
         <h1 className="mt-5 text-3xl sm:text-4xl md:text-6xl font-medium tracking-normal leading-[1.06] max-w-4xl break-words">
@@ -78,6 +80,7 @@ export default function AssetsPage() {
         <div className="mt-8 sm:mt-10 glass-panel flex min-h-14 items-center gap-3 rounded-2xl p-2 pl-4 sm:pl-5 max-w-3xl focus-within:border-[#FFD600]/20 transition">
           <Search className="h-5 w-5 text-[#CFCFCF]/70" />
           <input
+            aria-label="Search marketplace assets"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search assets, tags, creators..."
@@ -86,10 +89,12 @@ export default function AssetsPage() {
         </div>
 
         <div className="mt-6 sm:mt-8 flex flex-col items-stretch justify-between gap-4 md:flex-row md:items-center">
-          <div className="flex gap-2 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible md:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div role="group" aria-label="Filter assets by product type" className="flex gap-2 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible md:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filters.map(f => (
               <button
                 key={f}
+                type="button"
+                aria-pressed={filter === f}
                 onClick={() => setFilter(f)}
                 className={`min-h-10 shrink-0 rounded-full border px-4 py-1.5 text-sm transition ${
                   filter === f
@@ -100,6 +105,7 @@ export default function AssetsPage() {
             ))}
           </div>
           <select
+            aria-label="Sort assets"
             value={sort}
             onChange={(e) => setSort(e.target.value as typeof sorts[number])}
             className="min-h-11 w-full rounded-full border border-white/10 bg-[#0E0E0E]/60 px-4 py-2 text-sm text-white/80 focus:outline-none focus:border-[#FFD600]/70 md:w-auto"

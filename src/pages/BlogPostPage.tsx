@@ -1,4 +1,4 @@
-import { Navigate, useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SiteLayout from "@/components/layout/SiteLayout";
 import type { Asset, BlogPost } from "@/data/marketplace";
@@ -9,6 +9,8 @@ import { explainSupabaseError } from "@/lib/supabase/errors";
 import { getCreatorBySlug, listPublishedAssetsByCreatorId } from "@/services/creators";
 import { dbAssetToAsset } from "@/lib/asset-mappers";
 import { SectionVisual } from "@/components/visuals/MarketplaceVisuals";
+import Seo from "@/components/Seo";
+import { SITE_URL } from "@/lib/seo";
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -32,7 +34,7 @@ export default function BlogPostPage() {
           setPost(mapped);
           setCreatorName(row.creators?.brand_name || "");
           setCreatorSlug(row.creators?.slug || "");
-          const posts = await listPublishedBlogPosts();
+          const posts = await listPublishedBlogPosts(4);
           setRelated(posts.filter(p => p.slug !== row.slug).slice(0, 3).map(dbBlogToBlogPost));
           if (row.creators?.slug) {
             const creator = await getCreatorBySlug(row.creators.slug);
@@ -52,10 +54,10 @@ export default function BlogPostPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  if (!post && !loading && !err) return <Navigate to="/blog" replace />;
   if (!post) {
     return (
       <SiteLayout>
+        <Seo title="Post not found" description="This blog post is not available." path={`/blog/${slug || ""}`} noindex />
         <section className="container-mb pt-16 sm:pt-24 pb-20">
           {loading ? (
             <div className="card-premium p-6 text-[#CFCFCF]">Loading post...</div>
@@ -75,6 +77,7 @@ export default function BlogPostPage() {
 
   return (
     <SiteLayout>
+      <Seo title={post.title} description={post.excerpt} path={`/blog/${post.slug}`} type="article" schema={{ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description: post.excerpt, url: `${SITE_URL}/blog/${post.slug}`, author: creatorName ? { "@type": "Organization", name: creatorName } : { "@type": "Organization", name: "Make Better" } }} />
       <article className="container-mb section-rich pt-10 sm:pt-12 md:pt-16 max-w-3xl">
         <SectionVisual variant="lines" />
         <Link to="/blog" className="text-sm text-[#CFCFCF] hover:text-white">Back to blog</Link>

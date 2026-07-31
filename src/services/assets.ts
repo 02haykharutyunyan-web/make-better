@@ -28,13 +28,14 @@ const assetSelect = `
   )
 `;
 
-export async function listPublishedAssets() {
+export async function listPublishedAssets(limit = 60) {
   const { data, error } = await supabase
     .from("assets")
     .select(assetSelect)
     .eq("status", "published")
     .order("featured", { ascending: false })
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .limit(limit);
 
   if (error) throw error;
   return data || [];

@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
+import Seo from "@/components/Seo";
 
 export default function NotFound() {
   return (
     <SiteLayout>
+      <Seo title="Page not found" description="The requested Make Better page could not be found." path={window.location.pathname} noindex />
       <section className="container-mb min-h-[60vh] flex flex-col items-center justify-center text-center">
         <div className="eyebrow">404</div>
         <h1 className="mt-5 text-4xl sm:text-5xl md:text-7xl font-medium tracking-normal">Page not found</h1>

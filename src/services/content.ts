@@ -2,12 +2,13 @@ import { supabase } from "@/lib/supabase/client";
 import type { Inserts, Updates } from "@/types/database";
 import { formatSupabaseOperationError } from "@/lib/supabase/errors";
 
-export async function listPublishedBlogPosts() {
+export async function listPublishedBlogPosts(limit = 30) {
   const { data, error } = await supabase
     .from("blog_posts")
     .select("*, creators (id, slug, brand_name)")
     .eq("status", "published")
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .limit(limit);
 
   if (error) throw error;
   return data || [];
@@ -159,12 +160,13 @@ export async function deleteBlogPost(id: string) {
   if (error) throw error;
 }
 
-export async function listPublishedCollections() {
+export async function listPublishedCollections(limit = 50) {
   const { data, error } = await supabase
     .from("collections")
     .select("*")
     .eq("status", "published")
-    .order("title", { ascending: true });
+    .order("title", { ascending: true })
+    .limit(limit);
 
   if (error) throw error;
   return data || [];
@@ -219,7 +221,7 @@ export async function listPublishedAssetsForCollection(collection: { selected_as
     query = query.in("id", collection.selected_asset_ids);
   }
 
-  const { data, error } = await query.order("published_at", { ascending: false });
+  const { data, error } = await query.order("published_at", { ascending: false }).limit(60);
   if (error) throw error;
   const rows = data || [];
   if (collection.selected_asset_ids && collection.selected_asset_ids.length > 0) return rows;

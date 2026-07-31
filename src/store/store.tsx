@@ -5,7 +5,9 @@ import { supabase } from "@/lib/supabase/client";
 import { dbAssetToSubmittedAsset, type DbAsset } from "@/lib/asset-mappers";
 import { requireSupabaseConfig } from "@/lib/supabase/errors";
 import { publicEnv } from "@/lib/env";
-import { claimFreeAssetBySlug, createCreator, getCreatorByProfileId, getPublishedAssetBySlug, listMyAssetClaims, upsertProfile } from "@/services";
+import { claimFreeAssetBySlug, getPublishedAssetBySlug, listMyAssetClaims } from "@/services/assets";
+import { createCreator, getCreatorByProfileId } from "@/services/creators";
+import { upsertProfile } from "@/services/profiles";
 import type { Tables } from "@/types/database";
 
 export type Role = "buyer" | "creator" | "admin";

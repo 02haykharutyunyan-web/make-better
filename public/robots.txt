@@ -12,3 +12,10 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /creator-dashboard
+Disallow: /my-assets
+Disallow: /login
+Disallow: /auth/
+
+Sitemap: https://www.makebetter.im/sitemap.xml
