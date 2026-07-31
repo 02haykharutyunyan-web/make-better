@@ -6,12 +6,11 @@ import AssetCard from "@/components/AssetCard";
 import type { Asset, BlogPost, Collection, Creator } from "@/data/marketplace";
 import { productTypes, platformStats } from "@/data/marketplace-meta";
 import { ArrowUpRight, Search, Star } from "lucide-react";
-import { listPublishedAssets } from "@/services/assets";
 import { dbAssetToAsset, dbCreatorToCreator } from "@/lib/asset-mappers";
-import { listPublishedBlogPosts, listPublishedCollections } from "@/services/content";
-import { listActiveCreators } from "@/services/creators";
 import { dbBlogToBlogPost, dbCollectionToCollection } from "@/lib/content-mappers";
 import { CategoryGlyph, ProductMockupCard, SectionVisual } from "@/components/visuals/MarketplaceVisuals";
+import { getHomepageFeed } from "@/services/homepage";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const suggested = [
   "free prompts for TikTok",
@@ -32,55 +31,37 @@ export default function Index() {
   const [remoteCollections, setRemoteCollections] = useState<Collection[]>([]);
   const [remoteCreators, setRemoteCreators] = useState<Creator[]>([]);
   const [remotePosts, setRemotePosts] = useState<BlogPost[]>([]);
-  const [loadingAssets, setLoadingAssets] = useState(true);
+  const [loading, setLoading] = useState(true);
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    async function loadAssets() {
-      setLoadingAssets(true);
+    async function loadHomepage() {
+      setLoading(true);
       try {
-        const rows = await listPublishedAssets(6);
+        const feed = await getHomepageFeed();
         if (!cancelled) {
-          setRemoteAssets(rows.map(row => ({
+          setRemoteAssets(feed.assets.map(row => ({
             asset: dbAssetToAsset(row),
             creatorName: row.creators?.brand_name || "",
           })));
-        }
-      } catch {
-        if (!cancelled) setRemoteAssets([]);
-      } finally {
-        if (!cancelled) setLoadingAssets(false);
-      }
-    }
-
-    loadAssets();
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadContent() {
-      try {
-        const [collectionRows, creatorRows, postRows] = await Promise.all([
-          listPublishedCollections(6),
-          listActiveCreators(3),
-          listPublishedBlogPosts(3),
-        ]);
-        if (!cancelled) {
-          setRemoteCollections(collectionRows.map(dbCollectionToCollection).slice(0, 6));
-          setRemoteCreators((creatorRows.map(dbCreatorToCreator).filter(Boolean) as Creator[]).slice(0, 3));
-          setRemotePosts(postRows.map(dbBlogToBlogPost).slice(0, 3));
+          setRemoteCollections(feed.collections.map(dbCollectionToCollection));
+          setRemoteCreators(feed.creators.map(dbCreatorToCreator).filter(Boolean) as Creator[]);
+          setRemotePosts(feed.posts.map(dbBlogToBlogPost));
         }
       } catch {
         if (!cancelled) {
+          setRemoteAssets([]);
           setRemoteCollections([]);
           setRemoteCreators([]);
           setRemotePosts([]);
         }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
-    loadContent();
+
+    loadHomepage();
     return () => { cancelled = true; };
   }, []);
 
@@ -185,14 +166,12 @@ export default function Index() {
         action={{ label: "Browse all assets", to: "/assets" }}
       >
         <div ref={resultsRef}>
-          {loadingAssets && remoteAssets.length === 0 && (
-            <div className="mb-6 card-premium p-4 text-sm text-[#CFCFCF]">Loading published assets...</div>
-          )}
+          {loading && <CardSkeletonGrid count={6} className="sm:grid-cols-2 lg:grid-cols-3" />}
           {displayedAssets.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {displayedAssets.map(a => <AssetCard key={a.slug} asset={a} />)}
             </div>
-          ) : !loadingAssets && (
+          ) : !loading && (
             <div className="card-premium p-8 sm:p-12 text-center">
               <h3 className="text-xl sm:text-2xl font-medium tracking-normal">No assets found</h3>
               <p className="mx-auto mt-2 max-w-md text-sm sm:text-base text-[#CFCFCF]">
@@ -243,7 +222,8 @@ export default function Index() {
         visual="mesh"
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {remoteCollections.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No published collections yet.</div>}
+          {loading && <CardSkeletonGrid count={6} className="sm:grid-cols-2 lg:grid-cols-3" />}
+          {!loading && remoteCollections.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF]">No published collections yet.</div>}
           {remoteCollections.map(c => (
             <Link to={`/collections/${c.slug}`} key={c.slug} className="card-premium p-5 sm:p-7 group">
               <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">Goal</div>
@@ -266,7 +246,8 @@ export default function Index() {
         visual="market"
       >
         <div className="grid gap-5 lg:grid-cols-3">
-          {remoteCreators.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF] lg:col-span-3">No active creators yet.</div>}
+          {loading && <CardSkeletonGrid count={3} className="lg:grid-cols-3" />}
+          {!loading && remoteCreators.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF] lg:col-span-3">No active creators yet.</div>}
           {remoteCreators.map(c => (
             <div key={c.slug} className="card-premium p-5 sm:p-7">
               <div className="flex min-w-0 items-center gap-4">
@@ -302,7 +283,8 @@ export default function Index() {
         visual="lines"
       >
         <div className="grid gap-5 md:grid-cols-3">
-          {remotePosts.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF] md:col-span-3">No published posts yet.</div>}
+          {loading && <CardSkeletonGrid count={3} className="md:grid-cols-3" />}
+          {!loading && remotePosts.length === 0 && <div className="card-premium p-8 sm:p-10 text-center text-[#CFCFCF] md:col-span-3">No published posts yet.</div>}
           {remotePosts.map(p => (
             <Link key={p.slug} to={`/blog/${p.slug}`} className="card-premium p-7 group">
               <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">{p.category}</div>
@@ -317,7 +299,7 @@ export default function Index() {
       {/* CREATOR CTA */}
       <section className="container-mb mt-24 md:mt-32">
         <div className="card-premium p-5 sm:p-8 md:p-16 relative overflow-hidden">
-          <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-[#0E0E0E]/70 blur-3xl" />
+          <div className="cta-ambient absolute -top-32 -right-32 h-80 w-80 rounded-full bg-[#0E0E0E]/70 blur-3xl" />
           <div className="relative max-w-3xl">
             <div className="eyebrow">For creators</div>
             <h2 className="mt-6 text-3xl sm:text-4xl md:text-5xl font-medium tracking-normal leading-tight">
@@ -346,6 +328,21 @@ export default function Index() {
         </div>
       </section>
     </SiteLayout>
+  );
+}
+
+function CardSkeletonGrid({ count, className }: { count: number; className: string }) {
+  return (
+    <div className={`col-span-full grid gap-5 ${className}`} aria-label="Loading homepage content">
+      {Array.from({ length: count }, (_, index) => (
+        <div key={index} className="card-premium min-h-56 p-6">
+          <Skeleton className="h-28 w-full rounded-xl bg-white/[0.06]" />
+          <Skeleton className="mt-5 h-5 w-3/4 bg-white/[0.06]" />
+          <Skeleton className="mt-3 h-4 w-full bg-white/[0.06]" />
+          <Skeleton className="mt-2 h-4 w-2/3 bg-white/[0.06]" />
+        </div>
+      ))}
+    </div>
   );
 }
 

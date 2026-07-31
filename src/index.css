@@ -264,8 +264,7 @@
     position: absolute;
     border: 1px solid rgba(255,255,255,0.12);
     background: rgba(255,255,255,0.045);
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    background: linear-gradient(145deg, rgba(38,38,38,0.96), rgba(14,14,14,0.96));
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 18px 42px rgba(0,0,0,0.28);
   }
 
@@ -455,7 +454,13 @@
 
   .glass-card,
   .card-premium {
-    @apply rounded-xl glass-panel;
+    @apply rounded-xl border border-white/10 transition-all duration-300;
+    background:
+      linear-gradient(145deg, rgba(31,31,31,0.98), rgba(12,12,12,0.98) 58%, rgba(19,18,12,0.98)),
+      #0E0E0E;
+    box-shadow:
+      0 18px 48px rgba(0,0,0,0.32),
+      inset 0 1px 0 rgba(255,255,255,0.10);
   }
 
   .glass-card h3,
@@ -520,9 +525,8 @@
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-[#CFCFCF] transition-colors;
-    backdrop-filter: blur(10px) saturate(130%);
-    -webkit-backdrop-filter: blur(10px) saturate(130%);
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs text-[#CFCFCF] transition-colors;
+    background: linear-gradient(180deg, rgba(34,34,34,0.96), rgba(16,16,16,0.96));
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
   }
 
@@ -599,13 +603,43 @@
   }
 
   @media (max-width: 767px) {
-    .glass-panel,
     .glass-card,
     .card-premium,
-    .glass-nav,
-    .glass-modal {
-      backdrop-filter: blur(12px) saturate(125%);
-      -webkit-backdrop-filter: blur(12px) saturate(125%);
+    .chip,
+    .section-visual-chip {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .ambient-grid,
+    .asset-preview-grid {
+      mask-image: none;
+      -webkit-mask-image: none;
+      opacity: 0.12;
+    }
+
+    .ambient-light {
+      display: none;
+      filter: none;
+    }
+
+    .cta-ambient {
+      display: none;
+    }
+
+    .section-visual {
+      display: none;
+    }
+
+    .visual-halo {
+      filter: none;
+      opacity: 0.32;
+    }
+
+    .mockup-card {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: linear-gradient(145deg, #24231c, #0d0d0d 58%, #171717);
     }
 
     .glass-card:hover,
@@ -619,6 +653,24 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .glass-card,
+    .card-premium,
+    .chip,
+    .section-visual-chip,
+    .mockup-card {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .ambient-light,
+    .visual-halo {
+      filter: none;
+    }
+
+    .section-visual {
+      display: none;
+    }
+
     *,
     *::before,
     *::after {

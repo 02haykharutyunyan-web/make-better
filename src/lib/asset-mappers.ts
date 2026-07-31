@@ -4,7 +4,12 @@ import type { SubmittedAsset, AssetStatus } from "@/store/store";
 
 type DbCreator = Pick<Tables<"creators">, "slug" | "brand_name" | "niche" | "description" | "tags" | "followers" | "assets_count" | "downloads" | "rating" | "monthly_revenue" | "strengths">;
 
-export type DbAsset = Tables<"assets"> & {
+type MarketplaceAssetFields = Pick<Tables<"assets">,
+  "slug" | "title" | "category" | "product_type" | "short_description" |
+  "tags" | "price" | "downloads" | "rating" | "review_count"
+> & Partial<Pick<Tables<"assets">, "long_description">>;
+
+export type DbAsset = MarketplaceAssetFields & {
   creators?: DbCreator | null;
 };
 
@@ -52,7 +57,7 @@ export function dbAssetToAsset(asset: DbAsset): Asset {
   };
 }
 
-export function dbAssetToSubmittedAsset(asset: DbAsset): SubmittedAsset {
+export function dbAssetToSubmittedAsset(asset: Tables<"assets"> & { creators?: DbCreator | null }): SubmittedAsset {
   return {
     ...dbAssetToAsset(asset),
     id: asset.id,
