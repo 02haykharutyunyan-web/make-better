@@ -80,7 +80,7 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
           <>
             <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">{isPaid ? "Purchase intent" : "Free asset"}</div>
             <h3 id="claim-title" className="mt-2 pr-10 text-xl sm:text-2xl font-medium">{asset.title}</h3>
-            <p className="mt-2 text-sm text-[#CFCFCF]">{isPaid ? "Paid purchases are coming soon. Join the access list." : user ? "Claim this free asset securely to your account." : "Enter only your email. We'll send a secure link to verify it and finish your claim."}</p>
+            <p className="mt-2 text-sm text-[#CFCFCF]">{isPaid ? "Enter your details to reserve checkout. We will notify you when secure payments open." : user ? "Claim this free asset securely to your account." : "Enter only your email. We'll send a secure link to verify it and finish your claim."}</p>
             <form onSubmit={submit} className="mt-6 space-y-4">
               {isPaid && <Field label="Full name" value={form.name} onChange={name => setForm({ ...form, name })} required />}
               {!user && <Field label="Email" type="email" value={form.email} onChange={email => setForm({ ...form, email })} required />}
