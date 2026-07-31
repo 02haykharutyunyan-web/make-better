@@ -6,7 +6,7 @@ import type { Asset } from "@/data/marketplace";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { claimFreeAssetSecure, requestPaidAssetAccessBySlug, sendFreeClaimMagicLink } from "@/services/assets";
 
-type Step = "form" | "sending" | "sent" | "claiming" | "success" | "already";
+type Step = "form" | "sending" | "sent" | "claiming" | "checkout" | "success" | "already";
 const RESEND_SECONDS = 60;
 
 export default function GetAssetModal({ asset, assetId, open, onClose }: { asset: Asset; assetId: string; open: boolean; onClose: () => void }) {
@@ -33,7 +33,7 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
       if (isPaid) {
         setStep("sending");
         await requestPaidAssetAccessBySlug({ slug: asset.slug, name: form.name, email: form.email, phone: form.phone, userId: user?.id });
-        setStep("success");
+        setStep("checkout");
       } else if (user) {
         setStep("claiming");
         const result = await claimFreeAssetSecure(assetId);
@@ -62,12 +62,12 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
       <div className="relative w-full max-w-md glass-modal max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-5 sm:p-7">
         <button aria-label="Close" onClick={onClose} className="absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full text-[#CFCFCF] hover:bg-[#FFD600]/10"><X className="h-4 w-4" /></button>
 
-        {(step === "success" || step === "already") ? (
+        {(step === "success" || step === "already" || step === "checkout") ? (
           <div className="text-center py-4" aria-live="polite">
             <div className="mx-auto h-12 w-12 rounded-full border border-white/10 bg-[#0E0E0E]/70 flex items-center justify-center mb-4">✓</div>
-            <h3 id="claim-title" className="text-2xl font-medium">{isPaid ? "You're on the list." : step === "already" ? "Already in your assets" : "Asset claimed"}</h3>
-            <p className="mt-2 text-sm text-[#CFCFCF]">{isPaid ? "No payment has been taken." : "The server confirmed this asset is saved to your account."}</p>
-            <button onClick={() => { onClose(); navigate(isPaid ? "/assets" : "/my-assets"); }} className="mt-6 min-h-12 w-full rounded-full btn-primary py-3 text-sm font-medium">{isPaid ? "Browse assets" : "Open My Assets"}</button>
+            <h3 id="claim-title" className="text-2xl font-medium">{isPaid ? "Checkout is almost ready" : step === "already" ? "Already in your assets" : "Asset claimed"}</h3>
+            <p className="mt-2 text-sm text-[#CFCFCF]">{isPaid ? `Your purchase intent for ${asset.title} is saved. Secure Stripe checkout is coming soon — no payment has been taken.` : "The server confirmed this asset is saved to your account."}</p>
+            <>{isPaid && <button disabled className="mt-6 min-h-12 w-full rounded-full border border-white/15 bg-white/5 py-3 text-sm font-medium text-white/45 cursor-not-allowed">Payments are coming soon</button>}<button onClick={() => { onClose(); navigate(isPaid ? "/assets" : "/my-assets"); }} className="mt-3 min-h-12 w-full rounded-full btn-primary py-3 text-sm font-medium">{isPaid ? "Browse assets" : "Open My Assets"}</button></>
           </div>
         ) : step === "sent" ? (
           <div className="py-4" aria-live="polite">
@@ -78,7 +78,7 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
           </div>
         ) : (
           <>
-            <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">{isPaid ? "Request access" : "Free asset"}</div>
+            <div className="text-xs uppercase tracking-[0.18em] text-[#CFCFCF]">{isPaid ? "Purchase intent" : "Free asset"}</div>
             <h3 id="claim-title" className="mt-2 pr-10 text-xl sm:text-2xl font-medium">{asset.title}</h3>
             <p className="mt-2 text-sm text-[#CFCFCF]">{isPaid ? "Paid purchases are coming soon. Join the access list." : user ? "Claim this free asset securely to your account." : "Enter only your email. We'll send a secure link to verify it and finish your claim."}</p>
             <form onSubmit={submit} className="mt-6 space-y-4">
@@ -86,7 +86,7 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
               {!user && <Field label="Email" type="email" value={form.email} onChange={email => setForm({ ...form, email })} required />}
               {isPaid && <Field label="Phone" type="tel" value={form.phone} onChange={phone => setForm({ ...form, phone })} />}
               {err && <p role="alert" className="text-sm text-[#CFCFCF]">{err}</p>}
-              <button disabled={busy || (!isPaid && !assetId)} type="submit" className="w-full rounded-full btn-primary py-3 text-sm font-medium disabled:opacity-50">{step === "sending" ? "Sending secure link..." : step === "claiming" ? "Claiming..." : isPaid ? "Join waitlist" : user ? "Claim free asset" : "Email me a secure link"}</button>
+              <button disabled={busy || (!isPaid && !assetId)} type="submit" className="w-full rounded-full btn-primary py-3 text-sm font-medium disabled:opacity-50">{step === "sending" ? (isPaid ? "Saving purchase intent..." : "Sending secure link...") : step === "claiming" ? "Claiming..." : isPaid ? "Continue to checkout" : user ? "Claim free asset" : "Email me a secure link"}</button>
             </form>
           </>
         )}
