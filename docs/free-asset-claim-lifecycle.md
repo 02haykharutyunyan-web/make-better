@@ -2,7 +2,7 @@
 
 ## Lifecycle and security boundary
 
-The public page exposes only published asset metadata. Its **Claim free asset** action asks an unauthenticated visitor only for an email address and calls Supabase passwordless OTP with a fixed same-origin callback (`/auth/free-claim?asset=<uuid>`). Supabase sends the link to that exact email. The callback accepts only a UUID asset intent, rejects auth errors, establishes the Supabase session, and calls `public.claim_free_asset(uuid)`.
+The public page exposes only published asset metadata. Its **Claim free asset** action asks an unauthenticated visitor only for an email address and calls Supabase passwordless OTP with the exact same-origin callback (`/auth/free-claim`). The pending UUID is kept in validated browser storage rather than exposed in or trusted from the redirect query string. Supabase sends the link to that exact email. The callback rejects auth errors, establishes the Supabase session, reads the pending browser intent, and calls `public.claim_free_asset(uuid)`; the RPC remains the authority for the authenticated owner and asset eligibility.
 
 The security-definer function derives the owner from `auth.uid()` and re-reads the asset in the database. It accepts only `status = 'published'`, `price_type = 'free'`, `is_free = true`, and `price = 0`. The existing `(user_id, asset_id)` unique constraint plus `INSERT ... ON CONFLICT DO NOTHING` makes refreshes and concurrent claims idempotent. Direct buyer claim inserts are removed; admin claim management remains governed by the existing admin RLS policy. Delivery metadata and the private Storage bucket remain inaccessible until the authenticated owner has an unlocked claim. A published-state check was added to buyer delivery authorization.
 
@@ -22,6 +22,7 @@ In **Authentication → URL Configuration**, set the correct Site URL and add ev
 ```text
 http://localhost:8080/auth/free-claim
 https://YOUR_APP_HOST/auth/free-claim
+https://makebetter.im/auth/free-claim
 ```
 
 Keep email confirmations/passwordless email enabled and configure an SMTP provider appropriate for the environment. Do not use wildcard production redirect origins. Existing password login routes are unchanged.

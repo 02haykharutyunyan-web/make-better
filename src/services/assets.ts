@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase/client";
 import { requireSupabaseConfig } from "@/lib/supabase/errors";
 import type { AccessRequestStatus, DeliveryType, Inserts, Tables, Updates } from "@/types/database";
 import type { FreeClaimResult } from "@/lib/free-claim";
+import { rememberPendingFreeClaim } from "@/lib/free-claim";
 import { trackMarketplaceEvent } from "@/lib/analytics";
 
 export type AssetWithCreator = Awaited<ReturnType<typeof listPublishedAssets>>[number];
@@ -363,10 +364,11 @@ export async function claimFreeAssetSecure(assetId: string) {
 
 export async function sendFreeClaimMagicLink(email: string, assetId: string) {
   requireSupabaseConfig();
+  rememberPendingFreeClaim(window.localStorage, assetId);
   const { error } = await supabase.auth.signInWithOtp({
     email: email.trim(),
     options: {
-      emailRedirectTo: new URL(`/auth/free-claim?asset=${encodeURIComponent(assetId)}`, window.location.origin).toString(),
+      emailRedirectTo: `${window.location.origin}/auth/free-claim`,
       data: { role: "buyer" },
     },
   });
