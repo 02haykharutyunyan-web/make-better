@@ -1,7 +1,7 @@
 import type { BlogPost, Collection, ProductType } from "@/data/marketplace";
 import type { Tables } from "@/types/database";
 
-type BlogRow = Tables<"blog_posts"> & {
+type BlogRow = Pick<Tables<"blog_posts">, "slug" | "title" | "excerpt" | "category" | "published_at" | "created_at"> & Partial<Pick<Tables<"blog_posts">, "body">> & {
   creators?: { slug: string; brand_name: string } | null;
 };
 
@@ -19,7 +19,7 @@ export function dbBlogToBlogPost(post: BlogRow): BlogPost {
   };
 }
 
-export function dbCollectionToCollection(collection: Tables<"collections">): Collection {
+export function dbCollectionToCollection(collection: Pick<Tables<"collections">, "slug" | "title" | "description" | "long_description" | "best_for" | "related_types" | "related_tags">): Collection {
   return {
     slug: collection.slug,
     title: collection.title,

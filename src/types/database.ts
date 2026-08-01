@@ -408,6 +408,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      get_homepage_feed: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
       claim_free_asset: {
         Args: { target_asset_id: string };
         Returns: Record<string, unknown>;
