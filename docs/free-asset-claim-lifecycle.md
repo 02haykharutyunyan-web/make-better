@@ -2,7 +2,7 @@
 
 ## Lifecycle and security boundary
 
-The public page exposes only published asset metadata. Its **Claim free asset** action asks an unauthenticated visitor only for an email address and calls Supabase passwordless OTP with the exact same-origin callback (`/auth/free-claim`). The pending UUID is kept in validated browser storage rather than exposed in or trusted from the redirect query string. Supabase sends the link to that exact email. The callback rejects auth errors, establishes the Supabase session, reads the pending browser intent, and calls `public.claim_free_asset(uuid)`; the RPC remains the authority for the authenticated owner and asset eligibility.
+The public page exposes only published asset metadata. Its **Claim free asset** action asks an unauthenticated visitor only for an email address and calls Supabase passwordless OTP with the exact same-origin callback (`/auth/free-claim`). The pending UUID is kept in validated browser `localStorage` rather than exposed in or trusted from the redirect query string. The emailed magic link must be opened in the same browser where the claim began. The callback rejects auth errors, restores either a PKCE-code or implicit-hash Supabase session, reads the pending local intent, and calls `public.claim_free_asset(uuid)`; client intent is never authorization, because the RPC remains the authority for the authenticated owner and asset eligibility.
 
 The security-definer function derives the owner from `auth.uid()` and re-reads the asset in the database. It accepts only `status = 'published'`, `price_type = 'free'`, `is_free = true`, and `price = 0`. The existing `(user_id, asset_id)` unique constraint plus `INSERT ... ON CONFLICT DO NOTHING` makes refreshes and concurrent claims idempotent. Direct buyer claim inserts are removed; admin claim management remains governed by the existing admin RLS policy. Delivery metadata and the private Storage bucket remain inaccessible until the authenticated owner has an unlocked claim. A published-state check was added to buyer delivery authorization.
 
@@ -52,6 +52,7 @@ Integration verification requires a disposable Supabase project with Auth email 
 - Open a published free asset signed out; confirm the CTA says **Claim free asset** and the dialog asks only for email.
 - Validate malformed email, sending, sent confirmation, the 60-second resend cooldown, and a second send.
 - Open valid, expired, malformed, and already-used links; confirm no success is shown before the claim RPC confirms.
+- Confirm opening the link in a different browser shows an invalid/missing-intent state and creates no claim; cross-device claiming is intentionally deferred until a server-side, one-time pending-claim design exists.
 - Confirm a new passwordless user receives a buyer profile from the existing auth trigger.
 - Confirm first claim, refreshed callback, and reopened callback yield one ownership row and a clear claimed/already-claimed state; use **Return to asset** to reach the same asset detail page.
 - Confirm paid, draft, pending, approved-but-unpublished, rejected, deleted, and missing-delivery assets fail safely.

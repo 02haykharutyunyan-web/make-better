@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
 import { supabase } from "@/lib/supabase/client";
-import { authCallbackError, clearPendingFreeClaim, pendingFreeClaim } from "@/lib/free-claim";
+import { authCallbackError, clearPendingFreeClaim, pendingFreeClaim, restoreMagicLinkSession } from "@/lib/free-claim";
 import { claimFreeAssetSecure } from "@/services/assets";
 
 type State = "processing" | "success" | "already" | "invalid" | "expired" | "auth" | "not_found" | "not_published" | "not_free" | "error";
@@ -38,18 +38,11 @@ export default function FreeClaimCallbackPage() {
     const run = async () => {
       const callbackError = authCallbackError(location.search, location.hash);
       if (callbackError) { setState(callbackError); return; }
-      const assetId = pendingFreeClaim(window.localStorage);
-      if (!assetId) { setState("invalid"); return; }
-
       try {
-        const code = new URLSearchParams(location.search).get("code");
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-        }
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        if (!data.session) { setState("auth"); return; }
+        const session = await restoreMagicLinkSession(supabase.auth, location.search, location.hash);
+        if (!session) { setState("auth"); return; }
+        const assetId = pendingFreeClaim(window.localStorage);
+        if (!assetId) { setState("invalid"); return; }
 
         const result = await claimFreeAssetSecure(assetId);
         if (!active) return;

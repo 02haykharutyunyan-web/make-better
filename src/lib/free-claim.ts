@@ -1,3 +1,5 @@
+import type { Session } from "@supabase/supabase-js";
+
 export type FreeClaimOutcome = "claimed" | "already_claimed";
 
 export interface FreeClaimResult {
@@ -22,6 +24,32 @@ export function pendingFreeClaim(storage: Pick<Storage, "getItem">) {
 
 export function clearPendingFreeClaim(storage: Pick<Storage, "removeItem">) {
   storage.removeItem(pendingClaimKey);
+}
+
+interface MagicLinkAuth {
+  exchangeCodeForSession(code: string): Promise<{ error: Error | null }>;
+  setSession(tokens: { access_token: string; refresh_token: string }): Promise<{ error: Error | null }>;
+  getSession(): Promise<{ data: { session: Session | null }; error: Error | null }>;
+}
+
+export async function restoreMagicLinkSession(auth: MagicLinkAuth, search: string, hash: string) {
+  const code = new URLSearchParams(search).get("code");
+  if (code) {
+    const { error } = await auth.exchangeCodeForSession(code);
+    if (error) throw error;
+  } else {
+    const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+    const accessToken = hashParams.get("access_token");
+    const refreshToken = hashParams.get("refresh_token");
+    if (accessToken && refreshToken) {
+      const { error } = await auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      if (error) throw error;
+    }
+  }
+
+  const { data, error } = await auth.getSession();
+  if (error) throw error;
+  return data.session;
 }
 
 export function authCallbackError(search: string, hash: string) {
