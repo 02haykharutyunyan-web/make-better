@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
 import { SubmittedAsset, useStore } from "@/store/store";
-import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { explainSupabaseError } from "@/lib/supabase/errors";
 import { dbAssetToSubmittedAsset } from "@/lib/asset-mappers";
 import { getCreatorByProfileId, reapplyCreatorApplication } from "@/services/creators";
 import type { Tables } from "@/types/database";
-import { countAccessRequestsForAssets, listCreatorAssets } from "@/services/assets";
-import { listCreatorBlogPosts } from "@/services/content";
+import { countAccessRequestsForAssets, deleteOwnAsset, getAssetDeliverable, getMyPaidListingEligibility, listCreatorAssets, removeAssetDeliverableFile, type PaidListingEligibility } from "@/services/assets";
+import { deleteOwnBlogPost, listCreatorBlogPosts } from "@/services/content";
 
 const statusStyles: Record<string, string> = {
   "Draft": "bg-[#0E0E0E]/80 text-[#CFCFCF] border-white/10",
@@ -27,40 +27,39 @@ export default function CreatorDashboard() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [reapplying, setReapplying] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [paidEligibility, setPaidEligibility] = useState<PaidListingEligibility | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
+  const load = useCallback(async () => {
       if (!user) return;
       setLoading(true);
       setErr("");
       try {
         const creator = await getCreatorByProfileId(user.id);
-        if (!cancelled) setCreator(creator);
+        setCreator(creator);
         if (!creator) {
-          if (!cancelled) { setRemoteAssets([]); setBlogPosts([]); }
+          setRemoteAssets([]); setBlogPosts([]); setPaidEligibility(null);
           return;
         }
-        const rows = await listCreatorAssets(creator.id);
+        const [rows, posts, eligibility] = await Promise.all([
+          listCreatorAssets(creator.id),
+          listCreatorBlogPosts(creator.id),
+          creator.application_status === "approved" ? getMyPaidListingEligibility() : Promise.resolve(null),
+        ]);
         const mapped = rows.map(dbAssetToSubmittedAsset);
         const counts = await countAccessRequestsForAssets(mapped.map(a => a.id));
-        const posts = await listCreatorBlogPosts(creator.id);
-        if (!cancelled) {
-          setRemoteAssets(mapped);
-          setRequestCounts(counts);
-          setBlogPosts(posts);
-        }
+        setRemoteAssets(mapped);
+        setRequestCounts(counts);
+        setBlogPosts(posts);
+        setPaidEligibility(eligibility);
       } catch (error) {
-        if (!cancelled) {
-          setErr(explainSupabaseError(error, "Unable to load your submissions."));
-        }
+        setErr(explainSupabaseError(error, "Unable to load your submissions."));
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
-    }
-    load();
-    return () => { cancelled = true; };
   }, [user]);
+
+  useEffect(() => { void load(); }, [load]);
 
   const reapply = async () => {
     if (!window.confirm("Resubmit your creator application for admin review?")) return;
@@ -73,6 +72,34 @@ export default function CreatorDashboard() {
       setErr(explainSupabaseError(error, "Unable to resubmit your creator application."));
     } finally {
       setReapplying(false);
+    }
+  };
+
+  const removeAsset = async (asset: SubmittedAsset) => {
+    if (deletingId || !window.confirm(`Permanently delete “${asset.title}”? This cannot be undone.`)) return;
+    setDeletingId(asset.id); setErr("");
+    try {
+      const deliverable = await getAssetDeliverable(asset.id);
+      if (deliverable?.storage_path) await removeAssetDeliverableFile(deliverable.storage_path);
+      await deleteOwnAsset(asset.id);
+      await load();
+    } catch (error) {
+      setErr(explainSupabaseError(error, "Unable to delete this asset."));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const removeBlogPost = async (post: Tables<"blog_posts">) => {
+    if (deletingId || !window.confirm(`Permanently delete “${post.title}”? This cannot be undone.`)) return;
+    setDeletingId(post.id); setErr("");
+    try {
+      await deleteOwnBlogPost(post.id);
+      await load();
+    } catch (error) {
+      setErr(explainSupabaseError(error, "Unable to delete this blog post."));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -139,8 +166,12 @@ export default function CreatorDashboard() {
         </div>
 
         <div className="mt-10 card-premium p-5 sm:p-6">
-          <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">Payouts</div>
-          <div className="mt-2 text-white/80">Stripe payouts will be available soon. We'll email you when payout setup opens.</div>
+          <div className="text-xs uppercase tracking-[0.16em] text-[#CFCFCF]/70">Paid listings</div>
+          {paidEligibility?.eligible ? (
+            <div className="mt-2 text-white/80">Paid listings are unlocked. Stripe payouts will be available soon.</div>
+          ) : (
+            <div className="mt-2 text-white/80">Publish 3 free assets and 3 blog posts to unlock paid listings. Progress: {paidEligibility?.published_free_assets || 0}/3 free assets • {paidEligibility?.published_blog_posts || 0}/3 blog posts.</div>
+          )}
         </div>
 
         <div className="mt-10">
@@ -167,6 +198,7 @@ export default function CreatorDashboard() {
                     <span className={`rounded-full border px-3 py-1 text-xs ${statusStyles[a.status]}`}>{a.status}</span>
                     <span className="text-xs text-[#CFCFCF]/80">{a.downloads.toLocaleString()} downloads</span>
                     <Link to={`/creator-dashboard/assets/${a.slug}/edit`} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 hover:border-[#FFD600]/60 hover:text-white transition">Edit</Link>
+                    <button type="button" disabled={deletingId === a.id} onClick={() => void removeAsset(a)} className="inline-flex items-center gap-1 rounded-full border border-red-400/30 px-3 py-1 text-xs text-red-200 transition hover:border-red-300/70 disabled:opacity-50"><Trash2 className="h-3 w-3" /> {deletingId === a.id ? "Deleting..." : "Delete"}</button>
                   </div>
                 </div>
               ))}
@@ -193,6 +225,7 @@ export default function CreatorDashboard() {
                     <span className={`rounded-full border px-3 py-1 text-xs ${statusStyles[statusLabel(post.status)]}`}>{statusLabel(post.status)}</span>
                     <Link to={`/creator-dashboard/blog/${post.slug}/preview`} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 hover:border-[#FFD600]/60">Preview</Link>
                     {(post.status === "draft" || post.status === "rejected") && <Link to={`/creator-dashboard/blog/${post.slug}/edit`} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 hover:border-[#FFD600]/60 hover:text-white transition">Edit</Link>}
+                    <button type="button" disabled={deletingId === post.id} onClick={() => void removeBlogPost(post)} className="inline-flex items-center gap-1 rounded-full border border-red-400/30 px-3 py-1 text-xs text-red-200 transition hover:border-red-300/70 disabled:opacity-50"><Trash2 className="h-3 w-3" /> {deletingId === post.id ? "Deleting..." : "Delete"}</button>
                   </div>
                 </div>
               ))}

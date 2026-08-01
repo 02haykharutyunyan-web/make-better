@@ -12,6 +12,7 @@ const creatorBlogEditor = readFileSync("src/pages/creator/EditBlogPostPage.tsx",
 const adminAssets = readFileSync("src/pages/admin/AdminAssets.tsx", "utf8");
 const adminBlog = readFileSync("src/pages/admin/AdminBlog.tsx", "utf8");
 const paidEligibilityMigration = readFileSync("supabase/migrations/20260801000100_paid_listing_eligibility.sql", "utf8");
+const creatorDeletionMigration = readFileSync("supabase/migrations/20260801000200_creator_owned_content_deletion.sql", "utf8");
 
 describe("Task 2B content moderation lifecycle", () => {
   it("splits blog enum values from later enum usage for transaction safety", () => {
@@ -113,5 +114,20 @@ describe("Task 2B content moderation lifecycle", () => {
     expect(paidEligibilityMigration).toContain("This paid listing no longer meets the 3 published free assets and 3 published blog posts requirement.");
     expect(assetsService).toContain('supabase.rpc("get_my_paid_listing_eligibility")');
     expect(readFileSync("src/pages/creator/SubmitAssetPage.tsx", "utf8")).toContain("Paid listings unlock after 3 published free assets and 3 published blog posts");
+  });
+
+  it("allows creators to delete only their own content and immediately removes paid eligibility when prerequisites are deleted", () => {
+    expect(creatorDeletionMigration).toContain("function public.delete_own_asset");
+    expect(creatorDeletionMigration).toContain("function public.delete_own_blog_post");
+    expect(creatorDeletionMigration).toContain("creators.profile_id = auth.uid()");
+    expect(creatorDeletionMigration).toContain("public.paid_listing_eligibility");
+    expect(creatorDeletionMigration).toContain("status in ('published', 'pending_review')");
+    expect(creatorDeletionMigration).toContain("creators delete own asset deliverable files");
+    expect(assetsService).toContain('supabase.rpc("delete_own_asset"');
+    expect(contentService).toContain('supabase.rpc("delete_own_blog_post"');
+    expect(dashboard).toContain('removeAsset');
+    expect(dashboard).toContain('removeBlogPost');
+    expect(dashboard).toContain('Publish 3 free assets and 3 blog posts to unlock paid listings');
+    expect(dashboard).toContain('getMyPaidListingEligibility');
   });
 });

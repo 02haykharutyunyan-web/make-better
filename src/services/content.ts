@@ -160,6 +160,12 @@ export async function deleteBlogPost(id: string) {
   if (error) throw error;
 }
 
+/** Permanently delete the signed-in creator's blog post. Ownership is verified by the database. */
+export async function deleteOwnBlogPost(id: string) {
+  const { error } = await supabase.rpc("delete_own_blog_post", { target_blog_post_id: id });
+  if (error) throw error;
+}
+
 export async function listPublishedCollections(limit = 50) {
   const { data, error } = await supabase
     .from("collections")
