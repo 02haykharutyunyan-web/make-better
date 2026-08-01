@@ -8,6 +8,7 @@ import { explainDeliverableError, explainSupabaseError } from "@/lib/supabase/er
 import { getCurrentCreatorForSubmission } from "@/services/creators";
 import {
   ASSET_DELIVERABLES_BUCKET,
+  getMyPaidListingEligibility,
   submitAsset as submitAssetToSupabase,
   submitAssetForReview,
   uploadAssetDeliverableFile,
@@ -56,6 +57,7 @@ export default function SubmitAssetPage() {
   const [err, setErr] = useState("");
   const [partialWarning, setPartialWarning] = useState("");
   const [loading, setLoading] = useState(false);
+  const [paidEligibility, setPaidEligibility] = useState<{ published_free_assets: number; published_blog_posts: number; eligible: boolean } | null>(null);
 
   // Keep written details when a browser unloads this route (for example after
   // switching tabs and returning). Files cannot be restored by browsers for
@@ -64,6 +66,12 @@ export default function SubmitAssetPage() {
     localStorage.setItem(SUBMIT_ASSET_DRAFT_KEY, JSON.stringify(form));
   }, [form]);
 
+  useEffect(() => {
+    let cancelled = false;
+    getMyPaidListingEligibility().then(result => { if (!cancelled) setPaidEligibility(result); }).catch(() => { if (!cancelled) setPaidEligibility(null); });
+    return () => { cancelled = true; };
+  }, []);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr("");
@@ -71,6 +79,7 @@ export default function SubmitAssetPage() {
     setLoading(true);
     try {
       if (!user) throw new Error("Sign in as a creator before submitting an asset.");
+      if (form.priceType === "paid" && paidEligibility && !paidEligibility.eligible) throw new Error("Paid listings unlock after 3 published free assets and 3 published blog posts.");
       const creator = await getCurrentCreatorForSubmission();
 
       const price = form.priceType === "paid" ? Number(form.price) || 0 : 0;
@@ -190,6 +199,7 @@ export default function SubmitAssetPage() {
                 <option className="bg-black" value="paid">Paid</option>
               </select>
             </label>
+            {form.priceType === "paid" && <p className={`text-sm ${paidEligibility?.eligible ? "text-[#FFD600]" : "text-[#CFCFCF]"}`}>{paidEligibility?.eligible ? "Paid listings are unlocked for your creator account." : `Paid listings unlock after 3 published free assets and 3 published blog posts. Progress: ${paidEligibility?.published_free_assets || 0}/3 free assets • ${paidEligibility?.published_blog_posts || 0}/3 blog posts.`}</p>}
             {form.priceType === "paid" && (
               <Field label="Price (USD)" type="number" value={form.price} onChange={v => setForm({ ...form, price: v })} />
             )}

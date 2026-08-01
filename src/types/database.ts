@@ -440,6 +440,10 @@ export type Database = {
         Args: { target_creator_id: string; expected_status: CreatorStatus };
         Returns: boolean;
       };
+      get_my_paid_listing_eligibility: {
+        Args: Record<string, never>;
+        Returns: { published_free_assets: number; published_blog_posts: number; eligible: boolean }[];
+      };
       review_creator_application: {
         Args: {
           target_creator_id: string;

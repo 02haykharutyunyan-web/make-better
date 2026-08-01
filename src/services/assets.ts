@@ -105,6 +105,20 @@ export async function submitAssetForReview(assetId: string) {
   return data;
 }
 
+export type PaidListingEligibility = {
+  published_free_assets: number;
+  published_blog_posts: number;
+  eligible: boolean;
+};
+
+export async function getMyPaidListingEligibility(): Promise<PaidListingEligibility> {
+  const { data, error } = await supabase.rpc("get_my_paid_listing_eligibility");
+  if (error) throw error;
+  const eligibility = data?.[0];
+  if (!eligibility) throw new Error("Unable to load paid listing eligibility.");
+  return eligibility;
+}
+
 export async function reviewAsset(assetId: string, status: "published" | "rejected" | "draft", rejectionReason?: string | null) {
   if (status === "rejected" && !rejectionReason?.trim()) throw new Error("A rejection reason is required.");
   const { data, error } = await supabase.rpc("review_asset", {
