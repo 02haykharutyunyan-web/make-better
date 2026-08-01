@@ -444,6 +444,14 @@ export type Database = {
         Args: Record<string, never>;
         Returns: { published_free_assets: number; published_blog_posts: number; eligible: boolean }[];
       };
+      delete_own_asset: {
+        Args: { target_asset_id: string };
+        Returns: undefined;
+      };
+      delete_own_blog_post: {
+        Args: { target_blog_post_id: string };
+        Returns: undefined;
+      };
       review_creator_application: {
         Args: {
           target_creator_id: string;

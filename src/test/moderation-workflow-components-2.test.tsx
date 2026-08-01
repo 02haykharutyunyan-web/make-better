@@ -9,7 +9,7 @@ import EditBlogPostPage from "@/pages/creator/EditBlogPostPage";
 const mocks = vi.hoisted(() => ({
   listAdminBlogPosts: vi.fn(), reviewBlogPost: vi.fn(), deleteBlogPost: vi.fn(), updateBlogPost: vi.fn(), createAdminBlogPost: vi.fn(), listCreatorBlogPosts: vi.fn(), createBlogPost: vi.fn(), submitBlogPostForReview: vi.fn(), getCreatorBlogPostBySlug: vi.fn(),
   listActiveCreators: vi.fn(), getCreatorByProfileId: vi.fn(), reapplyCreatorApplication: vi.fn(), getCurrentCreatorForSubmission: vi.fn(),
-  listAdminAssets: vi.fn(), listAssetDeliverables: vi.fn(), reviewAsset: vi.fn(), setAssetFeatured: vi.fn(), deleteAsset: vi.fn(), updateAsset: vi.fn(), listCreatorAssets: vi.fn(), countAccessRequestsForAssets: vi.fn(),
+  listAdminAssets: vi.fn(), listAssetDeliverables: vi.fn(), reviewAsset: vi.fn(), setAssetFeatured: vi.fn(), deleteAsset: vi.fn(), updateAsset: vi.fn(), listCreatorAssets: vi.fn(), countAccessRequestsForAssets: vi.fn(), getMyPaidListingEligibility: vi.fn(),
 }));
 
 vi.mock("@/components/layout/AdminLayout", () => ({ default: ({ children }: { children: React.ReactNode }) => <main>{children}</main> }));
@@ -20,7 +20,7 @@ vi.mock("@/store/store", async () => {
 });
 vi.mock("@/services/content", () => ({ listAdminBlogPosts: mocks.listAdminBlogPosts, reviewBlogPost: mocks.reviewBlogPost, deleteBlogPost: mocks.deleteBlogPost, updateBlogPost: mocks.updateBlogPost, createAdminBlogPost: mocks.createAdminBlogPost, listCreatorBlogPosts: mocks.listCreatorBlogPosts, createBlogPost: mocks.createBlogPost, submitBlogPostForReview: mocks.submitBlogPostForReview, getCreatorBlogPostBySlug: mocks.getCreatorBlogPostBySlug }));
 vi.mock("@/services/creators", () => ({ listActiveCreators: mocks.listActiveCreators, getCreatorByProfileId: mocks.getCreatorByProfileId, reapplyCreatorApplication: mocks.reapplyCreatorApplication, getCurrentCreatorForSubmission: mocks.getCurrentCreatorForSubmission }));
-vi.mock("@/services/assets", () => ({ listAdminAssets: mocks.listAdminAssets, listAssetDeliverables: mocks.listAssetDeliverables, reviewAsset: mocks.reviewAsset, setAssetFeatured: mocks.setAssetFeatured, deleteAsset: mocks.deleteAsset, updateAsset: mocks.updateAsset, listCreatorAssets: mocks.listCreatorAssets, countAccessRequestsForAssets: mocks.countAccessRequestsForAssets, deliveryLabel: () => "File" }));
+vi.mock("@/services/assets", () => ({ listAdminAssets: mocks.listAdminAssets, listAssetDeliverables: mocks.listAssetDeliverables, reviewAsset: mocks.reviewAsset, setAssetFeatured: mocks.setAssetFeatured, deleteAsset: mocks.deleteAsset, updateAsset: mocks.updateAsset, listCreatorAssets: mocks.listCreatorAssets, countAccessRequestsForAssets: mocks.countAccessRequestsForAssets, getMyPaidListingEligibility: mocks.getMyPaidListingEligibility, deliveryLabel: () => "File" }));
 
 const creator = { id: "creator-1", profile_id: "profile-1", slug: "creator-one", brand_name: "Creator One", active: true, application_status: "approved", application_rejection_reason: null, niche: null, description: null, tags: [], followers: 0, assets_count: 0, downloads: 0, rating: 0, monthly_revenue: null, strengths: [], featured: false, created_at: "2026-01-01", updated_at: "2026-01-01" };
 const baseBlog = { id: "blog-1", creator_id: "creator-1", slug: "post", title: "Post", excerpt: "Excerpt", category: "Strategy", body: "Body", status: "pending_review", rejection_reason: null, submitted_at: "2026-01-01", reviewed_at: null, reviewed_by: null, published_at: null, created_at: "2026-01-01", updated_at: "2026-01-01", creators: { id: "creator-1", slug: "creator-one", brand_name: "Creator One" } };
@@ -33,6 +33,7 @@ beforeEach(() => {
   mocks.getCreatorByProfileId.mockResolvedValue(creator);
   mocks.countAccessRequestsForAssets.mockResolvedValue({});
   mocks.listAssetDeliverables.mockResolvedValue([]);
+  mocks.getMyPaidListingEligibility.mockResolvedValue({ eligible: false, published_free_assets: 0, published_blog_posts: 0 });
 });
 
 describe("moderation workflow component coverage", () => {
@@ -64,7 +65,7 @@ describe("moderation workflow component coverage", () => {
     await waitFor(() => expect(screen.queryByText("Loading submissions...")).not.toBeInTheDocument());
     expect(mocks.listCreatorBlogPosts).toHaveBeenCalled();
     expect(screen.getByText(/Blog submissions/)).toBeInTheDocument();
-    expect(screen.getByText("Blog posts").previousSibling?.textContent).toBe("1");
+    await waitFor(() => expect(screen.getByText("Blog posts").parentElement?.textContent).toBe("1Blog posts"));
 
     expect(mocks.listCreatorBlogPosts).toHaveBeenCalledWith("creator-1");
   });

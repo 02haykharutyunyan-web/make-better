@@ -159,6 +159,12 @@ export async function deleteAsset(id: string) {
   if (error) throw error;
 }
 
+/** Permanently delete the signed-in creator's asset. Ownership is verified by the database. */
+export async function deleteOwnAsset(id: string) {
+  const { error } = await supabase.rpc("delete_own_asset", { target_asset_id: id });
+  if (error) throw error;
+}
+
 export function validateDeliverableFile(file: File) {
   if (!file.name.trim() || file.size <= 0) throw new Error("Choose a non-empty deliverable file.");
   if (file.size > MAX_DELIVERABLE_FILE_SIZE) {
