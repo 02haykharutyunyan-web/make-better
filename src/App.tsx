@@ -37,6 +37,7 @@ const AdminAssets = lazy(() => import("./pages/admin/AdminAssets.tsx"));
 const AdminAccessRequests = lazy(() => import("./pages/admin/AdminAccessRequests.tsx"));
 const AdminBlog = lazy(() => import("./pages/admin/AdminBlog.tsx"));
 const AdminCollections = lazy(() => import("./pages/admin/AdminCollections.tsx"));
+const AdminImport = lazy(() => import("./pages/admin/AdminImport.tsx"));
 const BlogPreviewPage = lazy(() => import("./pages/BlogPreviewPage.tsx"));
 const FreeClaimCallbackPage = lazy(() => import("./pages/FreeClaimCallbackPage.tsx"));
 
@@ -127,6 +128,9 @@ const App = () => (
             } />
             <Route path="/admin/collections" element={
               <AdminRoute><AdminCollections /></AdminRoute>
+            } />
+            <Route path="/admin/import" element={
+              <AdminRoute><AdminImport /></AdminRoute>
             } />
 
             <Route path="*" element={<NotFound />} />
