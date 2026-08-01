@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import Header from "@/components/layout/Header";
-import { LayoutDashboard, Users, Sparkles, Package, BookOpen, FolderKanban, Inbox } from "lucide-react";
+import { LayoutDashboard, Users, Sparkles, Package, BookOpen, FolderKanban, Inbox, Upload } from "lucide-react";
 
 const nav = [
   { to: "/admin", end: true, label: "Dashboard", icon: LayoutDashboard },
@@ -11,6 +11,7 @@ const nav = [
   { to: "/admin/requests", label: "Requests", icon: Inbox },
   { to: "/admin/blog", label: "Blog", icon: BookOpen },
   { to: "/admin/collections", label: "Collections", icon: FolderKanban },
+  { to: "/admin/import", label: "Bulk upload", icon: Upload },
 ];
 
 export default function AdminLayout({ children, title, eyebrow }: { children: ReactNode; title: string; eyebrow?: string }) {
