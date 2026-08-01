@@ -21,7 +21,10 @@ describe("mobile navigation", () => {
     fireEvent.click(toggle);
     expect(screen.getByRole("button", { name: "Close menu" })).toHaveAttribute("aria-expanded", "true");
     expect(document.getElementById("mobile-navigation")).toBeInTheDocument();
-    expect(document.querySelector('#mobile-navigation a[href="/assets"]')).toBeInTheDocument();
+    const mobileAssetsLink = document.querySelector<HTMLAnchorElement>('#mobile-navigation a[href="/assets"]');
+    expect(mobileAssetsLink).toBeInTheDocument();
+    mobileAssetsLink?.focus();
+    expect(document.activeElement).toBe(mobileAssetsLink);
 
     fireEvent.click(screen.getByRole("button", { name: "Close menu" }));
     expect(document.getElementById("mobile-navigation")).not.toBeInTheDocument();

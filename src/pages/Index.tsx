@@ -33,26 +33,7 @@ export default function Index() {
   const [remoteCreators, setRemoteCreators] = useState<Creator[]>([]);
   const [remotePosts, setRemotePosts] = useState<BlogPost[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(true);
-  const [loadBelowFold, setLoadBelowFold] = useState(false);
   const resultsRef = useRef<HTMLDivElement | null>(null);
-  const belowFoldRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const target = belowFoldRef.current;
-    if (!target || typeof IntersectionObserver === "undefined") {
-      setLoadBelowFold(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setLoadBelowFold(true);
-        observer.disconnect();
-      }
-    }, { rootMargin: "600px 0px" });
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,7 +59,6 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-    if (!loadBelowFold) return;
     let cancelled = false;
     async function loadContent() {
       try {
@@ -102,7 +82,7 @@ export default function Index() {
     }
     loadContent();
     return () => { cancelled = true; };
-  }, [loadBelowFold]);
+  }, []);
 
   const searchableAssets = useMemo<SearchableAsset[]>(() => {
     return remoteAssets;
@@ -231,7 +211,6 @@ export default function Index() {
       </Section>
 
       {/* PRODUCT TYPES */}
-      <div ref={belowFoldRef} aria-hidden="true" />
       <Section
         eyebrow="Browse by product type"
         title="What format works for you?"
@@ -381,7 +360,7 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
 
 function Section({ eyebrow, title, description, action, visual, children }: { eyebrow: string; title: string; description?: string; action?: { label: string; to: string }; visual?: "mesh" | "lines" | "market"; children: React.ReactNode }) {
   return (
-    <section className="homepage-section container-mb section-rich mt-20 sm:mt-24 md:mt-32">
+    <section className="container-mb section-rich mt-20 sm:mt-24 md:mt-32">
       {visual && <SectionVisual variant={visual} />}
       <div className="flex items-start sm:items-end justify-between gap-6 flex-col sm:flex-row sm:flex-wrap">
         <div className="max-w-2xl">
