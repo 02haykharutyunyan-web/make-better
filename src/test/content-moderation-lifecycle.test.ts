@@ -11,6 +11,7 @@ const dashboard = readFileSync("src/pages/creator/CreatorDashboard.tsx", "utf8")
 const creatorBlogEditor = readFileSync("src/pages/creator/EditBlogPostPage.tsx", "utf8");
 const adminAssets = readFileSync("src/pages/admin/AdminAssets.tsx", "utf8");
 const adminBlog = readFileSync("src/pages/admin/AdminBlog.tsx", "utf8");
+const paidEligibilityMigration = readFileSync("supabase/migrations/20260801000100_paid_listing_eligibility.sql", "utf8");
 
 describe("Task 2B content moderation lifecycle", () => {
   it("splits blog enum values from later enum usage for transaction safety", () => {
@@ -100,5 +101,17 @@ describe("Task 2B content moderation lifecycle", () => {
     expect(adminAssets).toContain("setAssetFeatured(id, Boolean(patch.featured))");
     expect(adminAssets).toContain("overflow-x-auto");
     expect(migration).not.toContain("grant update (featured");
+  });
+
+  it("enforces paid-listing eligibility in trusted submission and publication transitions", () => {
+    expect(paidEligibilityMigration).toContain("function public.paid_listing_eligibility");
+    expect(paidEligibilityMigration).toContain("status = 'published'");
+    expect(paidEligibilityMigration).toContain("price_type = 'free'");
+    expect(paidEligibilityMigration.match(/\) >= 3/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(paidEligibilityMigration).toContain("function public.get_my_paid_listing_eligibility");
+    expect(paidEligibilityMigration).toContain("Paid listings require 3 published free assets and 3 published blog posts");
+    expect(paidEligibilityMigration).toContain("This paid listing no longer meets the 3 published free assets and 3 published blog posts requirement.");
+    expect(assetsService).toContain('supabase.rpc("get_my_paid_listing_eligibility")');
+    expect(readFileSync("src/pages/creator/SubmitAssetPage.tsx", "utf8")).toContain("Paid listings unlock after 3 published free assets and 3 published blog posts");
   });
 });
