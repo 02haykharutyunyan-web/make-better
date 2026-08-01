@@ -285,6 +285,11 @@ export async function getClaimedAssetDelivery(assetId: string) {
   if (assetError) throw assetError;
   if (!asset) throw new Error("Asset not published. Delivery is available only after admin approval.");
 
+  // The database repeats entitlement checks and records at most one access per
+  // buyer/asset/day before any private delivery is revealed.
+  const { error: accessError } = await supabase.rpc("record_asset_delivery_access", { target_asset_id: assetId });
+  if (accessError) throw accessError;
+
   const delivery = await getAssetDeliverable(assetId);
   if (!delivery) throw new Error("No deliverable attached. Ask the creator or admin to add a file, link, or text delivery.");
   trackMarketplaceEvent("delivery_opened", assetId, { delivery_type: delivery.delivery_type });

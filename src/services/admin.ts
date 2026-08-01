@@ -11,6 +11,7 @@ export type AdminOverview = {
   totalClaims: number;
   totalDownloads: number;
   observability: { assetViews: number; freeClaimStarts: number; freeClaimsCompleted: number; deliveriesOpened: number; creatorSubmissions: number; adminReviews: number; clientErrors24h: number };
+  downloadAnalytics: { downloads7d: number; downloads30d: number; topAssets: { id: string; title: string; slug: string; downloads: number; creator_name: string }[] };
 };
 
 export type AdminCreatorRow = Tables<"creators"> & {
@@ -22,17 +23,20 @@ export type AdminCreatorRow = Tables<"creators"> & {
 };
 
 export async function getAdminOverview(): Promise<AdminOverview> {
-  const [creators, assets, claims, observability] = await Promise.all([
+  const [creators, assets, claims, observability, downloadAnalytics] = await Promise.all([
     supabase.from("creators").select("id", { count: "exact" }),
     listAdminAssets(),
     supabase.from("asset_claims").select("id", { count: "exact", head: true }),
     supabase.rpc("get_marketplace_observability"),
+    supabase.rpc("get_admin_download_analytics"),
   ]);
 
   if (creators.error) throw creators.error;
   if (claims.error) throw claims.error;
   if (observability.error) throw observability.error;
+  if (downloadAnalytics.error) throw downloadAnalytics.error;
   const metrics = observability.data?.[0];
+  const downloadMetrics = downloadAnalytics.data?.[0];
 
   return {
     totalCreators: creators.count || creators.data?.length || 0,
@@ -49,6 +53,11 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       creatorSubmissions: metrics?.creator_submissions || 0,
       adminReviews: metrics?.admin_reviews || 0,
       clientErrors24h: metrics?.client_errors_24h || 0,
+    },
+    downloadAnalytics: {
+      downloads7d: downloadMetrics?.downloads_7d || 0,
+      downloads30d: downloadMetrics?.downloads_30d || 0,
+      topAssets: Array.isArray(downloadMetrics?.top_assets) ? downloadMetrics.top_assets as AdminOverview["downloadAnalytics"]["topAssets"] : [],
     },
   };
 }
