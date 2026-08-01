@@ -209,6 +209,27 @@ export type Database = {
           }
         ];
       };
+      asset_download_events: {
+        Row: {
+          id: string;
+          asset_id: string;
+          user_id: string;
+          accessed_on: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          asset_id: string;
+          user_id: string;
+          accessed_on?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["asset_download_events"]["Insert"]>;
+        Relationships: [
+          { foreignKeyName: "asset_download_events_asset_id_fkey"; columns: ["asset_id"]; isOneToOne: false; referencedRelation: "assets"; referencedColumns: ["id"] },
+          { foreignKeyName: "asset_download_events_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }
+        ];
+      };
       asset_deliverables: {
         Row: {
           id: string;
@@ -431,6 +452,14 @@ export type Database = {
       can_access_asset_delivery: {
         Args: { target_asset_id: string };
         Returns: boolean;
+      };
+      record_asset_delivery_access: {
+        Args: { target_asset_id: string };
+        Returns: boolean;
+      };
+      get_admin_download_analytics: {
+        Args: Record<string, never>;
+        Returns: { downloads_7d: number; downloads_30d: number; top_assets: Json }[];
       };
       is_approved_creator: {
         Args: { target_creator_id: string };

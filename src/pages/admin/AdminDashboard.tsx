@@ -66,6 +66,22 @@ export default function AdminDashboard() {
         <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-[#CFCFCF]">Client errors in the last 24 hours: <span className="text-white">{overview?.observability.clientErrors24h ?? 0}</span></div>
       </section>
 
+      <section className="mt-10">
+        <div className="eyebrow">Real delivery access</div>
+        <h2 className="mt-2 text-xl font-medium">Downloads</h2>
+        <p className="mt-2 text-sm text-[#CFCFCF]">Counts only entitled delivery access. Repeat opens of the same asset by the same user count once per day.</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div className="card-premium p-5"><div className="text-2xl font-medium">{overview?.downloadAnalytics.downloads7d ?? 0}</div><div className="mt-2 text-xs uppercase tracking-wider text-[#CFCFCF]/80">Last 7 days</div></div>
+          <div className="card-premium p-5"><div className="text-2xl font-medium">{overview?.downloadAnalytics.downloads30d ?? 0}</div><div className="mt-2 text-xs uppercase tracking-wider text-[#CFCFCF]/80">Last 30 days</div></div>
+        </div>
+        <div className="mt-5 card-premium overflow-hidden">
+          <div className="border-b border-white/10 px-5 py-4 text-sm font-medium">Top assets</div>
+          {(overview?.downloadAnalytics.topAssets.length || 0) === 0 ? <div className="px-5 py-5 text-sm text-[#CFCFCF]">No verified delivery access yet.</div> : (
+            <div className="divide-y divide-white/10">{overview?.downloadAnalytics.topAssets.map(asset => <a key={asset.id} href={`/asset/${asset.slug}`} className="flex items-center justify-between gap-4 px-5 py-4 text-sm hover:bg-white/[0.03]"><span className="min-w-0"><span className="block truncate text-white">{asset.title}</span><span className="text-xs text-[#CFCFCF]">{asset.creator_name}</span></span><span className="shrink-0 text-white">{asset.downloads.toLocaleString()} downloads</span></a>)}</div>
+          )}
+        </div>
+      </section>
+
       {(overview?.pendingReviewCount || 0) > 0 && (
         <div className="mt-10 card-premium p-5 sm:p-6">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:flex-wrap sm:items-center">
