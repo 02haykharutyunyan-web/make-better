@@ -68,7 +68,8 @@ export default function Header() {
   };
 
   return (
-    <header
+    <>
+      <header
       className={`fixed inset-x-0 top-0 z-40 glass-nav transition-all duration-300 ${
         scrolled ? "shadow-[0_24px_72px_rgba(0,0,0,0.42),0_0_34px_rgba(255,214,0,0.08)]" : ""
       }`}
@@ -154,9 +155,11 @@ export default function Header() {
         </div>
       </div>
 
+    </header>
+
       {mobileOpen && <div
         id="mobile-navigation"
-        className={`fixed inset-x-0 bottom-0 top-16 z-40 md:hidden transition-all duration-300 ${
+        className={`fixed inset-x-0 bottom-0 top-16 z-50 md:hidden transition-all duration-300 ${
           mobileOpen ? "pointer-events-auto opacity-100 translate-y-0" : "pointer-events-none opacity-0 -translate-y-3"
         }`}
       >
@@ -249,6 +252,6 @@ export default function Header() {
           </nav>
         </div>
       </div>}
-    </header>
+    </>
   );
 }
