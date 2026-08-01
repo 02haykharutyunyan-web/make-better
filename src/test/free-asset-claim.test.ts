@@ -5,6 +5,7 @@ import path from "node:path";
 
 const root = path.resolve(__dirname, "../..");
 const migration = fs.readFileSync(path.join(root, "supabase/migrations/20260725000100_secure_free_asset_claim.sql"), "utf8");
+const callbackPage = fs.readFileSync(path.join(root, "src/pages/FreeClaimCallbackPage.tsx"), "utf8");
 
 describe("free claim callback safety", () => {
   const assetId = "123e4567-e89b-42d3-a456-426614174000";
@@ -18,6 +19,12 @@ describe("free claim callback safety", () => {
   it("classifies invalid and expired callbacks", () => {
     expect(authCallbackError("?error_code=otp_expired", "")).toBe("expired");
     expect(authCallbackError("", "#error_description=invalid+token")).toBe("invalid");
+  });
+
+  it("returns a verified claimant to the exact claimed asset", () => {
+    expect(callbackPage).toContain("setAssetSlug(result.asset_slug)");
+    expect(callbackPage).toContain("`/asset/${assetSlug}`");
+    expect(callbackPage).toContain("Return to asset");
   });
 });
 
