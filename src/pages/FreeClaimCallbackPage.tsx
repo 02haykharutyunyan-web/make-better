@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
 import { supabase } from "@/lib/supabase/client";
-import { authCallbackError, callbackAssetId } from "@/lib/free-claim";
+import { authCallbackError, clearPendingFreeClaim, pendingFreeClaim } from "@/lib/free-claim";
 import { claimFreeAssetSecure } from "@/services/assets";
 
 type State = "processing" | "success" | "already" | "invalid" | "expired" | "auth" | "not_found" | "not_published" | "not_free" | "error";
@@ -31,13 +31,14 @@ const copy: Record<State, { title: string; body: string }> = {
 export default function FreeClaimCallbackPage() {
   const location = useLocation();
   const [state, setState] = useState<State>("processing");
+  const [assetSlug, setAssetSlug] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     const run = async () => {
       const callbackError = authCallbackError(location.search, location.hash);
       if (callbackError) { setState(callbackError); return; }
-      const assetId = callbackAssetId(location.search);
+      const assetId = pendingFreeClaim(window.localStorage);
       if (!assetId) { setState("invalid"); return; }
 
       try {
@@ -52,6 +53,8 @@ export default function FreeClaimCallbackPage() {
 
         const result = await claimFreeAssetSecure(assetId);
         if (!active) return;
+        setAssetSlug(result.asset_slug);
+        clearPendingFreeClaim(window.localStorage);
         window.history.replaceState({}, "", "/auth/free-claim");
         setState(result.outcome === "already_claimed" ? "already" : "success");
       } catch (error) {
@@ -72,7 +75,7 @@ export default function FreeClaimCallbackPage() {
           <div className="eyebrow">Free asset claim</div>
           <h1 className="mt-5 text-3xl sm:text-4xl font-medium">{message.title}</h1>
           <p className="mt-4 text-[#CFCFCF]">{message.body}</p>
-          {state !== "processing" && <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row"><Link to="/assets" className="min-h-11 rounded-full border border-white/10 px-5 py-3 text-sm">Browse assets</Link>{(state === "success" || state === "already") && <Link to="/my-assets" className="min-h-11 rounded-full btn-primary px-5 py-3 text-sm font-medium">Open My Assets</Link>}</div>}
+          {state !== "processing" && <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row"><Link to={assetSlug ? `/asset/${assetSlug}` : "/assets"} className="min-h-11 rounded-full border border-white/10 px-5 py-3 text-sm">{assetSlug ? "Return to asset" : "Browse assets"}</Link>{(state === "success" || state === "already") && <Link to="/my-assets" className="min-h-11 rounded-full btn-primary px-5 py-3 text-sm font-medium">Open My Assets</Link>}</div>}
         </div>
       </section>
     </SiteLayout>
