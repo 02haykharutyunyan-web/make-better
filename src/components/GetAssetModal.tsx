@@ -11,7 +11,7 @@ type Step = "form" | "sending" | "sent" | "claiming" | "checkout" | "success" | 
 const RESEND_SECONDS = 60;
 
 export default function GetAssetModal({ asset, assetId, open, onClose }: { asset: Asset; assetId: string; open: boolean; onClose: () => void }) {
-  const { user } = useStore();
+  const { user, refreshMyClaims } = useStore();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("form");
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", phone: user?.phone || "" });
@@ -63,6 +63,9 @@ export default function GetAssetModal({ asset, assetId, open, onClose }: { asset
         setStep("claiming");
         trackMarketplaceEvent("free_claim_started", assetId, { signed_in: true });
         const result = await claimFreeAssetSecure(assetId);
+        // Refresh before the success screen so the destination page has the
+        // new entitlement immediately, even during same-session navigation.
+        await refreshMyClaims().catch(error => console.error("Failed to refresh claimed assets", error));
         setStep(result.outcome === "already_claimed" ? "already" : "success");
       } else {
         if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) {

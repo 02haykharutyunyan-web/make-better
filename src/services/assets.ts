@@ -248,6 +248,25 @@ export async function listAssetDeliverables(assetIds: string[]) {
   return data || [];
 }
 
+/**
+ * Load only the delivery type for already-entitled assets. RLS still enforces
+ * the claim on every row; keeping the selection narrow avoids loading private
+ * URLs or text just to choose a button label.
+ */
+export async function listClaimedAssetDeliveryMetadata(assetIds: string[]) {
+  requireSupabaseConfig();
+  const uniqueIds = [...new Set(assetIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return [] as Pick<Tables<"asset_deliverables">, "asset_id" | "delivery_type">[];
+
+  const { data, error } = await supabase
+    .from("asset_deliverables")
+    .select("asset_id, delivery_type")
+    .in("asset_id", uniqueIds);
+
+  if (error) throw error;
+  return data || [];
+}
+
 export async function createSignedDeliverableUrl(storagePath: string) {
   const { data, error } = await supabase.storage
     .from(ASSET_DELIVERABLES_BUCKET)
