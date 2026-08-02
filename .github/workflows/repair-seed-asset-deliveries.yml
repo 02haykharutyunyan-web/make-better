@@ -1,0 +1,37 @@
+name: Repair seed asset deliveries
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/repair-seed-asset-deliveries.yml'
+      - 'scripts/repair-seed-asset-deliveries.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    environment: production-qa
+    timeout-minutes: 10
+    steps:
+      - name: Checkout trusted repair revision
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Repair the ten seeded external deliveries
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/repair-seed-asset-deliveries.mjs
