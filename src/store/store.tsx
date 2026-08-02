@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- This module intentionally exports component-related helpers used by shadcn/ui consumers without changing runtime behavior. */
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import type { Asset, Creator, BlogPost, Collection, ProductType } from "@/data/marketplace";
 import { supabase } from "@/lib/supabase/client";
 import { dbAssetToSubmittedAsset, type DbAsset } from "@/lib/asset-mappers";
@@ -101,6 +101,7 @@ type Ctx = {
   logout: () => Promise<void>;
   signupBuyer: (data: { name: string; email: string; password: string; phone?: string }) => Promise<User | null>;
   signupCreator: (data: { name: string; email: string; password: string; phone?: string; brand: string; bio: string }) => Promise<User | null>;
+  refreshMyClaims: () => Promise<void>;
   claimAsset: (asset: SubmittedAsset) => Promise<Claim>;
   myClaims: () => (Claim & { asset?: SubmittedAsset })[];
   submitAsset: (data: Partial<SubmittedAsset>) => SubmittedAsset;
@@ -121,9 +122,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [remoteClaims, setRemoteClaims] = useState<Claim[]>([]);
 
-  const update = (fn: (s: StoreShape) => StoreShape) => setStore(prev => fn({ ...prev }));
+  const update = useCallback((fn: (s: StoreShape) => StoreShape) => setStore(prev => fn({ ...prev })), []);
 
-  const rememberUser = (nextUser: User | null) => {
+  const rememberUser = useCallback((nextUser: User | null) => {
     setUser(nextUser);
     if (!nextUser) return;
     update(s => {
@@ -135,9 +136,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           : [nextUser, ...s.users],
       };
     });
-  };
+  }, [update]);
 
-  const loadCurrentProfile = async () => {
+  const syncClaimsForUser = useCallback(async (userId: string) => {
+    const claims = await listMyAssetClaims(userId);
+    const mappedClaims: Claim[] = claims.map(c => ({
+      id: c.id,
+      userId: c.user_id,
+      assetSlug: c.assets?.slug || "",
+      status: claimStatusLabel(c.status),
+      createdAt: c.created_at,
+    })).filter(c => c.assetSlug);
+    setRemoteClaims(mappedClaims);
+
+    const claimedAssets = claims
+      .map(c => c.assets ? dbAssetToSubmittedAsset(c.assets as DbAsset) : null)
+      .filter(Boolean) as SubmittedAsset[];
+    if (claimedAssets.length > 0) {
+      update(s => ({
+        ...s,
+        assets: [
+          ...claimedAssets.filter(a => !s.assets.some(existing => existing.slug === a.slug)),
+          ...s.assets,
+        ],
+      }));
+    }
+  }, [update]);
+
+  const loadCurrentProfile = useCallback(async () => {
     requireSupabaseConfig();
 
     const { data: auth, error: authError } = await supabase.auth.getUser();
@@ -162,30 +188,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const nextUser = profileToUser(profile, creator);
     rememberUser(nextUser);
 
-    const claims = await listMyAssetClaims(profile.id);
-    const mappedClaims: Claim[] = claims.map(c => ({
-      id: c.id,
-      userId: c.user_id,
-      assetSlug: c.assets?.slug || "",
-      status: claimStatusLabel(c.status),
-      createdAt: c.created_at,
-    })).filter(c => c.assetSlug);
-    setRemoteClaims(mappedClaims);
-    const claimedAssets = claims
-      .map(c => c.assets ? dbAssetToSubmittedAsset(c.assets as DbAsset) : null)
-      .filter(Boolean) as SubmittedAsset[];
-    if (claimedAssets.length > 0) {
-      update(s => ({
-        ...s,
-        assets: [
-          ...claimedAssets.filter(a => !s.assets.some(existing => existing.slug === a.slug)),
-          ...s.assets,
-        ],
-      }));
-    }
+    await syncClaimsForUser(profile.id);
 
     return nextUser;
-  };
+  }, [rememberUser, syncClaimsForUser]);
+
+  const refreshMyClaims = useCallback(async () => {
+    if (!user?.id) {
+      setRemoteClaims([]);
+      return;
+    }
+    await syncClaimsForUser(user.id);
+  }, [syncClaimsForUser, user?.id]);
 
   useEffect(() => {
     let mounted = true;
@@ -228,9 +242,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  // The auth bootstrap must subscribe once on mount; these helpers close over stable React setters and Supabase services.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadCurrentProfile, rememberUser]);
 
   const ensureBuyerProfile = async (authUserId: string, data: { name: string; email: string; phone?: string }) => {
     requireSupabaseConfig();
@@ -308,6 +320,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       return loadCurrentProfile();
     },
+    refreshMyClaims,
     claimAsset: async (asset) => {
       requireSupabaseConfig();
       const currentUserId = user?.id;

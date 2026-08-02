@@ -1,16 +1,47 @@
 import { Link } from "react-router-dom";
 import SiteLayout from "@/components/layout/SiteLayout";
 import { useStore } from "@/store/store";
-import { Download, ArrowUpRight } from "lucide-react";
-import { useState } from "react";
-import { createSignedDeliverableUrl, getClaimedAssetDelivery } from "@/services/assets";
+import { Download, ArrowUpRight, BookOpen, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createSignedDeliverableUrl, getClaimedAssetDelivery, listClaimedAssetDeliveryMetadata } from "@/services/assets";
 import { explainSupabaseError } from "@/lib/supabase/errors";
+import { getDeliveryAction } from "@/lib/delivery-actions";
+import type { DeliveryType } from "@/types/database";
 
 export default function MyAssetsPage() {
-  const { user, myClaims } = useStore();
+  const { user, myClaims, refreshMyClaims } = useStore();
   const [err, setErr] = useState("");
   const [loadingClaimId, setLoadingClaimId] = useState<string | null>(null);
   const [textDelivery, setTextDelivery] = useState<{ title: string; body: string } | null>(null);
+  const claims = myClaims();
+  const userId = user?.id;
+  const claimedAssetIds = claims.flatMap(claim => claim.asset?.id ? [claim.asset.id] : []);
+  const claimedAssetIdsKey = claimedAssetIds.join("|");
+  const [deliveryTypes, setDeliveryTypes] = useState<Record<string, DeliveryType>>({});
+
+  useEffect(() => {
+    if (!userId) return;
+    void refreshMyClaims().catch(error => setErr(explainSupabaseError(error, "Unable to refresh your assets.")));
+  }, [refreshMyClaims, userId]);
+
+  useEffect(() => {
+    let active = true;
+    const assetIds = claimedAssetIdsKey ? claimedAssetIdsKey.split("|") : [];
+    if (!assetIds.length) {
+      setDeliveryTypes({});
+      return () => { active = false; };
+    }
+
+    void listClaimedAssetDeliveryMetadata(assetIds)
+      .then(rows => {
+        if (active) setDeliveryTypes(Object.fromEntries(rows.map(row => [row.asset_id, row.delivery_type])));
+      })
+      .catch(() => {
+        // The action remains safely generic until metadata can be reloaded.
+      });
+
+    return () => { active = false; };
+  }, [claimedAssetIdsKey]);
 
   if (!user) {
     return (
@@ -23,8 +54,6 @@ export default function MyAssetsPage() {
       </SiteLayout>
     );
   }
-
-  const claims = myClaims();
 
   const accessClaim = async (claim: (typeof claims)[number]) => {
     setErr("");
@@ -84,13 +113,19 @@ export default function MyAssetsPage() {
                       View <ArrowUpRight className="h-3.5 w-3.5" />
                     </Link>
                   )}
-                  <button
-                    disabled={c.status === "Pending payment"}
-                    onClick={() => accessClaim(c)}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full btn-primary px-5 py-2.5 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <Download className="h-4 w-4" /> {loadingClaimId === c.id ? "Opening..." : c.status === "Pending payment" ? "Awaiting Stripe" : "Access"}
-                  </button>
+                  {(() => {
+                    const action = getDeliveryAction(c.asset?.id ? deliveryTypes[c.asset.id] : undefined);
+                    const ActionIcon = action.kind === "download" ? Download : action.kind === "read" ? BookOpen : ExternalLink;
+                    return (
+                      <button
+                        disabled={c.status === "Pending payment"}
+                        onClick={() => accessClaim(c)}
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full btn-primary px-5 py-2.5 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <ActionIcon className="h-4 w-4" /> {loadingClaimId === c.id ? "Opening..." : c.status === "Pending payment" ? "Awaiting Stripe" : action.label}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             ))}
